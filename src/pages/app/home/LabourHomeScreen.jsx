@@ -1,0 +1,966 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import {
+  AlertTriangle,
+  Bell,
+  Building2,
+  CalendarClock,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Droplets,
+  Flame,
+  GraduationCap,
+  HardHat,
+  Headphones,
+  IndianRupee,
+  LifeBuoy,
+  LogIn,
+  LogOut,
+  MapPin,
+  Menu,
+  MessageCircle,
+  Navigation,
+  Phone,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  Timer,
+  Wallet,
+  Wrench,
+} from 'lucide-react'
+import { KYC_STATUS } from '../../../constants/userRoles.js'
+import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
+import { AppSecondaryButton } from '../../../components/app/AppSecondaryButton.jsx'
+import { AppSectionHeader } from '../../../components/app-ui/layout/AppSectionHeader.jsx'
+import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
+import { useNow } from '../../../hooks/useNow.js'
+import { formatSecondsAsClock } from '../../../lib/formatDurationClock.js'
+import {
+  formatAppUserLocationLabel,
+  hasAppUserLocation,
+  readAppUserLocation,
+} from '../../../lib/appUserLocationStorage.js'
+import { AppUserLocationModal } from '../../../components/app/AppUserLocationModal.jsx'
+import { LabourCheckOutConfirmModal } from '../../../components/labour/LabourCheckOutConfirmModal.jsx'
+import { LabourAssignmentDetailModal } from '../../../components/labour/LabourAssignmentDetailModal.jsx'
+import { useLabourPresence } from '../../../hooks/useLabourPresence.js'
+import {
+  appendAttendancePunch,
+  dayKey,
+  lastTodayType,
+  liveWorkedSecondsForDay,
+  readAttendanceEntries,
+  subscribeAttendance,
+} from '../../../lib/labourAttendanceStorage.js'
+import {
+  loadJobDemoState,
+  nowIso,
+  saveJobDemoState,
+  subscribeJobDemo,
+} from '../../../lib/labourJobDemoStorage.js'
+import { readWalletState, subscribeWallet } from '../../../lib/labourWalletStorage.js'
+import {
+  buildAttendanceHistoryRows,
+  buildEarningsGlance,
+  buildUpcomingSchedule,
+  formatInrFromPaise,
+  LABOUR_EMERGENCY_PHONE,
+  LABOUR_SUPPORT_PHONE,
+  offerDistanceKm,
+  pickTodayAssignment,
+  SAFETY_BANNERS,
+  whatsAppSupportUrl,
+} from '../../../lib/labourHomeHelpers.js'
+import {
+  buildLabourNotifications,
+  markNotificationRead,
+  subscribeLabourNotifications,
+} from '../../../lib/labourNotifications.js'
+
+function getTimeGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function initialsFromName(name) {
+  if (!name?.trim()) return '?'
+  const parts = name.trim().split(/\s+/)
+  const a = parts[0]?.[0]
+  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] : ''
+  return `${a || ''}${b || ''}`.toUpperCase() || '?'
+}
+
+function formatPunchTime(iso) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+
+const QUICK_ACTIONS = [
+  { to: '/app/attendance', label: 'Attendance', icon: CalendarClock, bg: 'from-sky-500/15 to-sky-50', iconTone: 'text-sky-700' },
+  { to: '/app/earnings', label: 'Earnings', icon: IndianRupee, bg: 'from-emerald-500/15 to-emerald-50', iconTone: 'text-emerald-700' },
+  { to: '/app/jobs', label: 'My jobs', icon: HardHat, bg: 'from-amber-500/15 to-amber-50', iconTone: 'text-amber-800' },
+  { to: '/app/jobs', label: 'Site details', icon: MapPin, bg: 'from-violet-500/15 to-violet-50', iconTone: 'text-violet-700' },
+  { to: '/app/work-categories', label: 'Skills', icon: Wrench, bg: 'from-orange-500/15 to-orange-50', iconTone: 'text-orange-800' },
+  { to: '/app/support', label: 'Support', icon: LifeBuoy, bg: 'from-rose-500/15 to-rose-50', iconTone: 'text-rose-700' },
+]
+
+const STATUS_TONE = {
+  emerald: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  rose: 'bg-rose-500',
+  sky: 'bg-sky-500',
+  brand: 'bg-brand',
+}
+
+function SafetyBannerIcon({ icon }) {
+  if (icon === 'helmet') return <HardHat className="h-6 w-6" aria-hidden />
+  if (icon === 'shield') return <Shield className="h-6 w-6" aria-hidden />
+  if (icon === 'droplet') return <Droplets className="h-6 w-6" aria-hidden />
+  return <GraduationCap className="h-6 w-6" aria-hidden />
+}
+
+/**
+ * Worker home — attendance-first dashboard with jobs, earnings, site info, and safety.
+ */
+export function LabourHomeScreen({ user }) {
+  const reduce = useReducedMotion()
+  const navigate = useNavigate()
+  const now = useNow(1000)
+  const [entries, setEntries] = useState(readAttendanceEntries)
+  const [wallet, setWallet] = useState(readWalletState)
+  const [jobs, setJobs] = useState(loadJobDemoState)
+  const [toast, setToast] = useState('')
+  const [safetyIdx, setSafetyIdx] = useState(0)
+  const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
+  const [workAreaModalOpen, setWorkAreaModalOpen] = useState(false)
+  const [checkOutModalOpen, setCheckOutModalOpen] = useState(false)
+  const [pendingCheckIn, setPendingCheckIn] = useState(false)
+  const [notifTick, setNotifTick] = useState(0)
+  const [assignmentDetailOpen, setAssignmentDetailOpen] = useState(false)
+  const { setOnline } = useLabourPresence()
+
+  const firstName = user?.fullName?.split(/\s/)?.[0]
+  const greeting = getTimeGreeting()
+  const initials = initialsFromName(user?.fullName)
+  const profileImageUrl = user?.profileImageUrl?.trim()
+  const kyc = user?.labourProfile?.kycStatus
+  const kycOk = kyc === KYC_STATUS.VERIFIED
+  const categories = user?.labourProfile?.categoryIds
+  const primaryTrade =
+    Array.isArray(categories) && categories.length > 0
+      ? typeof categories[0] === 'object' && categories[0]?.name
+        ? categories[0].name
+        : 'Skilled worker'
+      : 'Worker'
+
+  useEffect(() => subscribeAttendance(setEntries), [])
+  useEffect(() => subscribeWallet(setWallet), [])
+  useEffect(() => subscribeJobDemo(setJobs), [])
+  useEffect(() => subscribeLabourNotifications(() => setNotifTick((t) => t + 1)), [])
+
+  useEffect(() => {
+    const onLoc = () => setAppLocation(readAppUserLocation())
+    window.addEventListener('lc-app-user-location-changed', onLoc)
+    return () => window.removeEventListener('lc-app-user-location-changed', onLoc)
+  }, [])
+
+  useEffect(() => {
+    if (reduce) return undefined
+    const id = window.setInterval(() => {
+      setSafetyIdx((i) => (i + 1) % SAFETY_BANNERS.length)
+    }, 5200)
+    return () => window.clearInterval(id)
+  }, [reduce])
+
+  const todayKey = dayKey()
+  const lastType = lastTodayType(entries)
+  const onSite = lastType === 'in'
+  const workedSecondsToday = useMemo(
+    () => liveWorkedSecondsForDay(entries, todayKey, now),
+    [entries, todayKey, now],
+  )
+
+  const todayPunches = useMemo(
+    () => entries.filter((e) => e.day === todayKey).sort((a, b) => new Date(a.at) - new Date(b.at)),
+    [entries, todayKey],
+  )
+  const lastIn = useMemo(() => [...todayPunches].reverse().find((e) => e.type === 'in'), [todayPunches])
+
+  const todayAssignment = useMemo(() => pickTodayAssignment(jobs), [jobs])
+  const todayJob = todayAssignment.job
+  const schedule = useMemo(() => buildUpcomingSchedule(jobs), [jobs])
+  const historyRows = useMemo(() => buildAttendanceHistoryRows(entries), [entries])
+
+  const withdrawnPaise = useMemo(
+    () => wallet.withdrawals.reduce((acc, w) => acc + w.amountPaise, 0),
+    [wallet.withdrawals],
+  )
+  const earnings = useMemo(
+    () => buildEarningsGlance(entries, wallet.ratePaisePerMin, withdrawnPaise),
+    [entries, wallet.ratePaisePerMin, withdrawnPaise],
+  )
+
+  const notifications = useMemo(
+    () => buildLabourNotifications(user, jobs, earnings),
+    [user, jobs, earnings, notifTick],
+  )
+
+  const hasWorkLocation = useMemo(() => hasAppUserLocation(appLocation), [appLocation])
+  const locationLabel = formatAppUserLocationLabel(appLocation) || 'Set your work area'
+  const siteLabel = lastIn?.projectLabel && lastIn.projectLabel !== 'Unassigned'
+    ? lastIn.projectLabel
+    : todayJob?.siteName || todayJob?.title || 'No site assigned'
+
+  const showToast = useCallback((msg) => {
+    setToast(msg)
+    window.setTimeout(() => setToast(''), 2600)
+  }, [])
+
+  const punchLabels = useMemo(
+    () => ({
+      projectLabel: todayJob?.title || todayJob?.siteName || lastIn?.projectLabel || 'Unassigned',
+      workLabel: todayJob?.role || lastIn?.workLabel || primaryTrade,
+    }),
+    [todayJob, lastIn, primaryTrade],
+  )
+
+  const performCheckIn = useCallback(() => {
+    appendAttendancePunch('in', punchLabels)
+    setEntries(readAttendanceEntries())
+    setOnline(true)
+    showToast('Checked in — stay safe on site.')
+  }, [punchLabels, setOnline, showToast])
+
+  const handleCheckIn = () => {
+    if (lastType === 'in') {
+      showToast('You are already checked in.')
+      return
+    }
+    if (!hasWorkLocation) {
+      setPendingCheckIn(true)
+      setWorkAreaModalOpen(true)
+      showToast('Set your work area before check-in.')
+      return
+    }
+    performCheckIn()
+  }
+
+  const handleCheckOutRequest = () => {
+    if (lastType !== 'in') {
+      showToast('Check in first to start your shift.')
+      return
+    }
+    setCheckOutModalOpen(true)
+  }
+
+  const confirmCheckOut = useCallback(() => {
+    appendAttendancePunch('out', punchLabels)
+    setEntries(readAttendanceEntries())
+    setOnline(false)
+    setCheckOutModalOpen(false)
+    showToast('You are offline. No new job requests until you check in again.')
+  }, [punchLabels, setOnline, showToast])
+
+  const handleWorkAreaSaved = useCallback(() => {
+    const next = readAppUserLocation()
+    setAppLocation(next)
+    if (pendingCheckIn && hasAppUserLocation(next)) {
+      setPendingCheckIn(false)
+      if (lastTodayType(readAttendanceEntries()) !== 'in') {
+        performCheckIn()
+      }
+    }
+  }, [pendingCheckIn, performCheckIn])
+
+  const handleAcceptOffer = (offerId) => {
+    if (!kycOk) {
+      showToast('Complete Aadhaar KYC before accepting jobs.')
+      navigate('/app/kyc')
+      return
+    }
+    const offer = jobs.offers.find((o) => o.id === offerId)
+    if (!offer) return
+    saveJobDemoState({
+      ...jobs,
+      offers: jobs.offers.filter((o) => o.id !== offerId),
+      active: [...jobs.active, { ...offer, acceptedAt: nowIso() }],
+    })
+    markNotificationRead(`job:${offerId}`)
+    setJobs(loadJobDemoState())
+    setNotifTick((t) => t + 1)
+    showToast('Job accepted — see Active in My Jobs.')
+  }
+
+  const openDrawer = () => window.dispatchEvent(new CustomEvent('lc-open-app-drawer'))
+
+  const alertOffers = useMemo(
+    () =>
+      jobs.offers
+        .slice(0, 3)
+        .map((o) => ({ ...o, km: offerDistanceKm(o.id) })),
+    [jobs.offers],
+  )
+
+  const safetyBanner = SAFETY_BANNERS[safetyIdx]
+
+  return (
+    <motion.div
+      initial={reduce ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="-mx-4 space-y-5 overflow-x-hidden pb-4"
+      aria-label={user?.fullName ? `Worker home for ${user.fullName}` : 'Worker home'}
+    >
+      {toast ? (
+        <p
+          className="mx-4 rounded-xl border border-brand/25 bg-brand/10 px-4 py-2 text-center text-sm font-semibold text-brand"
+          role="status"
+        >
+          {toast}
+        </p>
+      ) : null}
+
+      {/* 1. Header */}
+      <section className="relative px-4 pb-2 pt-[max(0.35rem,env(safe-area-inset-top,0px))]">
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-[1.75rem] border border-white/20 bg-linear-to-br from-slate-900 via-slate-800 to-slate-950 text-white shadow-[0_20px_50px_-24px_rgba(0,0,0,0.55)]"
+        >
+          <motion.div
+            className="pointer-events-none absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=60')] bg-cover bg-center opacity-25"
+            aria-hidden
+          />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-slate-950/85 via-slate-900/75 to-brand/30" aria-hidden />
+          <motion.div
+            className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-brand/30 blur-3xl"
+            animate={reduce ? undefined : { scale: [1, 1.12, 1], opacity: [0.35, 0.55, 0.35] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            aria-hidden
+          />
+
+          <motion.div className="relative p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <button
+                type="button"
+                onClick={openDrawer}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/app/notifications')}
+                className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                aria-label={
+                  notifications.unreadCount > 0
+                    ? `Notifications, ${notifications.unreadCount} unread`
+                    : 'Notifications'
+                }
+              >
+                <Bell className="h-5 w-5" />
+                {notifications.unreadCount > 0 ? (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white shadow-md ring-2 ring-slate-900/80">
+                    {notifications.unreadCount > 9 ? '9+' : notifications.unreadCount}
+                  </span>
+                ) : null}
+              </button>
+            </div>
+
+            <div className="mt-4 flex items-stretch gap-2.5 sm:gap-3">
+              <Link
+                to="/app/profile"
+                className="relative shrink-0 self-center rounded-2xl p-0.5 ring-2 ring-white/40 transition hover:ring-white/70"
+                aria-label="Open profile"
+              >
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt=""
+                    className="h-14 w-14 rounded-[0.85rem] object-cover sm:h-16 sm:w-16 sm:rounded-[0.9rem]"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="flex h-14 w-14 items-center justify-center rounded-[0.85rem] bg-white/15 text-lg font-black sm:h-16 sm:w-16 sm:rounded-[0.9rem] sm:text-xl">
+                    {initials}
+                  </span>
+                )}
+                {kycOk ? (
+                  <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-white ring-2 ring-slate-900 sm:h-6 sm:w-6">
+                    <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={3} aria-hidden />
+                  </span>
+                ) : null}
+              </Link>
+
+              <div className="flex min-w-0 flex-1 flex-col justify-center">
+                <p className="text-[11px] font-semibold text-white/75">
+                  {greeting}
+                  {firstName ? `, ${firstName}` : ''} 👋
+                </p>
+                <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-xl">
+                  {user?.fullName?.trim() || firstName || 'Worker'}
+                </h1>
+                <p className="truncate text-xs font-medium text-white/70">{primaryTrade}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  {kycOk ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-100">
+                      <ShieldCheck className="h-2.5 w-2.5" aria-hidden />
+                      Verified
+                    </span>
+                  ) : (
+                    <Link
+                      to="/app/kyc"
+                      className="inline-flex items-center gap-0.5 rounded-full border border-amber-300/50 bg-amber-500/25 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-50"
+                    >
+                      KYC
+                      <ChevronRight className="h-2.5 w-2.5" aria-hidden />
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex w-[7.4rem] shrink-0 flex-col justify-between rounded-2xl border border-emerald-400/35 bg-linear-to-br from-emerald-500/25 to-white/10 p-2.5 shadow-inner backdrop-blur-md sm:w-[8.25rem] sm:p-3">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-100/90">This month</p>
+                  <p className="mt-0.5 font-mono text-base font-black leading-tight tabular-nums text-white sm:text-lg">
+                    {formatInrFromPaise(earnings.monthPaise)}
+                  </p>
+                  {(earnings.availablePaise ?? 0) > 0 ? (
+                    <p className="mt-0.5 truncate text-[9px] font-semibold text-emerald-100/85">
+                      {formatInrFromPaise(earnings.availablePaise)} withdraw
+                    </p>
+                  ) : earnings.pendingPaise > 0 ? (
+                    <p className="mt-0.5 truncate text-[9px] font-semibold text-amber-100/85">
+                      {formatInrFromPaise(earnings.pendingPaise)} clearing
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-[9px] text-white/55">From attendance</p>
+                  )}
+                </div>
+                <Link
+                  to="/app/earnings"
+                  className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl bg-linear-to-r from-brand-bright to-brand py-2 text-[10px] font-black text-white shadow-md shadow-brand/30 transition hover:brightness-110 active:scale-[0.98]"
+                >
+                  <Wallet className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  Withdraw
+                </Link>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setWorkAreaModalOpen(true)}
+              className={`mt-4 flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm backdrop-blur-sm transition hover:bg-white/15 ${
+                hasWorkLocation
+                  ? 'border-white/20 bg-white/10'
+                  : 'border-amber-300/50 bg-amber-500/20 ring-1 ring-amber-300/40'
+              }`}
+            >
+              <MapPin className="h-4 w-4 shrink-0 text-brand-bright" aria-hidden />
+              <span className="min-w-0 flex-1 truncate font-medium text-white/90">{locationLabel}</span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-white/50" aria-hidden />
+            </button>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      <div className="space-y-5 px-4">
+        {/* 2. Attendance status — primary CTA */}
+        <motion.section
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.04 }}
+          aria-labelledby="attendance-heading"
+        >
+          <GlassPanel
+            className={`relative overflow-hidden border-2 p-4 ${
+              onSite ? 'border-emerald-300/80 bg-emerald-50/80' : 'border-slate-200/90 bg-white'
+            }`}
+          >
+            {onSite ? (
+              <motion.span
+                className="pointer-events-none absolute right-4 top-4 h-3 w-3 rounded-full bg-emerald-500"
+                animate={reduce ? undefined : { scale: [1, 1.35, 1], opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1.6, repeat: Infinity }}
+                aria-hidden
+              />
+            ) : null}
+            <motion.div className="flex items-start gap-3">
+              <span
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-inner ${
+                  onSite ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {onSite ? <CheckCircle2 className="h-6 w-6" aria-hidden /> : <Timer className="h-6 w-6" aria-hidden />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="attendance-heading" className="text-base font-extrabold text-slate-900">
+                  {onSite ? 'Checked in' : 'Not checked in'}
+                </h2>
+                <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-slate-600">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />
+                  <span className="truncate">Site: {siteLabel}</span>
+                </p>
+                {lastIn ? (
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    Since {formatPunchTime(lastIn.at)} · {formatSecondsAsClock(workedSecondsToday)} today
+                  </p>
+                ) : !hasWorkLocation ? (
+                  <p className="mt-1 text-xs font-semibold text-amber-800">
+                    Set your work area above before you can check in.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-slate-500">Tap in when you reach the site — GPS logged on device.</p>
+                )}
+              </div>
+            </motion.div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {!onSite ? (
+                <AppPrimaryButton
+                  type="button"
+                  onClick={handleCheckIn}
+                  className="col-span-2 w-full py-4 text-base shadow-lg shadow-brand/25"
+                >
+                  <LogIn className="h-5 w-5" aria-hidden />
+                  Check in
+                </AppPrimaryButton>
+              ) : (
+                <AppPrimaryButton
+                  type="button"
+                  onClick={handleCheckOutRequest}
+                  className="col-span-2 w-full border-rose-200 bg-linear-to-r from-rose-600 to-rose-700 py-4 text-base shadow-lg shadow-rose-500/25 hover:brightness-110"
+                >
+                  <LogOut className="h-5 w-5" aria-hidden />
+                  Check out
+                </AppPrimaryButton>
+              )}
+            </div>
+            <Link
+              to="/app/attendance"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-brand underline-offset-4 hover:underline"
+            >
+              Full attendance history
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </GlassPanel>
+        </motion.section>
+
+        {/* 3. Today's job */}
+        <motion.section
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+        >
+          <AppSectionHeader title="Today's assignment" className="mb-2 px-0.5" />
+          {todayJob ? (
+            <motion.div
+              role="button"
+              tabIndex={0}
+              onClick={() => setAssignmentDetailOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setAssignmentDetailOpen(true)
+                }
+              }}
+              className="cursor-pointer overflow-hidden rounded-[1.5rem] border border-slate-200/90 bg-white shadow-[0_16px_40px_-24px_rgba(15,23,42,0.2)] transition hover:border-brand/30 hover:shadow-lg active:scale-[0.99]"
+            >
+              <div className="relative h-28 bg-linear-to-br from-slate-700 to-slate-900">
+                <div
+                  className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=60')] bg-cover bg-center opacity-40"
+                  aria-hidden
+                />
+                <motion.div className="absolute inset-0 bg-linear-to-t from-slate-950/90 to-transparent" aria-hidden />
+                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-800">
+                  {todayAssignment.kind === 'active' ? 'On assignment' : 'Scheduled'}
+                </span>
+              </div>
+              <div className="space-y-2 p-4">
+                <p className="flex items-start gap-2 text-sm font-extrabold text-slate-900">
+                  <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
+                  {todayJob.siteName || todayJob.title}
+                </p>
+                <p className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                  <HardHat className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                  {todayJob.role} · {todayJob.contractor}
+                </p>
+                <p className="flex items-center gap-2 text-xs text-slate-600">
+                  <MapPin className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                  {todayJob.location}
+                </p>
+                <p className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                  <Clock className="h-3.5 w-3.5 text-brand" aria-hidden />
+                  {todayJob.shiftLabel}
+                </p>
+                {todayJob.rateLabel ? (
+                  <p className="text-xs font-bold text-brand">{todayJob.rateLabel}</p>
+                ) : null}
+                <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                  <AppSecondaryButton
+                    as="a"
+                    href={`https://www.google.com/maps/search/?api=1&query=${todayJob.mapQuery}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2.5 text-xs"
+                  >
+                    <Navigation className="h-3.5 w-3.5" aria-hidden />
+                    Map
+                  </AppSecondaryButton>
+                  <AppSecondaryButton
+                    type="button"
+                    onClick={() => setAssignmentDetailOpen(true)}
+                    className="flex-1 py-2.5 text-xs"
+                  >
+                    Details
+                  </AppSecondaryButton>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <GlassPanel className="border-dashed border-slate-300/90 p-5 text-center">
+              <HardHat className="mx-auto h-8 w-8 text-slate-300" aria-hidden />
+              <p className="mt-2 text-sm font-bold text-slate-800">No assignment for today</p>
+              <p className="mt-1 text-xs text-slate-500">Check new job alerts below or open My Jobs.</p>
+              <AppPrimaryButton as={Link} to="/app/jobs" className="mx-auto mt-4 w-full max-w-xs py-3 text-sm">
+                Browse jobs
+              </AppPrimaryButton>
+            </GlassPanel>
+          )}
+        </motion.section>
+
+        {/* 4. Quick actions */}
+        <section aria-label="Quick actions">
+          <AppSectionHeader title="Quick actions" className="mb-2 px-0.5" />
+          <div className="-mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
+            {QUICK_ACTIONS.map((a) => (
+              <Link
+                key={a.label}
+                to={a.to}
+                className={`flex min-w-[5.5rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-slate-200/80 bg-linear-to-b ${a.bg} px-3 py-3.5 shadow-sm transition active:scale-[0.98] hover:shadow-md`}
+              >
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ${a.iconTone}`}>
+                  <a.icon className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="text-center text-[10px] font-bold leading-tight text-slate-800">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 5. Earnings breakdown */}
+        <motion.section
+          initial={reduce ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          aria-label="Earnings breakdown"
+        >
+          <AppSectionHeader title="Earnings breakdown" className="mb-2 px-0.5" />
+          <GlassPanel className="border-slate-200/90 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">All-time earned</p>
+              <p className="font-mono text-sm font-black tabular-nums text-slate-900">
+                {formatInrFromPaise(earnings.earnedPaise ?? 0)}
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Today', value: earnings.todayPaise },
+                { label: 'This week', value: earnings.weekPaise },
+                { label: 'Available', value: earnings.availablePaise ?? 0 },
+              ].map((cell) => (
+                <Link
+                  key={cell.label}
+                  to="/app/earnings"
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-2 py-2 text-center transition hover:border-brand/30 hover:bg-brand/5"
+                >
+                  <p className="text-[9px] font-bold uppercase text-slate-500">{cell.label}</p>
+                  <p className="mt-0.5 text-xs font-black tabular-nums text-slate-900">
+                    {formatInrFromPaise(cell.value)}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </GlassPanel>
+        </motion.section>
+
+        {/* 6. Job alerts */}
+        {alertOffers.length > 0 ? (
+          <section aria-label="New job alerts">
+            <AppSectionHeader title="New assignments" className="mb-2 px-0.5" />
+            <ul className="space-y-3">
+              {alertOffers.map((offer) => (
+                <li key={offer.id}>
+                  <GlassPanel
+                    className={`relative overflow-hidden border-2 p-4 ${
+                      offer.urgency === 'high'
+                        ? 'border-amber-300/80 bg-amber-50/50'
+                        : 'border-slate-200/90'
+                    }`}
+                  >
+                    {offer.urgency === 'high' ? (
+                      <motion.div
+                        className="pointer-events-none absolute inset-0 rounded-[inherit] ring-2 ring-amber-400/50"
+                        animate={reduce ? undefined : { opacity: [0.4, 0.9, 0.4] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        aria-hidden
+                      />
+                    ) : null}
+                    <div className="relative flex items-start gap-2">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                        <Flame className="h-4 w-4" aria-hidden />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-amber-800">New job</p>
+                        <p className="text-sm font-extrabold text-slate-900">{offer.trade} needed</p>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                          {offer.km} km away · {offer.rateLabel}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-slate-500">{offer.site}</p>
+                      </div>
+                    </div>
+                    <div className="relative mt-3 flex gap-2">
+                      <AppPrimaryButton
+                        type="button"
+                        onClick={() => handleAcceptOffer(offer.id)}
+                        className="flex-1 py-2.5 text-xs"
+                      >
+                        Accept job
+                      </AppPrimaryButton>
+                      <AppSecondaryButton as={Link} to="/app/jobs" className="shrink-0 py-2.5 text-xs">
+                        View
+                      </AppSecondaryButton>
+                    </div>
+                  </GlassPanel>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {/* 7. Upcoming schedule */}
+        {schedule.length > 0 ? (
+          <section aria-label="Upcoming schedule">
+            <AppSectionHeader title="Upcoming schedule" className="mb-2 px-0.5" />
+            <ol className="relative space-y-0 border-l-2 border-slate-200/90 pl-4 ml-1.5">
+              {schedule.map((row, i) => (
+                <li key={`${row.id}-${i}`} className="relative pb-4 last:pb-0">
+                  <span
+                    className={`absolute -left-[1.3rem] top-1 flex h-3 w-3 rounded-full ring-4 ring-white ${
+                      row.tone === 'brand' ? 'bg-brand' : row.tone === 'amber' ? 'bg-amber-500' : 'bg-slate-300'
+                    }`}
+                    aria-hidden
+                  />
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.when}</p>
+                  <p className="mt-0.5 text-sm font-extrabold text-slate-900">{row.siteName || row.title}</p>
+                  <p className="text-xs text-slate-600">
+                    {row.role} · {row.shiftLabel}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+
+        {/* 8. Site details */}
+        {todayJob ? (
+          <section aria-label="Site details">
+            <AppSectionHeader title="Current site" className="mb-2 px-0.5" />
+            <GlassPanel className="border-slate-200/90 p-4">
+              <p className="text-sm font-extrabold text-slate-900">{todayJob.siteName || todayJob.title}</p>
+              <p className="mt-1 text-xs text-slate-600">{todayJob.location}</p>
+              <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+                <p className="text-[10px] font-bold uppercase text-slate-400">Supervisor</p>
+                <p className="mt-0.5 text-sm font-bold text-slate-900">{todayJob.supervisor || '—'}</p>
+                {todayJob.supervisorPhone ? (
+                  <a
+                    href={`tel:${todayJob.supervisorPhone}`}
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-brand"
+                  >
+                    <Phone className="h-3 w-3" aria-hidden />
+                    {todayJob.supervisorPhone}
+                  </a>
+                ) : null}
+              </div>
+              <p className="mt-3 text-[10px] font-bold uppercase text-slate-400">Facilities on site</p>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {(todayJob.facilities || []).map((f) => (
+                  <li
+                    key={f}
+                    className="inline-flex items-center gap-1 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-900"
+                  >
+                    <Check className="h-3 w-3" aria-hidden />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <AppSecondaryButton
+                as="a"
+                href={`https://www.google.com/maps/search/?api=1&query=${todayJob.mapQuery}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 w-full py-3 text-sm"
+              >
+                <MapPin className="h-4 w-4" aria-hidden />
+                Open map
+              </AppSecondaryButton>
+            </GlassPanel>
+          </section>
+        ) : null}
+
+        {/* 9. Skills & KYC */}
+        <section aria-label="Skills and verification">
+          <AppSectionHeader title="Skills & verification" className="mb-2 px-0.5" />
+          <GlassPanel className="border-slate-200/90 p-4">
+            <ul className="space-y-2">
+              <li className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                {kycOk ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden />
+                )}
+                {kycOk ? 'Aadhaar verified' : 'Aadhaar verification pending'}
+              </li>
+            </ul>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Array.isArray(categories) && categories.length > 0 ? (
+                categories.map((c) => (
+                  <span
+                    key={typeof c === 'object' && c?._id ? c._id : String(c)}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 shadow-sm"
+                  >
+                    <Wrench className="h-3 w-3 text-brand" aria-hidden />
+                    {typeof c === 'object' && c?.name ? c.name : 'Skill'}
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-slate-500">Add your work types for better job matching.</span>
+              )}
+            </div>
+            <Link
+              to="/app/work-categories"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-brand underline-offset-4 hover:underline"
+            >
+              Update skills
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </GlassPanel>
+        </section>
+
+  
+       
+
+        {/* 11. Support & emergency */}
+        <section aria-label="Support and emergency">
+          <AppSectionHeader title="Support & emergency" className="mb-2 px-0.5" />
+          <div className="grid gap-2 sm:grid-cols-3">
+            <a
+              href={`tel:${LABOUR_SUPPORT_PHONE}`}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-sky-200/80 bg-sky-50 px-3 py-4 text-center transition hover:bg-sky-100/80 active:scale-[0.98]"
+            >
+              <Phone className="h-6 w-6 text-sky-700" aria-hidden />
+              <span className="text-xs font-extrabold text-sky-950">Call support</span>
+            </a>
+            <a
+              href={`tel:${LABOUR_EMERGENCY_PHONE}`}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-rose-300/80 bg-rose-50 px-3 py-4 text-center transition hover:bg-rose-100/80 active:scale-[0.98]"
+            >
+              <AlertTriangle className="h-6 w-6 text-rose-700" aria-hidden />
+              <span className="text-xs font-extrabold text-rose-950">Emergency</span>
+            </a>
+            <a
+              href={whatsAppSupportUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 rounded-2xl border border-emerald-300/80 bg-emerald-50 px-3 py-4 text-center transition hover:bg-emerald-100/80 active:scale-[0.98]"
+            >
+              <MessageCircle className="h-6 w-6 text-emerald-700" aria-hidden />
+              <span className="text-xs font-extrabold text-emerald-950">WhatsApp</span>
+            </a>
+          </div>
+          <AppSecondaryButton as={Link} to="/app/support" className="mt-3 w-full py-3">
+            <Headphones className="h-4 w-4 text-brand" aria-hidden />
+            Open support centre
+          </AppSecondaryButton>
+        </section>
+
+        {/* 12. Safety / training carousel */}
+        <section aria-label="Safety tips">
+          <AppSectionHeader title="Safety & training" className="mb-2 px-0.5" />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={safetyBanner.id}
+              initial={reduce ? false : { opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={reduce ? undefined : { opacity: 0, x: -12 }}
+              transition={{ duration: 0.35 }}
+              className={`overflow-hidden rounded-[1.35rem] bg-linear-to-br ${safetyBanner.tone} p-4 text-white shadow-lg`}
+            >
+              <div className="flex gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                  <SafetyBannerIcon icon={safetyBanner.icon} />
+                </span>
+                <div>
+                  <p className="text-sm font-extrabold">{safetyBanner.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/90">{safetyBanner.subtitle}</p>
+                </div>
+              </div>
+              <motion.div className="mt-3 flex justify-center gap-1.5">
+                {SAFETY_BANNERS.map((b, i) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setSafetyIdx(i)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === safetyIdx ? 'w-5 bg-white' : 'w-1.5 bg-white/40'
+                    }`}
+                    aria-label={`Show tip: ${b.title}`}
+                  />
+                ))}
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+        </section>
+
+        <p className="flex items-center justify-center gap-1.5 pb-2 text-center text-[10px] font-medium text-slate-400">
+          <Sparkles className="h-3 w-3" aria-hidden />
+          Demo jobs & earnings on this device — syncs when backend is live
+        </p>
+      </div>
+
+      <AppUserLocationModal
+        open={workAreaModalOpen}
+        onClose={() => {
+          setWorkAreaModalOpen(false)
+          setPendingCheckIn(false)
+        }}
+        onSaved={handleWorkAreaSaved}
+        title="Work area"
+        subtitle="Required for check-in — enter manually or fetch GPS"
+        saveLabel={pendingCheckIn ? 'Save & check in' : 'Save work area'}
+        requireLocation
+      />
+
+      <LabourCheckOutConfirmModal
+        open={checkOutModalOpen}
+        onClose={() => setCheckOutModalOpen(false)}
+        onConfirm={confirmCheckOut}
+      />
+
+      <LabourAssignmentDetailModal
+        open={assignmentDetailOpen}
+        onClose={() => setAssignmentDetailOpen(false)}
+        job={todayJob}
+        rawJob={todayAssignment.raw}
+        assignmentKind={todayAssignment.kind}
+      />
+    </motion.div>
+  )
+}

@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@import "./themes/app.css";
+@import "./themes/buildmart.css";
+
+/* Light-first theme · brand #1CAF62 · dark only on stats + footer */
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-page: #ffffff;
+  --color-page-accent: #ffffff;
+  --color-surface-950: #0a1210;
+  --color-surface-900: #0f1c17;
+  --color-surface-850: #152820;
+  --color-surface-800: #1c3228;
+  --color-brand: #1caf62;
+  --color-brand-bright: #47e08a;
+  --color-brand-muted: #d1fae5;
+  --shadow-glow: 0 0 80px -20px rgb(28 175 98 / 0.2);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background: var(--color-page);
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(28 175 98 / 0.25);
+  color: #0f172a;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-app-shimmer {
+    animation: none !important;
+  }
+}
+
+@keyframes app-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-app-shimmer {
+  animation: app-shimmer 2.2s ease-in-out infinite;
+}
