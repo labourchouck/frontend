@@ -12,11 +12,11 @@ const STATUS_LABELS = {
   cancelled: 'Cancelled',
 }
 
-export function PipelineTimeline({ status, title = 'Status' }) {
+export function PipelineTimeline({ status, title = 'Status', compact = false }) {
   const steps = ['pending_review', 'confirmed', 'allocating', 'assigned', 'in_progress', 'attendance_tracking', 'billing', 'completed']
   const idx = steps.indexOf(status)
   return (
-    <AppSurface className="border-slate-200/90">
+    <AppSurface className={`border-slate-200/90 ${compact ? 'p-3' : 'p-4'}`}>
       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{title}</p>
       <p className="mt-2 text-sm font-bold text-slate-900">{STATUS_LABELS[status] || status}</p>
       <div className="mt-3 flex gap-1">

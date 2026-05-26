@@ -3,7 +3,7 @@ import { AuthProvider } from './context/AuthProvider.jsx'
 import { ProtectedRoute } from './components/auth/ProtectedRoute.jsx'
 import { AppShell } from './layouts/AppShell.jsx'
 import { CorporateShell } from './layouts/CorporateShell.jsx'
-import { VendorShell } from './layouts/VendorShell.jsx'
+import { VendorAppShell } from './layouts/VendorAppShell.jsx'
 import { AdminLayout } from './layouts/AdminLayout.jsx'
 import { LandingPage } from './pages/LandingPage'
 import { AuthEntryPage } from './pages/auth/AuthEntryPage.jsx'
@@ -69,7 +69,7 @@ function App() {
             path="/vendor"
             element={
               <ProtectedRoute roles={VENDOR_ROLES}>
-                <VendorShell />
+                <VendorAppShell />
               </ProtectedRoute>
             }
           >

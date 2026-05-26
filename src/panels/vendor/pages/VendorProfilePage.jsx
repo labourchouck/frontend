@@ -238,7 +238,7 @@ export function VendorProfilePage() {
     .filter(Boolean)
 
   return (
-    <motion.div className="space-y-4 pb-10">
+    <motion.div className="min-w-0 space-y-4 overflow-x-hidden px-4 pb-10">
       <AnimatePresence>
         {banner ? (
           <motion.p
