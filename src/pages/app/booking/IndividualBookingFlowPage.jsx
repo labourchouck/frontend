@@ -3,13 +3,10 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   AlertCircle,
-  ArrowLeft,
   ArrowRight,
   Calendar,
   Check,
   CheckCircle2,
-  Clock,
-  CreditCard,
   ImagePlus,
   IndianRupee,
   MapPin,
@@ -17,17 +14,17 @@ import {
   MessageCircle,
   Navigation,
   Phone,
-  Sparkles,
   Zap,
 } from 'lucide-react'
-import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
+import { AppStackScreenHeader } from '../../../components/app/AppStackScreenHeader.jsx'
 import { AppButton } from '../../../components/app-ui/buttons/AppButton.jsx'
-import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
 import { AppTextInput } from '../../../components/app-ui/inputs/AppTextInput.jsx'
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
+import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { BookingFindingScreen } from '../../../components/app/booking/BookingFindingScreen.jsx'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { BookingStepProgress } from '../../../components/app/booking/BookingStepProgress.jsx'
+import { BookingServiceHighlight } from '../../../components/app/booking/BookingServiceHighlight.jsx'
 import {
   BOOKING_JOB_TIMELINE,
   PAYMENT_METHODS,
@@ -59,34 +56,20 @@ import {
 
 const TIME_SLOTS = ['9:00 AM – 12:00 PM', '12:00 PM – 3:00 PM', '3:00 PM – 6:00 PM', '6:00 PM – 9:00 PM']
 
-function FlowHeader({ title, subtitle, onBack }) {
+function FieldLabel({ children, optional }) {
   return (
-    <motion.div layout className="-mx-4 px-4 pb-2">
-      <div className="flex items-start gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-800 shadow-sm transition hover:border-brand/35 hover:text-brand"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand">Booking</p>
-          <h1 className="text-xl font-black tracking-tight text-slate-900">{title}</h1>
-          {subtitle ? <p className="mt-1 text-xs text-slate-600">{subtitle}</p> : null}
-        </div>
-      </div>
-    </motion.div>
+    <label className="lc-booking-flow-label">
+      {children}
+      {optional ? <span className="lc-booking-flow-muted font-normal"> (optional)</span> : null}
+    </label>
   )
 }
 
-function FieldLabel({ children, optional }) {
+function BookingPrimaryButton({ children, className = '', ...rest }) {
   return (
-    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
+    <button type="button" className={`lc-booking-btn-primary ${className}`} {...rest}>
       {children}
-      {optional ? <span className="ml-1 font-normal normal-case text-slate-400">(optional)</span> : null}
-    </label>
+    </button>
   )
 }
 
@@ -140,6 +123,48 @@ export function IndividualBookingFlowPage() {
     const stored = readBookingDraft()
     if (stored) queueMicrotask(() => setDraft(stored))
   }, [])
+
+  useEffect(() => {
+    if (!categoryIdParam && !groupIdParam) return
+    const patch = {}
+    if (categoryIdParam) patch.categoryId = categoryIdParam
+    if (groupIdParam) patch.groupId = groupIdParam
+    syncDraft(patch)
+  }, [categoryIdParam, groupIdParam, syncDraft])
+
+  useEffect(() => {
+    const cid = categoryIdParam
+    const gid = groupIdParam
+    if (!cid) return
+
+    const current = readBookingDraft()
+    if (current?.categoryName && (!gid || current?.groupName)) return
+
+    let cancelled = false
+    fetchLabourCategoriesGrouped()
+      .then((res) => {
+        if (cancelled) return
+        const groups = res.data?.groups ?? []
+        for (const g of groups) {
+          if (gid && String(g._id) !== gid) continue
+          const cat = (g.categories || []).find((c) => String(c._id) === String(cid))
+          if (cat) {
+            syncDraft({
+              categoryId: String(cat._id),
+              categoryName: cat.name || '',
+              groupId: String(g._id),
+              groupName: g.name || '',
+            })
+            return
+          }
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [categoryIdParam, groupIdParam, syncDraft])
 
   useEffect(() => {
     if (!refParam || activeBooking) return
@@ -290,7 +315,8 @@ export function IndividualBookingFlowPage() {
   if (step === 'searching' && !noMatch) {
     return (
       <div className="pb-8">
-        <FlowHeader title="Matching labour" subtitle="Hang tight — this usually takes a few seconds" onBack={() => goStep('summary')} />
+        <AppStackScreenHeader title="Matching labour" onBack={() => goStep('summary')} />
+        <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
         <BookingFindingScreen
           categoryLabel={draft.categoryName}
           onComplete={handleFindingComplete}
@@ -303,15 +329,15 @@ export function IndividualBookingFlowPage() {
   if (noMatch) {
     return (
       <div className="space-y-4 pb-8">
-        <FlowHeader title="No one available yet" subtitle="Try widening your search" onBack={() => navigate('/app/discover/labours')} />
+        <AppStackScreenHeader title="No match" onBack={() => navigate('/app/discover/labours')} />
         <GlassPanel className="p-6 text-center">
           <AlertCircle className="mx-auto h-10 w-10 text-amber-500" aria-hidden />
           <p className="mt-3 text-sm font-bold text-slate-900">No labour accepted within 5 minutes</p>
           <p className="mt-2 text-xs text-slate-600">You can retry with smart match or pick workers manually.</p>
           <motion.div layout className="mt-5 flex flex-col gap-2">
-            <AppPrimaryButton type="button" onClick={() => { setNoMatch(false); goStep('searching') }}>
+            <BookingPrimaryButton type="button" onClick={() => { setNoMatch(false); goStep('searching') }}>
               Retry search
-            </AppPrimaryButton>
+            </BookingPrimaryButton>
             <AppButton type="button" variant="secondary" onClick={() => navigate('/app/discover/labours')}>
               Change workers
             </AppButton>
@@ -328,11 +354,11 @@ export function IndividualBookingFlowPage() {
 
     return (
       <div className="space-y-4 pb-8">
-        <FlowHeader
+        <AppStackScreenHeader
           title={step === 'payment' ? 'Payment' : 'Worker on the way'}
-          subtitle={booking?.ref ? `Ref ${booking.ref}` : draft.categoryName}
           onBack={() => (step === 'payment' ? goStep('active') : navigate('/app/bookings', { replace: true }))}
         />
+        <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
 
         {worker ? (
           <GlassPanel className="overflow-hidden border-slate-200/90 p-0">
@@ -374,8 +400,8 @@ export function IndividualBookingFlowPage() {
           </GlassPanel>
         ) : null}
 
-        <AppSurface>
-          <p className="text-[11px] font-bold uppercase text-slate-400">Status</p>
+        <div className="lc-booking-flow-card">
+          <p className="lc-booking-flow-label">Status</p>
           <ol className="mt-3 space-y-2">
             {BOOKING_JOB_TIMELINE.map((t, i) => {
               const done = i <= Math.max(0, timelineIdx)
@@ -388,12 +414,12 @@ export function IndividualBookingFlowPage() {
                   >
                     {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
                   </span>
-                  <span className={`text-sm font-semibold ${done ? 'text-slate-900' : 'text-slate-400'}`}>{t.label}</span>
+                  <span className={`text-sm font-semibold ${done ? 'text-black' : 'text-black/40'}`}>{t.label}</span>
                 </li>
               )
             })}
           </ol>
-        </AppSurface>
+        </div>
 
         {step === 'payment' ? (
           <motion.div layout className="space-y-4">
@@ -407,11 +433,8 @@ export function IndividualBookingFlowPage() {
                   key={opt.id}
                   type="button"
                   onClick={() => syncDraft({ paymentTiming: opt.id })}
-                  className={`rounded-2xl border px-3 py-3 text-sm font-bold transition ${
-                    draft.paymentTiming === opt.id
-                      ? 'border-brand/40 bg-brand/8 ring-2 ring-brand/20'
-                      : 'border-slate-200/90'
-                  }`}
+                  className="lc-booking-slot"
+                  data-active={draft.paymentTiming === opt.id ? 'true' : 'false'}
                 >
                   {opt.label}
                 </button>
@@ -424,37 +447,33 @@ export function IndividualBookingFlowPage() {
                   key={m.id}
                   type="button"
                   onClick={() => syncDraft({ paymentMethod: m.id })}
-                  className={`rounded-2xl border px-3 py-3 text-sm font-bold transition ${
-                    draft.paymentMethod === m.id
-                      ? 'border-brand/40 bg-brand/8 ring-2 ring-brand/20'
-                      : 'border-slate-200/90'
-                  }`}
+                  className="lc-booking-slot"
+                  data-active={draft.paymentMethod === m.id ? 'true' : 'false'}
                 >
                   {m.label}
                 </button>
               ))}
             </motion.div>
-            <GlassPanel className="p-4 text-sm">
-              <div className="flex justify-between">
+            <div className="lc-booking-flow-card text-sm lc-booking-flow-body">
+              <div className="flex justify-between font-semibold">
                 <span>Subtotal</span>
-                <span className="font-semibold">{formatInr(estimate.estimatedSubtotal)}</span>
+                <span>{formatInr(estimate.estimatedSubtotal)}</span>
               </div>
-              <motion.div layout className="mt-1 flex justify-between text-slate-500">
+              <div className="mt-1 flex justify-between lc-booking-flow-muted">
                 <span>Platform fee</span>
                 <span>{formatInr(estimate.platformFee)}</span>
-              </motion.div>
-              <div className="mt-1 flex justify-between text-slate-500">
+              </div>
+              <div className="mt-1 flex justify-between lc-booking-flow-muted">
                 <span>Taxes (GST)</span>
                 <span>{formatInr(estimate.gst)}</span>
               </div>
-              <div className="mt-2 flex justify-between border-t border-slate-100 pt-2 font-black text-brand">
+              <div className="mt-2 flex justify-between border-t border-slate-200 pt-2 text-base font-extrabold text-black">
                 <span>Total</span>
                 <span>{formatInr(estimate.grandTotal)}</span>
               </div>
-            </GlassPanel>
-            <AppPrimaryButton
+            </div>
+            <BookingPrimaryButton
               type="button"
-              className="w-full py-3.5"
               onClick={() => {
                 clearBookingDraft()
                 navigate(`/app/bookings?ref=${encodeURIComponent(booking?.ref || '')}`)
@@ -462,31 +481,27 @@ export function IndividualBookingFlowPage() {
             >
               <CheckCircle2 className="h-4 w-4" aria-hidden />
               Confirm payment
-            </AppPrimaryButton>
+            </BookingPrimaryButton>
           </motion.div>
         ) : (
           <div className="sticky bottom-2 z-10 pt-2">
-            <AppPrimaryButton type="button" className="w-full py-3.5 shadow-xl" onClick={() => goStep('payment')}>
+            <BookingPrimaryButton type="button" onClick={() => goStep('payment')}>
               <IndianRupee className="h-4 w-4" aria-hidden />
               Proceed to payment
-            </AppPrimaryButton>
+            </BookingPrimaryButton>
           </div>
         )}
       </div>
     )
   }
 
+  const flowTitle =
+    step === 'type' ? 'Booking type' : step === 'details' ? 'Job details' : 'Review & confirm'
+
   return (
-    <div className="space-y-4 pb-8">
-      <FlowHeader
-        title={
-          step === 'type'
-            ? 'Booking type'
-            : step === 'details'
-              ? 'Job details'
-              : 'Review & confirm'
-        }
-        subtitle={draft.categoryName || 'Your booking'}
+    <div className="-mx-4 space-y-4 bg-white pb-8">
+      <AppStackScreenHeader
+        title={flowTitle}
         onBack={() => {
           if (step === 'type') leaveFlow()
           else if (step === 'details') goStep('type')
@@ -494,11 +509,14 @@ export function IndividualBookingFlowPage() {
         }}
       />
 
-      {step !== 'searching' ? (
-        <AppSurface className="border-slate-200/90">
-          <BookingStepProgress step={wizardIndex} total={3} />
-        </AppSurface>
-      ) : null}
+      <div className="space-y-4 px-4">
+        <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
+
+        {step !== 'searching' ? (
+          <div className="lc-booking-flow-card py-3">
+            <BookingStepProgress step={wizardIndex} total={3} />
+          </div>
+        ) : null}
 
       {step === 'type' ? (
         <motion.div layout initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
@@ -515,22 +533,17 @@ export function IndividualBookingFlowPage() {
               )}
             </span>
             <span className="flex-1">
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-bold text-black">
                 {draft.bookingType === 'scheduled' ? 'Schedule booking' : draft.bookingType === 'instant' ? 'Instant booking' : 'Choose booking type'}
               </p>
-              <p className="text-xs text-slate-500">Tap to change</p>
+              <p className="text-xs text-black/55">Tap to change</p>
             </span>
             <ArrowRight className="h-5 w-5 text-slate-300" aria-hidden />
           </button>
-          <AppPrimaryButton
-            type="button"
-            className="w-full py-3.5"
-            disabled={!draft.bookingType}
-            onClick={() => goStep('details')}
-          >
+          <BookingPrimaryButton type="button" disabled={!draft.bookingType} onClick={() => goStep('details')}>
             Continue
             <ArrowRight className="h-4 w-4" aria-hidden />
-          </AppPrimaryButton>
+          </BookingPrimaryButton>
         </motion.div>
       ) : null}
 
@@ -555,7 +568,8 @@ export function IndividualBookingFlowPage() {
               value={draft.address || ''}
               onChange={(e) => syncDraft({ address: e.target.value })}
               placeholder="House, street, area, city"
-              leftSlot={<MapPin className="h-4 w-4" aria-hidden />}
+              inputClassName="text-black font-semibold placeholder:text-black/40"
+              leftSlot={<MapPin className="h-4 w-4 text-black/50" aria-hidden />}
             />
             <div className="mt-2 grid grid-cols-2 gap-2">
               <button
@@ -569,7 +583,7 @@ export function IndividualBookingFlowPage() {
               <button
                 type="button"
                 onClick={applySavedAddress}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/90 py-2.5 text-[11px] font-bold text-slate-700"
+                className="lc-booking-btn-secondary py-2.5 text-[11px]"
               >
                 Saved address
               </button>
@@ -583,13 +597,13 @@ export function IndividualBookingFlowPage() {
               onChange={(e) => syncDraft({ notes: e.target.value })}
               rows={2}
               placeholder="Describe the work briefly…"
-              className="w-full resize-none rounded-2xl border border-slate-200/90 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-brand/25"
+              className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-black outline-none focus:border-brand focus:ring-0 placeholder:text-black/40"
             />
           </motion.div>
 
           <motion.div layout>
             <FieldLabel optional>Photos</FieldLabel>
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-4 text-xs font-bold text-slate-600">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-4 text-xs font-bold text-black">
               <ImagePlus className="h-4 w-4 text-brand" aria-hidden />
               Upload images
               <input
@@ -622,11 +636,8 @@ export function IndividualBookingFlowPage() {
                       durationDays: durationKindToDays(d.id, draft.durationDays),
                     })
                   }
-                  className={`rounded-full px-3 py-2 text-xs font-bold transition ${
-                    draft.durationKind === d.id
-                      ? 'bg-brand text-white shadow-md'
-                      : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200/80'
-                  }`}
+                  className="lc-booking-chip"
+                  data-active={draft.durationKind === d.id ? 'true' : 'false'}
                 >
                   {d.label}
                 </button>
@@ -639,19 +650,19 @@ export function IndividualBookingFlowPage() {
                 max={30}
                 value={draft.durationDays || 2}
                 onChange={(e) => syncDraft({ durationDays: Number(e.target.value) || 2 })}
-                className="mt-2 w-full rounded-2xl border border-slate-200/90 px-4 py-2.5 text-sm font-bold"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-black"
               />
             ) : null}
           </motion.div>
 
           {draft.bookingType === 'instant' ? (
-            <GlassPanel className="flex items-center gap-2 border-brand/20 bg-brand/5 p-3">
+            <div className="lc-booking-highlight flex items-center gap-2">
               <Zap className="h-5 w-5 text-brand" aria-hidden />
               <div>
-                <p className="text-sm font-bold text-slate-900">ASAP</p>
-                <p className="text-xs text-slate-600">We&apos;ll match the earliest available slot</p>
+                <p className="text-sm font-bold text-black">ASAP</p>
+                <p className="text-xs font-medium text-black/70">Earliest available slot</p>
               </div>
-            </GlassPanel>
+            </div>
           ) : (
             <div className="space-y-3">
               <motion.div layout>
@@ -661,7 +672,7 @@ export function IndividualBookingFlowPage() {
                   min={todayISODate()}
                   value={draft.serviceDate || ''}
                   onChange={(e) => syncDraft({ serviceDate: e.target.value })}
-                  className="w-full rounded-2xl border border-slate-200/90 px-4 py-3 text-sm font-semibold"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black"
                 />
               </motion.div>
               <div>
@@ -672,11 +683,8 @@ export function IndividualBookingFlowPage() {
                       key={slot}
                       type="button"
                       onClick={() => syncDraft({ timeSlot: slot })}
-                      className={`rounded-xl border px-2 py-2.5 text-[11px] font-bold ${
-                        draft.timeSlot === slot
-                          ? 'border-brand/40 bg-brand/8 ring-2 ring-brand/20'
-                          : 'border-slate-200/90'
-                      }`}
+                      className="lc-booking-slot"
+                      data-active={draft.timeSlot === slot ? 'true' : 'false'}
                     >
                       {slot}
                     </button>
@@ -693,94 +701,94 @@ export function IndividualBookingFlowPage() {
             </p>
           ) : null}
 
-          <AppPrimaryButton type="button" className="w-full py-3.5" onClick={() => (validateDetails() ? goStep('summary') : null)}>
+          <BookingPrimaryButton type="button" onClick={() => (validateDetails() ? goStep('summary') : null)}>
             Review booking
             <ArrowRight className="h-4 w-4" aria-hidden />
-          </AppPrimaryButton>
+          </BookingPrimaryButton>
         </motion.div>
       ) : null}
 
       {step === 'summary' ? (
         <motion.div layout className="space-y-4">
-          <GlassPanel className="space-y-3 p-4 text-sm">
+          <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
             <div className="flex justify-between gap-2">
-              <span className="text-slate-500">Service</span>
-              <span className="text-right font-bold text-slate-900">
-                {draft.groupName}
-                <br />
-                {draft.categoryName}
+              <span className="lc-booking-flow-muted">Service</span>
+              <span className="text-right font-bold text-black">
+                <span className="lc-booking-highlight-title block text-base">{draft.categoryName}</span>
+                {draft.groupName ? <span className="text-xs font-semibold">{draft.groupName}</span> : null}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Booking</span>
-              <span className="font-bold capitalize">{draft.bookingType}</span>
+              <span className="lc-booking-flow-muted">Booking</span>
+              <span className="font-bold capitalize text-black">{draft.bookingType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">When</span>
-              <span className="font-bold text-slate-900">
+              <span className="lc-booking-flow-muted">When</span>
+              <span className="font-bold text-black">
                 {draft.bookingType === 'instant'
                   ? 'ASAP'
                   : `${draft.serviceDate} · ${draft.timeSlot}`}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Duration</span>
-              <span className="font-bold">{durationKindLabel(draft.durationKind)}</span>
+              <span className="lc-booking-flow-muted">Duration</span>
+              <span className="font-bold text-black">{durationKindLabel(draft.durationKind)}</span>
             </div>
             <div className="flex justify-between gap-2">
-              <span className="shrink-0 text-slate-500">Workers</span>
-              <span className="text-right font-bold">
+              <span className="shrink-0 lc-booking-flow-muted">Workers</span>
+              <span className="text-right font-bold text-black">
                 {draft.matchMode === 'smart'
                   ? 'Smart match'
                   : (draft.selectedWorkers || []).map((w) => w.displayName).join(', ') || '—'}
               </span>
             </div>
-            <p className="flex items-start gap-2 text-slate-800">
+            <p className="flex items-start gap-2 font-medium text-black">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
               {draft.address}
             </p>
-            <div className="border-t border-slate-100 pt-3">
-              <motion.div layout className="flex justify-between text-slate-600">
+            <div className="border-t border-slate-200 pt-3">
+              <div className="flex justify-between font-semibold text-black">
                 <span>Estimated labour</span>
                 <span>{formatInr(estimate.estimatedSubtotal)}</span>
-              </motion.div>
-              <div className="flex justify-between text-slate-500">
+              </div>
+              <div className="mt-1 flex justify-between lc-booking-flow-muted">
                 <span>Platform fee</span>
                 <span>{formatInr(estimate.platformFee)}</span>
               </div>
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between lc-booking-flow-muted">
                 <span>Taxes</span>
                 <span>{formatInr(estimate.gst)}</span>
               </div>
-              <div className="mt-2 flex justify-between text-base font-black text-brand">
+              <div className="mt-2 flex justify-between text-base font-extrabold text-black">
                 <span>Total</span>
                 <span>{formatInr(estimate.grandTotal)}</span>
               </div>
             </div>
-          </GlassPanel>
+          </div>
 
           <div className="flex gap-2">
-            <AppButton type="button" variant="secondary" className="flex-1" onClick={() => goStep('details')}>
+            <button type="button" className="lc-booking-btn-secondary flex-1" onClick={() => goStep('details')}>
               Edit details
-            </AppButton>
-            <AppPrimaryButton type="button" className="flex-1 py-3.5" onClick={confirmBooking}>
+            </button>
+            <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking}>
               Confirm booking
               <CheckCircle2 className="h-4 w-4" aria-hidden />
-            </AppPrimaryButton>
+            </BookingPrimaryButton>
           </div>
         </motion.div>
       ) : null}
 
-      <BookingTypeSheet
-        open={typeSheetOpen}
-        onClose={() => setTypeSheetOpen(false)}
-        value={draft.bookingType}
-        categoryLabel={draft.categoryName}
-        onSelect={(id) => {
-          syncDraft({ bookingType: id })
-          setTypeSheetOpen(false)
-        }}
-      />
+        <BookingTypeSheet
+          open={typeSheetOpen}
+          onClose={() => setTypeSheetOpen(false)}
+          value={draft.bookingType}
+          categoryLabel={draft.categoryName}
+          onSelect={(id) => {
+            syncDraft({ bookingType: id })
+            setTypeSheetOpen(false)
+          }}
+        />
+      </div>
     </div>
   )
 }

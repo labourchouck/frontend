@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, CalendarClock, Menu, Plus, Sparkles } from 'lucide-react'
-import { AppButton } from '../../../components/app-ui/buttons/AppButton.jsx'
-import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
-import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import { AppStackScreenHeader } from '../../../components/app/AppStackScreenHeader.jsx'
 import { IndividualBookingDetail } from '../../../components/app/booking/IndividualBookingDetail.jsx'
 import { IndividualBookingHistoryList } from '../../../components/app/booking/IndividualBookingHistoryList.jsx'
 import {
@@ -15,59 +12,13 @@ import {
   saveIndividualBookings,
 } from '../../../lib/individualBookings.js'
 import { writeBookingDraft } from '../../../lib/individualBookingDraft.js'
-import { mapRequestStatusToIndividualBooking } from '../../../lib/workforceLabels.js'
-import { useGetMyRequestsQuery } from '../../../store/api/workforceApi.js'
 import { buildBookingFlowPath } from '../../../lib/bookingFlowNavigation.js'
 
-function openAppDrawer() {
-  window.dispatchEvent(new Event('lc-open-app-drawer'))
-}
-
-function BookingsScreenHeader({ title, subtitle, onBack }) {
-  return (
-    <motion.div layout className="-mx-4 px-4 pb-1">
-      <div className="flex items-start gap-2 sm:gap-3">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-800 shadow-sm transition hover:border-brand/35 hover:text-brand"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden />
-          </button>
-        ) : (
-          <Link
-            to="/app"
-            className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-800 shadow-sm transition hover:border-brand/35 hover:text-brand"
-            aria-label="Back to home"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden />
-          </Link>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand">Bookings</p>
-          <h1 className="mt-0.5 text-xl font-black tracking-tight text-slate-900">{title}</h1>
-          {subtitle ? (
-            <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">{subtitle}</p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={openAppDrawer}
-          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-brand/35 hover:text-brand"
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" aria-hidden />
-        </button>
-      </div>
-    </motion.div>
-  )
-}
+const BTN_PRIMARY =
+  'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white transition active:opacity-90 disabled:opacity-50'
 
 /** History + track detail — new bookings start from Home search or category tiles. */
 export function IndividualHomeownerBookings() {
-  const reduce = useReducedMotion()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [history, setHistory] = useState(() => loadIndividualBookings())
@@ -182,18 +133,14 @@ export function IndividualHomeownerBookings() {
   if (detailRef) {
     return (
       <div className="space-y-4">
-        <BookingsScreenHeader
-          title="Track booking"
-          subtitle={detailBooking?.ref ? `Ref ${detailBooking.ref}` : 'Booking details'}
-          onBack={clearDetailRef}
-        />
+        <AppStackScreenHeader title="Booking details" onBack={clearDetailRef} />
         {!detailBooking ? (
-          <AppSurface className="border-slate-200/90">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <p className="text-sm font-semibold text-slate-800">Booking not found</p>
-            <AppButton type="button" variant="primary" className="mt-4" onClick={clearDetailRef}>
-              Back to history
-            </AppButton>
-          </AppSurface>
+            <button type="button" className={`${BTN_PRIMARY} mt-4`} onClick={clearDetailRef}>
+              Back to list
+            </button>
+          </div>
         ) : (
           <IndividualBookingDetail
             booking={detailBooking}
@@ -208,57 +155,23 @@ export function IndividualHomeownerBookings() {
 
   return (
     <div className="space-y-4 pb-4">
-      <BookingsScreenHeader
-        title="My bookings"
-        subtitle="Track requests or book again from home."
+      <AppStackScreenHeader title="My bookings" backTo="/app" />
+
+      <button type="button" className={BTN_PRIMARY} onClick={() => navigate('/app/search')}>
+        <Plus className="h-4 w-4" aria-hidden />
+        New booking
+      </button>
+
+      {isDemoHistory ? (
+        <p className="text-center text-xs text-slate-500">Sample list — real bookings appear after you confirm one.</p>
+      ) : null}
+
+      <IndividualBookingHistoryList
+        items={displayHistory}
+        isDemo={isDemoHistory}
+        onTrack={handleTrack}
+        onRebook={handleRebook}
       />
-
-      <AppSurface className="border-brand/20 bg-linear-to-br from-brand/8 via-white to-emerald-50/40">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-md">
-            <Sparkles className="h-5 w-5" aria-hidden />
-          </span>
-          <motion.div layout className="min-w-0 flex-1">
-            <p className="text-sm font-extrabold text-slate-900">Book labour</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-600">
-              Search a skill on home, pick workers, then confirm — instant or scheduled.
-            </p>
-            <AppPrimaryButton
-              type="button"
-              className="mt-3 w-full py-3 text-sm sm:w-auto"
-              onClick={() => navigate('/app')}
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              New booking
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </AppPrimaryButton>
-          </motion.div>
-        </div>
-      </AppSurface>
-
-      <motion.div
-        initial={reduce ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-3"
-      >
-        <div className="flex items-center gap-2 px-0.5">
-          <CalendarClock className="h-4 w-4 text-slate-400" aria-hidden />
-          <h2 className="text-sm font-extrabold text-slate-900">History</h2>
-        </div>
-
-        {isDemoHistory ? (
-          <p className="rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2 text-center text-[11px] text-slate-600">
-            Sample bookings below — your real requests appear after you confirm a booking.
-          </p>
-        ) : null}
-
-        <IndividualBookingHistoryList
-          items={displayHistory}
-          isDemo={isDemoHistory}
-          onTrack={handleTrack}
-          onRebook={handleRebook}
-        />
-      </motion.div>
     </div>
   )
 }

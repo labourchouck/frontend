@@ -10,6 +10,7 @@ import {
   IndianRupee,
   LifeBuoy,
   Package,
+  Search,
   ShieldCheck,
   UserRound,
   Wrench,
@@ -22,12 +23,14 @@ const byRole = {
     headerTagline: 'Hire labour for your home or small site',
     bottomNav: [
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
-      { id: 'book', to: '/app/bookings', label: 'History', icon: CalendarClock },
-      { id: 'buildmart', to: '/app/buildmart', label: 'Materials', icon: Package, premium: true },
+      { id: 'book', to: '/app/bookings', label: 'Bookings', icon: CalendarClock },
+      { id: 'search', to: '/app/search', label: 'Search', icon: Search, center: true },
+      { id: 'buildmart', to: '/app/buildmart', label: 'Mart', icon: Package, premium: true },
       { id: 'profile', to: '/app/profile', label: 'Profile', icon: UserRound },
     ],
     drawerNav: [
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
+      { id: 'search', to: '/app/search', label: 'Search skills', icon: Search },
       { id: 'buildmart', to: '/app/buildmart', label: 'BuildMart materials', icon: Package },
       { id: 'book', to: '/app/bookings', label: 'My bookings', icon: ClipboardList },
       { id: 'support', to: '/app/support', label: 'Support & issues', icon: LifeBuoy },
@@ -74,6 +77,7 @@ export function getAppShellTitle(pathname) {
   if (pathname.startsWith('/app/support')) return 'Support'
   if (pathname.startsWith('/app/profile')) return 'Profile'
   if (pathname.startsWith('/app/bookings')) return 'My bookings'
+  if (pathname.startsWith('/app/search')) return 'Search'
   return 'Home'
 }
 

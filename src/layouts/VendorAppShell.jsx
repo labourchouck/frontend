@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { LogOut, Menu, Sparkles, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.js'
 import { ROLE_LABELS } from '../constants/userRoles.js'
+import { BOOT_ROUTES } from '../constants/bootFlow.js'
 import { vendorNavigation, getVendorTitle } from '../config/vendorNavigation.js'
 import { AppAmbientBackground } from '../components/app/AppAmbientBackground.jsx'
 import { AppPageTransition } from '../components/app/AppPageTransition.jsx'
@@ -165,7 +166,7 @@ export function VendorAppShell() {
                   type="button"
                   onClick={() => {
                     logout()
-                    navigate('/auth', { replace: true })
+                    navigate(BOOT_ROUTES.SPLASH, { replace: true })
                   }}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800"
                 >

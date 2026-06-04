@@ -9,6 +9,7 @@ import { appSpring } from '../components/app/appMotion.js'
 import { GlassPanel } from '../components/ui/GlassPanel.jsx'
 import { AppBottomNav } from '../components/app-ui/navigation/AppBottomNav.jsx'
 import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
+import { BOOT_ROUTES } from '../constants/bootFlow.js'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
 
 export function PanelShell({
@@ -132,7 +133,7 @@ export function PanelShell({
                   type="button"
                   onClick={() => {
                     logout()
-                    navigate('/auth', { replace: true })
+                    navigate(BOOT_ROUTES.SPLASH, { replace: true })
                   }}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800"
                 >

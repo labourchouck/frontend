@@ -25,7 +25,7 @@ export function BookingStepProgress({ step, total = 5 }) {
             />
             <span
               className={`truncate text-[9px] font-bold uppercase tracking-wide ${
-                active ? 'text-brand' : done ? 'text-slate-600' : 'text-slate-400'
+                active ? 'text-black' : done ? 'text-black/70' : 'text-black/35'
               }`}
             >
               {LABELS[i]}

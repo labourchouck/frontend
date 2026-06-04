@@ -11,3 +11,7 @@ export function createAdminLabourCategory(payload) {
 export function patchAdminLabourCategory(id, payload) {
   return apiRequest(`/admin/labour-categories/${id}`, { method: 'PATCH', body: payload })
 }
+
+export function patchAdminLabourCategoryGroup(id, payload) {
+  return apiRequest(`/admin/labour-category-groups/${id}`, { method: 'PATCH', body: payload })
+}

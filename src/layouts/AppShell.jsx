@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown, LogOut, MapPin, Menu, Sparkles, X } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, MapPin, Menu, Sparkles, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.js'
 import {
   getAppNavigation,
@@ -19,6 +19,7 @@ import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
 import { readAppUserLocation } from '../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../components/app/AppUserLocationModal.jsx'
+import { BOOT_ROUTES } from '../constants/bootFlow.js'
 import { APP_HOME_LOCATION, APP_HOME_PATH, hasBookingFlowQuery } from '../lib/bookingFlowNavigation.js'
 
 export function AppShell() {
@@ -26,7 +27,6 @@ export function AppShell() {
   const navigate = useNavigate()
   const { logout, user } = useAuth()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [individualHeaderSolid, setIndividualHeaderSolid] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
   const headerRef = useRef(null)
@@ -44,6 +44,7 @@ export function AppShell() {
   const hideShellHeader =
     pathname.startsWith('/app/booking/flow') ||
     pathname === '/app/bookings' ||
+    pathname === '/app/search' ||
     pathname === '/app/support' ||
     pathname === '/app/profile' ||
     isLabourAppHome ||
@@ -113,13 +114,6 @@ export function AppShell() {
       const h = Math.ceil(header.getBoundingClientRect().height)
       document.documentElement.style.setProperty('--individual-home-sticky-top', `${h}px`)
     }
-    const sentinel = document.getElementById('individual-home-scroll-sentinel')
-    const threshold = header ? header.getBoundingClientRect().bottom : 88
-    if (!sentinel) {
-      setIndividualHeaderSolid(false)
-      return
-    }
-    setIndividualHeaderSolid(sentinel.getBoundingClientRect().top <= threshold + 2)
   }, [isIndividualAppHome])
 
   useLayoutEffect(() => {
@@ -196,8 +190,6 @@ export function AppShell() {
     }
     return null
   }, [user])
-
-  const solidIndividualHeader = isIndividualAppHome && individualHeaderSolid
 
   const { individualLocationTitle, individualLocationSubtitle } = useMemo(() => {
     if (!isIndividualAppHome) {
@@ -328,7 +320,7 @@ export function AppShell() {
                   type="button"
                   onClick={() => {
                     logout()
-                    navigate('/auth', { replace: true })
+                    navigate(BOOT_ROUTES.SPLASH, { replace: true })
                   }}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800 shadow-sm transition hover:bg-rose-50/90"
                 >
@@ -342,37 +334,26 @@ export function AppShell() {
       </AnimatePresence>
 
       <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-lg flex-col">
-        {isIndividualAppHome || isLabourAppHome || isLabourNotifications ? (
+        {!isIndividualAppHome && (isLabourAppHome || isLabourNotifications) ? (
           <div
             className="pointer-events-none absolute left-1/2 top-0 z-0 h-[min(52vh,26rem)] w-full max-w-lg -translate-x-1/2 rounded-b-[2rem] bg-brand"
             aria-hidden
           />
         ) : null}
-        {isIndividualAppHome || isLabourAppHome || isLabourNotifications ? (
-          <div
-            className="pointer-events-none absolute left-1/2 top-0 z-0 h-[min(52vh,26rem)] w-full max-w-lg -translate-x-1/2 rounded-b-[2rem] bg-[radial-gradient(75%_55%_at_50%_0%,rgba(255,255,255,0.14),transparent_62%)] opacity-95"
-            aria-hidden
-          />
-        ) : null}
 
         {!hideShellHeader ? (
-          <header ref={headerRef} className="sticky top-0 z-30 px-3 pt-3">
+          <header
+            ref={headerRef}
+            className={`sticky top-0 z-30 ${
+              isIndividualAppHome ? 'bg-brand px-4 pb-1 pt-3' : 'px-3 pt-3'
+            }`}
+          >
           {isIndividualAppHome ? (
-            <div
-              className={`flex items-center gap-2 rounded-2xl px-2 py-2 transition-colors duration-200 ${
-                solidIndividualHeader
-                  ? 'border border-slate-200/90 bg-white shadow-sm'
-                  : 'border border-white/25 bg-white/12 backdrop-blur-md'
-              }`}
-            >
+            <div className="flex items-center gap-2 text-white">
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm transition active:scale-95 ${
-                  solidIndividualHeader
-                    ? 'border-slate-200/90 bg-white text-slate-800 hover:bg-slate-50'
-                    : 'border-white/35 bg-white/15 text-white hover:bg-white/25'
-                }`}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition active:scale-95 hover:bg-white/25"
                 aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" />
@@ -380,53 +361,37 @@ export function AppShell() {
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(true)}
-                className={`flex min-w-0 flex-1 items-start gap-2 rounded-xl py-0.5 text-left outline-none ring-0 transition focus-visible:ring-2 ${
-                  solidIndividualHeader
-                    ? 'text-slate-900 hover:bg-slate-100 focus-visible:ring-brand/35'
-                    : 'text-white ring-white/0 hover:bg-white/10 focus-visible:ring-white/70'
-                }`}
+                className="flex min-w-0 flex-1 items-start gap-2 rounded-xl py-0.5 text-left outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
                 aria-haspopup="dialog"
                 aria-expanded={locationModalOpen}
                 aria-label="Open location settings"
               >
-                <MapPin
-                  className={`mt-0.5 h-5 w-5 shrink-0 ${solidIndividualHeader ? 'text-brand' : 'text-white opacity-95'}`}
-                  aria-hidden
-                />
+                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden />
                 <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold text-white/80">Your location</p>
                   <div className="flex items-center gap-0.5">
-                    <span
-                      className={`truncate text-sm font-black tracking-tight sm:text-[0.95rem] ${
-                        solidIndividualHeader ? 'text-slate-900' : 'text-white drop-shadow-sm'
-                      }`}
-                    >
+                    <span className="truncate text-sm font-extrabold tracking-tight sm:text-[0.95rem]">
                       {individualLocationTitle}
                     </span>
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 shrink-0 ${solidIndividualHeader ? 'text-slate-500' : 'text-white opacity-85'}`}
-                      aria-hidden
-                    />
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/80" aria-hidden />
                   </div>
-                  <p
-                    className={`truncate text-[11px] font-medium leading-snug ${
-                      solidIndividualHeader ? 'text-slate-500' : 'text-white/78'
-                    }`}
-                  >
-                    {individualLocationSubtitle}
-                  </p>
+                  <p className="sr-only">{individualLocationSubtitle}</p>
                 </div>
               </button>
               <Link
+                to="/app/support"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm transition hover:bg-white/95"
+                aria-label="Support and notifications"
+              >
+                <Bell className="h-5 w-5" aria-hidden />
+              </Link>
+              <Link
                 to="/app/profile"
-                className={`flex shrink-0 items-center rounded-full p-0.5 transition ${
-                  solidIndividualHeader
-                    ? 'ring-2 ring-slate-200 hover:ring-brand/35'
-                    : 'ring-2 ring-white/35 hover:ring-white/70'
-                }`}
+                className="flex shrink-0 items-center rounded-full ring-2 ring-white/50 transition hover:ring-white"
                 aria-label="Open profile"
               >
                 {profileImageUrl ? (
-                  <span className="relative block h-10 w-10 overflow-hidden rounded-full bg-white/20 shadow-md">
+                  <span className="relative block h-10 w-10 overflow-hidden rounded-full bg-white/20">
                     <img
                       src={profileImageUrl}
                       alt=""
@@ -435,13 +400,7 @@ export function AppShell() {
                     />
                   </span>
                 ) : (
-                  <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-[11px] font-black shadow-inner ${
-                      solidIndividualHeader
-                        ? 'bg-slate-100 text-slate-800 ring-1 ring-slate-200/90'
-                        : 'text-white'
-                    }`}
-                  >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[11px] font-black text-brand">
                     {drawerInitials}
                   </span>
                 )}
@@ -481,7 +440,7 @@ export function AppShell() {
             hideShellHeader
               ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]'
               : isIndividualAppHome
-                ? 'pt-2'
+                ? 'pt-0'
                 : 'pt-4'
           }`}
         >

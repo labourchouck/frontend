@@ -12,6 +12,7 @@ import { LabourNotificationsPage } from '../pages/app/labour/LabourNotifications
 import { IndividualBookingFlowPage } from '../pages/app/booking/IndividualBookingFlowPage.jsx'
 import { BuildMartHomePage } from '../pages/app/buildmart/BuildMartHomePage.jsx'
 import { BuildMartProductPage } from '../pages/app/buildmart/BuildMartProductPage.jsx'
+import { AppIndividualSearchPage } from '../pages/app/AppIndividualSearchPage.jsx'
 import { USER_ROLES } from '../constants/userRoles.js'
 
 const BUILDMART_ROLES = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
@@ -33,6 +34,14 @@ export const appShellChildRoutes = (
       element={
         <RoleRoute allow={[USER_ROLES.INDIVIDUAL]}>
           <AppBookingsPage />
+        </RoleRoute>
+      }
+    />
+    <Route
+      path="search"
+      element={
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]}>
+          <AppIndividualSearchPage />
         </RoleRoute>
       }
     />

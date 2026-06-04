@@ -8,7 +8,8 @@ import { AdminLayout } from './layouts/AdminLayout.jsx'
 import { LandingPage } from './pages/LandingPage'
 import { AuthEntryPage } from './pages/auth/AuthEntryPage.jsx'
 import { LabourCategoriesPage } from './pages/app/LabourCategoriesPage.jsx'
-import { appShellChildRoutes } from './routes/appRoutes.jsx'
+import { appShellChildRoutes } from './routes/appRoutes.jsx' 
+import { bootRoutes } from './routes/bootRoutes.jsx'
 import { corporateChildRoutes } from './routes/corporateRoutes.jsx'
 import { vendorChildRoutes } from './routes/vendorRoutes.jsx'
 import { AdminLabourCategoriesPage } from './pages/admin/AdminLabourCategoriesPage.jsx'
@@ -33,6 +34,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          {bootRoutes}
           <Route path="/auth" element={<AuthEntryPage />} />
 
           <Route

@@ -47,3 +47,18 @@ export function getCategoryImageUrl(category) {
   const key = String(category?.slug || category?.name || 'x')
   return FALLBACK_IMAGES[hashSeed(key) % FALLBACK_IMAGES.length]
 }
+
+/** Cover image for a trade group tile — group imageUrl, else first subcategory, else fallback. */
+export function getGroupImageUrl(group) {
+  const groupUrl = String(group?.imageUrl || '').trim()
+  if (groupUrl.startsWith('data:image/') || groupUrl.startsWith('https://') || groupUrl.startsWith('http://')) {
+    return groupUrl
+  }
+  const cats = group?.categories || []
+  const withImage = cats.find((c) => String(c?.imageUrl || '').trim())
+  const pick = withImage || cats[0]
+  if (pick) {
+    return getCategoryImageUrl(pick)
+  }
+  return getCategoryImageUrl({ slug: group?.slug, name: group?.name })
+}

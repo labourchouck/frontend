@@ -25,6 +25,7 @@ import {
   Sparkles,
   Wrench,
 } from 'lucide-react'
+import { BOOT_ROUTES } from '../../constants/bootFlow.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import {
   CORPORATE_STATUS,
@@ -241,7 +242,7 @@ export function AppProfilePage() {
 
   const handleSignOut = () => {
     logout()
-    navigate('/auth', { replace: true })
+    navigate(BOOT_ROUTES.SPLASH, { replace: true })
   }
 
   const quickLinks = []

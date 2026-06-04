@@ -12,28 +12,59 @@ import {
 import {
   fetchAdminLabourCategoryTree,
   createAdminLabourCategory,
-  patchAdminLabourCategory,
+  patchAdminLabourCategoryGroup,
 } from '../../api/adminLabourCategoriesApi.js'
 import { ApiError } from '../../api/http.js'
+import { assetUrlFromUpload, uploadMedia } from '../../api/uploadApi.js'
+import { UPLOAD_FOLDERS } from '../../constants/uploadFolders.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
+import { AdminCategoryImageEditor } from '../../components/admin/AdminCategoryImageEditor.jsx'
 import { AdminSubcategoryImageEditor } from '../../components/admin/AdminSubcategoryImageEditor.jsx'
-import { getCategoryImageUrl } from '../../lib/labourCategoryDisplay.js'
+import { getCategoryImageUrl, getGroupImageUrl } from '../../lib/labourCategoryDisplay.js'
 
 function AddCategoryModal({ groupLabel, onClose, onSubmit, busy, error, reduceMotion }) {
   const inputRef = useRef(null)
+  const fileRef = useRef(null)
 
   const [name, setName] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [uploadBusy, setUploadBusy] = useState(false)
+  const [uploadErr, setUploadErr] = useState('')
 
   useEffect(() => {
     setName('')
+    setImageUrl('')
+    setUploadErr('')
     const t = window.setTimeout(() => inputRef.current?.focus(), 50)
     return () => window.clearTimeout(t)
   }, [])
 
+  async function onPickFile(file) {
+    if (!file?.type?.startsWith('image/')) {
+      setUploadErr('Choose a JPG, PNG, or WebP image.')
+      return
+    }
+    setUploadErr('')
+    setUploadBusy(true)
+    try {
+      const uploaded = await uploadMedia(file, UPLOAD_FOLDERS.LABOUR_CATEGORIES)
+      const url = assetUrlFromUpload(uploaded)
+      if (!url) {
+        setUploadErr('Upload succeeded but no URL was returned.')
+        return
+      }
+      setImageUrl(url)
+    } catch (e) {
+      setUploadErr(e instanceof ApiError ? e.message : 'Upload failed')
+    } finally {
+      setUploadBusy(false)
+    }
+  }
+
   function handleSubmit(e) {
     e.preventDefault()
-    onSubmit(name.trim())
+    onSubmit({ name: name.trim(), imageUrl: imageUrl.trim() })
   }
 
   return (
@@ -92,8 +123,64 @@ function AddCategoryModal({ groupLabel, onClose, onSubmit, busy, error, reduceMo
               className="w-full rounded-xl border border-slate-200/90 bg-white px-4 py-3 text-sm outline-none ring-slate-200/80 focus:ring-2 focus:ring-brand/35"
             />
             <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-              Workers pick this under the main category you selected. You can hide it anytime from the list.
+              Workers pick this under the main category you selected. Add a tile image for the homeowner app.
             </p>
+
+            <div className="mt-4 space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Subcategory image (optional)</p>
+              <div className="flex items-center gap-3">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-2 ring-slate-200/90">
+                  {imageUrl ? (
+                    <img
+                      src={getCategoryImageUrl({ name, imageUrl })}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">No image</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0]
+                      if (f) void onPickFile(f)
+                      e.target.value = ''
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || uploadBusy}
+                    onClick={() => fileRef.current?.click()}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-700"
+                  >
+                    {uploadBusy ? 'Uploading…' : 'Upload image'}
+                  </button>
+                  {imageUrl ? (
+                    <button
+                      type="button"
+                      disabled={busy || uploadBusy}
+                      onClick={() => setImageUrl('')}
+                      className="text-[11px] font-bold text-rose-600"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <input
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Or paste https:// URL after upload"
+                className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs"
+              />
+              {uploadErr ? <p className="text-[11px] text-rose-700">{uploadErr}</p> : null}
+            </div>
+
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -184,7 +271,7 @@ export function AdminLabourCategoriesPage() {
     }
   }
 
-  async function handleModalCreate(name) {
+  async function handleModalCreate({ name, imageUrl }) {
     if (!selectedGroupId || !name) {
       setModalError('Enter a name')
       return
@@ -196,6 +283,7 @@ export function AdminLabourCategoriesPage() {
         groupId: selectedGroupId,
         name,
         sortOrder: 999,
+        ...(imageUrl ? { imageUrl } : {}),
       })
       setModalOpen(false)
       await load()
@@ -220,8 +308,9 @@ export function AdminLabourCategoriesPage() {
           <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Skill categories</h2>
           <p className="mt-1 max-w-xl text-sm text-slate-600">
             Choose a <span className="font-semibold text-slate-800">main category</span> on the left, then manage{' '}
-            <span className="font-semibold text-slate-800">subcategories</span> on the right. Only active subcategories
-            appear in the worker app.
+            <span className="font-semibold text-slate-800">subcategories</span> and{' '}
+            <span className="font-semibold text-slate-800">tile images</span> on the right. Images appear on the homeowner
+            home and search screens.
           </p>
         </div>
         {!loading ? (
@@ -268,13 +357,13 @@ export function AdminLabourCategoriesPage() {
                             : 'hover:bg-slate-50'
                         }`}
                       >
-                        <span
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ${
-                            active ? 'bg-white text-brand ring-brand/20' : 'bg-slate-100 text-slate-500 ring-slate-200/80'
+                        <img
+                          src={getGroupImageUrl(g)}
+                          alt=""
+                          className={`h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ${
+                            active ? 'ring-brand/40' : 'ring-slate-200/80'
                           }`}
-                        >
-                          <Layers className="h-5 w-5" aria-hidden />
-                        </span>
+                        />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-bold text-slate-900">{g.name}</span>
                           <span className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-500">
@@ -321,6 +410,18 @@ export function AdminLabourCategoriesPage() {
                   <Plus className="h-4 w-4" aria-hidden />
                   Add subcategory
                 </button>
+              </div>
+
+              <div className="border-b border-slate-100 px-4 py-4 sm:px-5">
+                <AdminCategoryImageEditor
+                  label="Main category image"
+                  imageUrl={selectedGroup.imageUrl}
+                  hint="Work-area chips on homeowner home (green header). Falls back to first subcategory if empty."
+                  onSave={async (imageUrl) => {
+                    await patchAdminLabourCategoryGroup(selectedGroup._id, { imageUrl })
+                    await load()
+                  }}
+                />
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto">

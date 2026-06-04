@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "./themes/app.css";
 @import "./themes/buildmart.css";
+@import "./themes/splash.css";
+@import "./themes/individual-home.css";
+@import "./themes/booking-flow.css";
 
 /* Light-first theme · brand #1CAF62 · dark only on stats + footer */
 @theme {
