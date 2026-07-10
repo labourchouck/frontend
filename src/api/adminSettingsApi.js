@@ -25,4 +25,18 @@ export const adminSettingsApi = {
       body: payload,
     })
   },
+
+  updateGst: (payload) => {
+    return apiRequest('/admin/settings/gst', {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
+
+  updatePenalty: (payload) => {
+    return apiRequest('/admin/settings/penalty', {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
 }

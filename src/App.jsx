@@ -25,6 +25,8 @@ import { AdminAttendancePage } from './pages/admin/AdminAttendancePage.jsx'
 import { AdminBillingPage } from './pages/admin/AdminBillingPage.jsx'
 import { AdminPricingPage } from './pages/admin/AdminPricingPage.jsx'
 import { AdminModulePlaceholder } from './components/admin/AdminModulePlaceholder.jsx'
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage.jsx'
+import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'
 
@@ -40,7 +42,7 @@ function App() {
           <Route
             path="/app"
             element={
-              <ProtectedRoute roles={APP_B2C_ROLES}>
+              <ProtectedRoute roles={APP_B2C_ROLES} allowGuest>
                 <AppShell />
               </ProtectedRoute>
             }
@@ -109,20 +111,12 @@ function App() {
                 />
               }
             />
-            <Route
-              path="settings"
-              element={
-                <AdminModulePlaceholder
-                  title="Settings"
-                  subtitle="Platform configuration and integrations."
-                  bullets={['OTP providers', 'Payment gateways', 'Feature flags']}
-                />
-              }
-            />
+            <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <BroadcastPopup />
       </AuthProvider>
     </BrowserRouter>
   )

@@ -25,6 +25,7 @@ import { BookingFindingScreen } from '../../../components/app/booking/BookingFin
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { BookingStepProgress } from '../../../components/app/booking/BookingStepProgress.jsx'
 import { BookingServiceHighlight } from '../../../components/app/booking/BookingServiceHighlight.jsx'
+import { useAuth } from '../../../hooks/useAuth.js'
 import {
   BOOKING_JOB_TIMELINE,
   PAYMENT_METHODS,
@@ -75,6 +76,7 @@ function BookingPrimaryButton({ children, className = '', ...rest }) {
 
 export function IndividualBookingFlowPage() {
   const navigate = useNavigate()
+  const { isGuest } = useAuth()
   const [createRequest] = useCreateRequestMutation()
   const location = useLocation()
   const reduce = useReducedMotion()
@@ -249,6 +251,10 @@ export function IndividualBookingFlowPage() {
 
   const confirmBooking = async () => {
     if (!validateDetails()) return
+    if (isGuest) {
+      navigate('/auth', { replace: true, state: { from: location.pathname + location.search } })
+      return
+    }
     writeAppUserLocation({ address: draft.address.trim(), lat: draft.lat, lng: draft.lng })
     const payload = bookingPayloadFromDraft({
       ...draft,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -87,6 +87,7 @@ const inputClass =
 
 export function AuthEntryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { applySession } = useAuth()
   const reduce = useReducedMotion()
   const otpInputRefs = useRef([])
@@ -260,7 +261,8 @@ export function AuthEntryPage() {
         setStep('work-setup')
         setBanner(null)
       } else {
-        navigate(getRoleHomePath(signedInUser.role), { replace: true })
+        const returnPath = location.state?.from || getRoleHomePath(signedInUser.role)
+        navigate(returnPath, { replace: true })
       }
     } catch (e) {
       setBanner({
@@ -277,7 +279,10 @@ export function AuthEntryPage() {
       <>
         <AppAmbientBackground />
         <MobileShell transparent className="pb-0 pt-4">
-          <LabourCategorySetup variant="auth" onComplete={() => navigate(getRoleHomePath(USER_ROLES.LABOUR), { replace: true })} />
+          <LabourCategorySetup variant="auth" onComplete={() => {
+            const returnPath = location.state?.from || getRoleHomePath(USER_ROLES.LABOUR)
+            navigate(returnPath, { replace: true })
+          }} />
         </MobileShell>
       </>
     )

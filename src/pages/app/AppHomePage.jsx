@@ -16,13 +16,13 @@ export function AppHomePage() {
     return <Navigate to="/app/work-categories" replace />
   }
 
-  if (user?.role === USER_ROLES.INDIVIDUAL) {
+  if (!user || !user.role || user.role === USER_ROLES.INDIVIDUAL) {
     return <IndividualHomeScreen user={user} />
   }
 
-  if (user?.role === USER_ROLES.LABOUR) {
+  if (user.role === USER_ROLES.LABOUR) {
     return <LabourHomeScreen user={user} />
   }
 
-  return <Navigate to={getRoleHomePath(user?.role)} replace />
+  return <Navigate to={getRoleHomePath(user.role)} replace />
 }

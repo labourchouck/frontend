@@ -7,12 +7,13 @@ import { IndividualHomeHeroCarousel } from '../../../components/app/individual/I
 import { IndividualHomeRecentlyBooked } from '../../../components/app/individual/IndividualHomeRecentlyBooked.jsx'
 import { IndividualHomeWorkerCarousel } from '../../../components/app/individual/IndividualHomeWorkerCarousel.jsx'
 import { IndividualHomeServiceSections } from '../../../components/app/individual/IndividualHomeServiceSections.jsx'
+import { BookingModeSheet } from '../../../components/app/booking/BookingModeSheet.jsx'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { writeBookingDraft, readBookingDraft } from '../../../lib/individualBookingDraft.js'
 import { fetchDiscoverLabour, fetchDiscoverLabours } from '../../../api/discoverLaboursApi.js'
 import { ApiError } from '../../../api/http.js'
 import { LabourPublicDetailSheet } from '../labour/LabourPublicDetailSheet.jsx'
-import { enrichDiscoverLabourUi } from '../../../lib/discoverLabourDummyUi.js'
+import { enrichDiscoverLabourUi, DEMO_LABOUR_ROWS } from '../../../lib/discoverLabourDummyUi.js'
 import { displayBookingsList, loadIndividualBookings } from '../../../lib/individualBookings.js'
 import { buildBookingFlowPath } from '../../../lib/bookingFlowNavigation.js'
 
@@ -48,6 +49,7 @@ export function IndividualHomeScreen({ user }) {
   const [detailId, setDetailId] = useState(null)
   const [detailLabour, setDetailLabour] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [quickBookModeOpen, setQuickBookModeOpen] = useState(false)
   const [quickBookTypeOpen, setQuickBookTypeOpen] = useState(false)
   const [quickBookCategory, setQuickBookCategory] = useState(null)
   const [bookingsLoading, setBookingsLoading] = useState(true)
@@ -78,13 +80,13 @@ export function IndividualHomeScreen({ user }) {
   }, [ongoingBookings, sortedBookings])
 
   useEffect(() => {
-    if (!quickBookTypeOpen) return
+    if (!quickBookTypeOpen && !quickBookModeOpen) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prev
     }
-  }, [quickBookTypeOpen])
+  }, [quickBookTypeOpen, quickBookModeOpen])
 
   const goSearch = useCallback(() => {
     navigate('/app/search')
@@ -92,8 +94,26 @@ export function IndividualHomeScreen({ user }) {
 
   const handleQuickBookCategory = useCallback((cat) => {
     setQuickBookCategory(cat)
-    setQuickBookTypeOpen(true)
+    setQuickBookModeOpen(true)
   }, [])
+
+  const handleQuickBookMode = useCallback(
+    (mode) => {
+      setQuickBookModeOpen(false)
+      if (mode === 'manual') {
+        const cat = quickBookCategory
+        setQuickBookCategory(null)
+        if (cat) {
+          navigate(
+            `/app/discover/labours?categoryId=${encodeURIComponent(cat._id)}&groupId=${encodeURIComponent(cat.groupId || '')}&promptMode=1`,
+          )
+        }
+      } else if (mode === 'smart') {
+        setQuickBookTypeOpen(true)
+      }
+    },
+    [navigate, quickBookCategory],
+  )
 
   const handleQuickBookType = useCallback(
     (bookingType) => {
@@ -153,7 +173,7 @@ export function IndividualHomeScreen({ user }) {
     } finally {
       setLaboursLoading(false)
     }
-  }, [selectedGroupId])
+  }, [selectedGroupId, user])
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -187,6 +207,7 @@ export function IndividualHomeScreen({ user }) {
     setDetailId(id)
     setDetailLabour(null)
     setDetailLoading(true)
+
     fetchDiscoverLabour(id)
       .then((res) => {
         setDetailLabour(res.data?.labour ?? null)
@@ -197,7 +218,7 @@ export function IndividualHomeScreen({ user }) {
       .finally(() => {
         setDetailLoading(false)
       })
-  }, [])
+  }, [user])
 
   const closeDetail = useCallback(() => {
     setDetailId(null)
@@ -246,6 +267,17 @@ export function IndividualHomeScreen({ user }) {
           onSelectGroup={setSelectedGroupId}
         />
       </section>
+
+      <BookingModeSheet
+        open={quickBookModeOpen}
+        onClose={() => {
+          setQuickBookModeOpen(false)
+          setQuickBookCategory(null)
+        }}
+        value={null}
+        categoryLabel={quickBookCategory?.name}
+        onSelect={handleQuickBookMode}
+      />
 
       <BookingTypeSheet
         open={quickBookTypeOpen}

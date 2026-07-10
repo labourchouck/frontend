@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   ChevronRight,
+  Clock,
   FolderTree,
+  IndianRupee,
   Layers,
   Plus,
   Sparkles,
@@ -13,6 +15,7 @@ import {
   fetchAdminLabourCategoryTree,
   createAdminLabourCategory,
   patchAdminLabourCategoryGroup,
+  createAdminLabourSubcategory,
 } from '../../api/adminLabourCategoriesApi.js'
 import { ApiError } from '../../api/http.js'
 import { assetUrlFromUpload, uploadMedia } from '../../api/uploadApi.js'
@@ -197,6 +200,101 @@ function AddCategoryModal({ groupLabel, onClose, onSubmit, busy, error, reduceMo
         </GlassPanel>
       </motion.div>
     </motion.div>
+  )
+}
+
+function AddSubcategoryInline({ categoryId, onCreated }) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [basePrice, setBasePrice] = useState('')
+  const [duration, setDuration] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!name.trim()) { setError('Name required'); return }
+    if (!basePrice || Number(basePrice) <= 0) { setError('Valid price required'); return }
+    setError('')
+    setBusy(true)
+    try {
+      await createAdminLabourSubcategory({
+        categoryId,
+        name: name.trim(),
+        basePrice: Number(basePrice),
+        estimatedDurationMins: duration ? Number(duration) : undefined,
+      })
+      setName('')
+      setBasePrice('')
+      setDuration('')
+      setOpen(false)
+      if (onCreated) await onCreated()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to create subcategory')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-[11px] font-bold text-slate-500 transition hover:border-brand/40 hover:text-brand"
+      >
+        <Plus className="h-3 w-3" aria-hidden />
+        Add subcategory (service)
+      </button>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-xl border border-brand/20 bg-emerald-50/30 p-3 space-y-2">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">New Subcategory</p>
+      {error && <p className="text-[11px] font-semibold text-rose-700">{error}</p>}
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Subcategory name"
+        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand/25"
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          type="number"
+          min={0}
+          value={basePrice}
+          onChange={(e) => setBasePrice(e.target.value)}
+          placeholder="Base price (₹)"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand/25"
+        />
+        <input
+          type="number"
+          min={0}
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+          placeholder="Duration (mins)"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand/25"
+        />
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={busy}
+          className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-50"
+        >
+          {busy ? 'Saving…' : 'Create'}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setError('') }}
+          disabled={busy}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-600"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
   )
 }
 
@@ -473,6 +571,32 @@ export function AdminLabourCategoriesPage() {
                             {c.isActive ? 'Active' : 'Hidden'}
                           </button>
                         </div>
+                        {/* Subcategories list */}
+                        {(c.subcategories || []).length > 0 && (
+                          <div className="ml-4 space-y-1.5 border-l-2 border-brand/20 pl-3">
+                            {c.subcategories.map((sub) => (
+                              <div key={sub._id} className="flex items-center justify-between rounded-lg bg-slate-50/80 px-3 py-2 text-xs">
+                                <span className="font-semibold text-slate-700">{sub.name}</span>
+                                <div className="flex items-center gap-3 text-slate-500">
+                                  {sub.basePrice != null && (
+                                    <span className="flex items-center gap-0.5">
+                                      <IndianRupee className="h-3 w-3" aria-hidden />
+                                      {sub.basePrice}
+                                    </span>
+                                  )}
+                                  {sub.estimatedDurationMins != null && (
+                                    <span className="flex items-center gap-0.5">
+                                      <Clock className="h-3 w-3" aria-hidden />
+                                      {sub.estimatedDurationMins}m
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Add Subcategory Form */}
+                        <AddSubcategoryInline categoryId={c._id} onCreated={load} />
                         <AdminSubcategoryImageEditor category={c} onUpdated={load} />
                       </li>
                     ))}
