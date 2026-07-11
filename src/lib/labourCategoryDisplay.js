@@ -44,6 +44,14 @@ export function getCategoryImageUrl(category) {
   if (url.startsWith('data:image/') || url.startsWith('https://') || url.startsWith('http://')) {
     return url
   }
+  if (url.startsWith('/')) {
+    try {
+      const origin = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').origin
+      return `${origin}${url}`
+    } catch (e) {
+      // ignore
+    }
+  }
   const key = String(category?.slug || category?.name || 'x')
   return FALLBACK_IMAGES[hashSeed(key) % FALLBACK_IMAGES.length]
 }
@@ -53,6 +61,14 @@ export function getGroupImageUrl(group) {
   const groupUrl = String(group?.imageUrl || '').trim()
   if (groupUrl.startsWith('data:image/') || groupUrl.startsWith('https://') || groupUrl.startsWith('http://')) {
     return groupUrl
+  }
+  if (groupUrl.startsWith('/')) {
+    try {
+      const origin = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').origin
+      return `${origin}${groupUrl}`
+    } catch (e) {
+      // ignore
+    }
   }
   const cats = group?.categories || []
   const withImage = cats.find((c) => String(c?.imageUrl || '').trim())

@@ -30,6 +30,7 @@ import { BookingStepProgress } from '../../../components/app/booking/BookingStep
 import { BookingServiceHighlight } from '../../../components/app/booking/BookingServiceHighlight.jsx'
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 import { useBookingSocket } from '../../../hooks/useBookingSocket.js'
+import { useAuth } from '../../../hooks/useAuth.js'
 import {
   PAYMENT_METHODS,
   durationKindLabel,
@@ -71,11 +72,13 @@ function BookingPrimaryButton({ children, className = '', ...rest }) {
 
 export function IndividualBookingFlowPage() {
   const navigate = useNavigate()
+  const { isGuest } = useAuth()
+  const [createRequest] = useCreateRequestMutation()
   const location = useLocation()
   const reduce = useReducedMotion()
   const [searchParams] = useSearchParams()
   const step = searchParams.get('step') || 'type'
-  
+
   const categoryIdParam = searchParams.get('categoryId')?.trim() || ''
   const groupIdParam = searchParams.get('groupId')?.trim() || ''
 
@@ -86,7 +89,7 @@ export function IndividualBookingFlowPage() {
   const [activeBooking, setActiveBooking] = useState(null)
   const [noMatch, setNoMatch] = useState(false)
   const [imageFiles, setImageFiles] = useState([])
-  
+
   const [calculatedBill, setCalculatedBill] = useState(null)
   const [isCalculating, setIsCalculating] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -150,7 +153,7 @@ export function IndividualBookingFlowPage() {
         // Refresh booking details then show review prompt
         bookingsApi.getBookingStatus(activeBookingId).then(res => {
           if (res.data?.booking) setActiveBooking(res.data.booking)
-        }).catch(() => {})
+        }).catch(() => { })
         setReviewOpen(true)
       }
     }
@@ -177,7 +180,7 @@ export function IndividualBookingFlowPage() {
             const srv = subcat?.services?.[0]
             syncDraft({
               categoryId: String(cat._id),
-              serviceId: srv ? String(srv._id) : String(cat._id), 
+              serviceId: srv ? String(srv._id) : String(cat._id),
               categoryName: cat.name || '',
               groupId: String(g._id),
               groupName: g.name || '',
@@ -186,7 +189,7 @@ export function IndividualBookingFlowPage() {
           }
         }
       })
-      .catch(() => {})
+      .catch(() => { })
 
     return () => {
       cancelled = true
@@ -220,7 +223,7 @@ export function IndividualBookingFlowPage() {
       (pos) => {
         syncDraft({ lat: pos.coords.latitude, lng: pos.coords.longitude })
       },
-      () => {},
+      () => { },
       { enableHighAccuracy: false, timeout: 10_000 },
     )
   }
@@ -273,7 +276,10 @@ export function IndividualBookingFlowPage() {
 
   const confirmBooking = async () => {
     if (!validateDetails()) return
-    setIsCreating(true)
+    if (isGuest) {
+      navigate('/auth', { replace: true, state: { from: location.pathname + location.search } })
+      return
+    }
     writeAppUserLocation({ address: draft.address.trim(), lat: draft.lat, lng: draft.lng })
 
     try {
@@ -289,9 +295,9 @@ export function IndividualBookingFlowPage() {
         serviceId: draft.serviceId || draft.categoryId,
         type: draft.bookingType === 'scheduled' ? 'SCHEDULED' : 'INSTANT',
         locationText: draft.address.trim(),
-        lat: draft.lat || 28.6139, 
-        lng: draft.lng || 77.2090, 
-        paymentMethod: draft.paymentMethod || 'CASH', 
+        lat: draft.lat || 28.6139,
+        lng: draft.lng || 77.2090,
+        paymentMethod: draft.paymentMethod || 'CASH',
         notes: draft.notes,
         durationKind: draft.durationKind,
         durationDays: days,
@@ -323,8 +329,8 @@ export function IndividualBookingFlowPage() {
         <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
         <BookingFindingScreen
           categoryLabel={draft.categoryName}
-          onComplete={() => {}} 
-          onNoMatch={() => {}} 
+          onComplete={() => { }}
+          onNoMatch={() => { }}
         />
       </div>
     )
@@ -418,9 +424,8 @@ export function IndividualBookingFlowPage() {
               return (
                 <li key={t.id} className="flex items-center gap-3">
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
-                      done ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'
-                    }`}
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${done ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'
+                      }`}
                   >
                     {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
                   </span>
@@ -562,250 +567,250 @@ export function IndividualBookingFlowPage() {
           </div>
         ) : null}
 
-      {step === 'type' ? (
-        <motion.div layout initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setTypeSheetOpen(true)}
-            className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-sm"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-              {draft.bookingType === 'scheduled' ? (
-                <Calendar className="h-5 w-5" aria-hidden />
-              ) : (
-                <Zap className="h-5 w-5" aria-hidden />
-              )}
-            </span>
-            <span className="flex-1">
-              <p className="text-sm font-bold text-black">
-                {draft.bookingType === 'scheduled' ? 'Schedule booking' : draft.bookingType === 'instant' ? 'Instant booking' : 'Choose booking type'}
-              </p>
-              <p className="text-xs text-black/55">Tap to change</p>
-            </span>
-            <ArrowRight className="h-5 w-5 text-slate-300" aria-hidden />
-          </button>
-          <BookingPrimaryButton type="button" disabled={!draft.bookingType} onClick={() => goStep('details')}>
-            Continue
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </BookingPrimaryButton>
-        </motion.div>
-      ) : null}
-
-      {step === 'details' ? (
-        <motion.div layout className="space-y-4">
-          <div>
-            <FieldLabel>Work location</FieldLabel>
-            <AppTextInput
-              value={draft.address || ''}
-              onChange={(e) => syncDraft({ address: e.target.value })}
-              placeholder="House, street, area, city"
-              inputClassName="text-black font-semibold placeholder:text-black/40"
-              leftSlot={<MapPin className="h-4 w-4 text-black/50" aria-hidden />}
-            />
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={pickLocation}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-brand/25 bg-brand/5 py-2.5 text-[11px] font-bold text-brand"
-              >
-                <Navigation className="h-3.5 w-3.5" aria-hidden />
-                Current location
-              </button>
-              <button
-                type="button"
-                onClick={applySavedAddress}
-                className="lc-booking-btn-secondary py-2.5 text-[11px]"
-              >
-                Saved address
-              </button>
-            </div>
-          </div>
-
-          <motion.div layout>
-            <FieldLabel optional>Work note</FieldLabel>
-            <textarea
-              value={draft.notes || ''}
-              onChange={(e) => syncDraft({ notes: e.target.value })}
-              rows={2}
-              placeholder="Describe the work briefly…"
-              className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-black outline-none focus:border-brand focus:ring-0 placeholder:text-black/40"
-            />
+        {step === 'type' ? (
+          <motion.div layout initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setTypeSheetOpen(true)}
+              className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-sm"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                {draft.bookingType === 'scheduled' ? (
+                  <Calendar className="h-5 w-5" aria-hidden />
+                ) : (
+                  <Zap className="h-5 w-5" aria-hidden />
+                )}
+              </span>
+              <span className="flex-1">
+                <p className="text-sm font-bold text-black">
+                  {draft.bookingType === 'scheduled' ? 'Schedule booking' : draft.bookingType === 'instant' ? 'Instant booking' : 'Choose booking type'}
+                </p>
+                <p className="text-xs text-black/55">Tap to change</p>
+              </span>
+              <ArrowRight className="h-5 w-5 text-slate-300" aria-hidden />
+            </button>
+            <BookingPrimaryButton type="button" disabled={!draft.bookingType} onClick={() => goStep('details')}>
+              Continue
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </BookingPrimaryButton>
           </motion.div>
+        ) : null}
 
-          <motion.div layout>
-            <FieldLabel optional>Photos</FieldLabel>
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-4 text-xs font-bold text-black">
-              <ImagePlus className="h-4 w-4 text-brand" aria-hidden />
-              Upload images
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="sr-only"
-                onChange={(e) => setImageFiles([...(e.target.files || [])])}
+        {step === 'details' ? (
+          <motion.div layout className="space-y-4">
+            <div>
+              <FieldLabel>Work location</FieldLabel>
+              <AppTextInput
+                value={draft.address || ''}
+                onChange={(e) => syncDraft({ address: e.target.value })}
+                placeholder="House, street, area, city"
+                inputClassName="text-black font-semibold placeholder:text-black/40"
+                leftSlot={<MapPin className="h-4 w-4 text-black/50" aria-hidden />}
               />
-            </label>
-            {imageFiles.length ? (
-              <p className="mt-1 text-[11px] text-slate-500">{imageFiles.length} file(s) selected</p>
-            ) : null}
-          </motion.div>
-
-          <motion.div layout>
-            <FieldLabel>Working duration</FieldLabel>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: 'few_hours', label: 'Few hours' },
-                { id: 'full_day', label: 'Full day' },
-                { id: 'multi_day', label: 'Multi day' },
-              ].map((d) => (
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
-                  key={d.id}
                   type="button"
-                  onClick={() =>
-                    syncDraft({
-                      durationKind: d.id,
-                      durationDays: durationKindToDays(d.id, draft.durationDays),
-                    })
-                  }
-                  className="lc-booking-chip"
-                  data-active={draft.durationKind === d.id ? 'true' : 'false'}
+                  onClick={pickLocation}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-brand/25 bg-brand/5 py-2.5 text-[11px] font-bold text-brand"
                 >
-                  {d.label}
+                  <Navigation className="h-3.5 w-3.5" aria-hidden />
+                  Current location
                 </button>
-              ))}
-            </div>
-            {draft.durationKind === 'multi_day' ? (
-              <input
-                type="number"
-                min={2}
-                max={30}
-                value={draft.durationDays || 2}
-                onChange={(e) => syncDraft({ durationDays: Number(e.target.value) || 2 })}
-                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-black"
-              />
-            ) : null}
-          </motion.div>
-
-          {draft.bookingType === 'instant' ? (
-            <div className="lc-booking-highlight flex items-center gap-2">
-              <Zap className="h-5 w-5 text-brand" aria-hidden />
-              <div>
-                <p className="text-sm font-bold text-black">ASAP</p>
-                <p className="text-xs font-medium text-black/70">Earliest available slot</p>
+                <button
+                  type="button"
+                  onClick={applySavedAddress}
+                  className="lc-booking-btn-secondary py-2.5 text-[11px]"
+                >
+                  Saved address
+                </button>
               </div>
             </div>
-          ) : (
-            <div className="space-y-3">
-              <motion.div layout>
-                <FieldLabel>Date</FieldLabel>
+
+            <motion.div layout>
+              <FieldLabel optional>Work note</FieldLabel>
+              <textarea
+                value={draft.notes || ''}
+                onChange={(e) => syncDraft({ notes: e.target.value })}
+                rows={2}
+                placeholder="Describe the work briefly…"
+                className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-black outline-none focus:border-brand focus:ring-0 placeholder:text-black/40"
+              />
+            </motion.div>
+
+            <motion.div layout>
+              <FieldLabel optional>Photos</FieldLabel>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-4 text-xs font-bold text-black">
+                <ImagePlus className="h-4 w-4 text-brand" aria-hidden />
+                Upload images
                 <input
-                  type="date"
-                  min={todayISODate()}
-                  value={draft.serviceDate || ''}
-                  onChange={(e) => syncDraft({ serviceDate: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => setImageFiles([...(e.target.files || [])])}
                 />
-              </motion.div>
-              <div>
-                <FieldLabel>Time slot</FieldLabel>
-                <div className="grid grid-cols-2 gap-2">
-                  {TIME_SLOTS.map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => syncDraft({ timeSlot: slot })}
-                      className="lc-booking-slot"
-                      data-active={draft.timeSlot === slot ? 'true' : 'false'}
-                    >
-                      {slot}
-                    </button>
-                  ))}
+              </label>
+              {imageFiles.length ? (
+                <p className="mt-1 text-[11px] text-slate-500">{imageFiles.length} file(s) selected</p>
+              ) : null}
+            </motion.div>
+
+            <motion.div layout>
+              <FieldLabel>Working duration</FieldLabel>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'few_hours', label: 'Few hours' },
+                  { id: 'full_day', label: 'Full day' },
+                  { id: 'multi_day', label: 'Multi day' },
+                ].map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() =>
+                      syncDraft({
+                        durationKind: d.id,
+                        durationDays: durationKindToDays(d.id, draft.durationDays),
+                      })
+                    }
+                    className="lc-booking-chip"
+                    data-active={draft.durationKind === d.id ? 'true' : 'false'}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+              {draft.durationKind === 'multi_day' ? (
+                <input
+                  type="number"
+                  min={2}
+                  max={30}
+                  value={draft.durationDays || 2}
+                  onChange={(e) => syncDraft({ durationDays: Number(e.target.value) || 2 })}
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-black"
+                />
+              ) : null}
+            </motion.div>
+
+            {draft.bookingType === 'instant' ? (
+              <div className="lc-booking-highlight flex items-center gap-2">
+                <Zap className="h-5 w-5 text-brand" aria-hidden />
+                <div>
+                  <p className="text-sm font-bold text-black">ASAP</p>
+                  <p className="text-xs font-medium text-black/70">Earliest available slot</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <motion.div layout>
+                  <FieldLabel>Date</FieldLabel>
+                  <input
+                    type="date"
+                    min={todayISODate()}
+                    value={draft.serviceDate || ''}
+                    onChange={(e) => syncDraft({ serviceDate: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black"
+                  />
+                </motion.div>
+                <div>
+                  <FieldLabel>Time slot</FieldLabel>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TIME_SLOTS.map((slot) => (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => syncDraft({ timeSlot: slot })}
+                        className="lc-booking-slot"
+                        data-active={draft.timeSlot === slot ? 'true' : 'false'}
+                      >
+                        {slot}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {formError ? (
+              <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                {formError}
+              </p>
+            ) : null}
+
+            <BookingPrimaryButton type="button" onClick={handleReviewBooking} disabled={isCalculating}>
+              {isCalculating ? 'Calculating...' : 'Review booking'}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </BookingPrimaryButton>
+          </motion.div>
+        ) : null}
+
+        {step === 'summary' && calculatedBill ? (
+          <motion.div layout className="space-y-4">
+            <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
+              <div className="flex justify-between gap-2">
+                <span className="lc-booking-flow-muted">Service</span>
+                <span className="text-right font-bold text-black">
+                  <span className="lc-booking-highlight-title block text-base">{draft.categoryName}</span>
+                  {draft.groupName ? <span className="text-xs font-semibold">{draft.groupName}</span> : null}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="lc-booking-flow-muted">Booking</span>
+                <span className="font-bold capitalize text-black">{draft.bookingType}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="lc-booking-flow-muted">When</span>
+                <span className="font-bold text-black">
+                  {draft.bookingType === 'instant'
+                    ? 'ASAP'
+                    : `${draft.serviceDate} · ${draft.timeSlot}`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="lc-booking-flow-muted">Duration</span>
+                <span className="font-bold text-black">{durationKindLabel(draft.durationKind)}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="shrink-0 lc-booking-flow-muted">Workers</span>
+                <span className="text-right font-bold text-black">
+                  Flash Broadcast Match
+                </span>
+              </div>
+              <p className="flex items-start gap-2 font-medium text-black">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
+                {draft.address}
+              </p>
+              <div className="border-t border-slate-200 pt-3">
+                <div className="flex justify-between font-semibold text-black">
+                  <span>Estimated labour</span>
+                  <span>{formatInr(calculatedBill.basePrice)}</span>
+                </div>
+                <div className="mt-1 flex justify-between lc-booking-flow-muted">
+                  <span>Platform fee</span>
+                  <span>{formatInr(calculatedBill.platformFee)}</span>
+                </div>
+                <div className="flex justify-between lc-booking-flow-muted">
+                  <span>Taxes</span>
+                  <span>{formatInr(calculatedBill.taxes)}</span>
+                </div>
+                <div className="mt-2 flex justify-between text-base font-extrabold text-black">
+                  <span>Total</span>
+                  <span>{formatInr(calculatedBill.totalAmount)}</span>
                 </div>
               </div>
             </div>
-          )}
 
-          {formError ? (
-            <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-950">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              {formError}
-            </p>
-          ) : null}
-
-          <BookingPrimaryButton type="button" onClick={handleReviewBooking} disabled={isCalculating}>
-            {isCalculating ? 'Calculating...' : 'Review booking'}
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </BookingPrimaryButton>
-        </motion.div>
-      ) : null}
-
-      {step === 'summary' && calculatedBill ? (
-        <motion.div layout className="space-y-4">
-          <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
-            <div className="flex justify-between gap-2">
-              <span className="lc-booking-flow-muted">Service</span>
-              <span className="text-right font-bold text-black">
-                <span className="lc-booking-highlight-title block text-base">{draft.categoryName}</span>
-                {draft.groupName ? <span className="text-xs font-semibold">{draft.groupName}</span> : null}
-              </span>
+            <div className="flex gap-2">
+              <button type="button" className="lc-booking-btn-secondary flex-1" onClick={() => goStep('details')}>
+                Edit details
+              </button>
+              <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking} disabled={isCreating}>
+                {isCreating ? 'Creating...' : 'Confirm booking'}
+                <CheckCircle2 className="h-4 w-4" aria-hidden />
+              </BookingPrimaryButton>
             </div>
-            <div className="flex justify-between">
-              <span className="lc-booking-flow-muted">Booking</span>
-              <span className="font-bold capitalize text-black">{draft.bookingType}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="lc-booking-flow-muted">When</span>
-              <span className="font-bold text-black">
-                {draft.bookingType === 'instant'
-                  ? 'ASAP'
-                  : `${draft.serviceDate} · ${draft.timeSlot}`}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="lc-booking-flow-muted">Duration</span>
-              <span className="font-bold text-black">{durationKindLabel(draft.durationKind)}</span>
-            </div>
-            <div className="flex justify-between gap-2">
-              <span className="shrink-0 lc-booking-flow-muted">Workers</span>
-              <span className="text-right font-bold text-black">
-                Flash Broadcast Match
-              </span>
-            </div>
-            <p className="flex items-start gap-2 font-medium text-black">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
-              {draft.address}
-            </p>
-            <div className="border-t border-slate-200 pt-3">
-              <div className="flex justify-between font-semibold text-black">
-                <span>Estimated labour</span>
-                <span>{formatInr(calculatedBill.basePrice)}</span>
-              </div>
-              <div className="mt-1 flex justify-between lc-booking-flow-muted">
-                <span>Platform fee</span>
-                <span>{formatInr(calculatedBill.platformFee)}</span>
-              </div>
-              <div className="flex justify-between lc-booking-flow-muted">
-                <span>Taxes</span>
-                <span>{formatInr(calculatedBill.taxes)}</span>
-              </div>
-              <div className="mt-2 flex justify-between text-base font-extrabold text-black">
-                <span>Total</span>
-                <span>{formatInr(calculatedBill.totalAmount)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <button type="button" className="lc-booking-btn-secondary flex-1" onClick={() => goStep('details')}>
-              Edit details
-            </button>
-            <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking} disabled={isCreating}>
-              {isCreating ? 'Creating...' : 'Confirm booking'}
-              <CheckCircle2 className="h-4 w-4" aria-hidden />
-            </BookingPrimaryButton>
-          </div>
-        </motion.div>
-      ) : null}
+          </motion.div>
+        ) : null}
 
         <BookingTypeSheet
           open={typeSheetOpen}

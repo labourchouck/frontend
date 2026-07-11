@@ -33,6 +33,7 @@ function toCategoryItem(c, group) {
     imageUrl: c.imageUrl || '',
     groupId: group._id,
     groupName: group.name,
+    services: c.services || [],
   }
 }
 

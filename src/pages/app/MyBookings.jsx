@@ -1,0 +1,161 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Calendar, CheckCircle2, Clock, Loader2, MapPin, Sparkles } from 'lucide-react'
+import { bookingsApi } from '../../api/bookingsApi.js'
+import { ApiError } from '../../api/http.js'
+import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
+import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+
+const STATUS_STYLES = {
+  CREATED: 'bg-blue-50 text-blue-700 border-blue-200',
+  ACCEPTED: 'bg-amber-50 text-amber-700 border-amber-200',
+  EN_ROUTE: 'bg-purple-50 text-purple-700 border-purple-200',
+  STARTED: 'bg-orange-50 text-orange-700 border-orange-200',
+  COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  CANCELLED: 'bg-rose-50 text-rose-700 border-rose-200',
+}
+
+export function MyBookings() {
+  const navigate = useNavigate()
+  const reduce = useReducedMotion()
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [tab, setTab] = useState('active')
+
+  useEffect(() => {
+    let cancelled = false
+    bookingsApi.getMyBookings()
+      .then((res) => {
+        if (cancelled) return
+        setBookings(res.data?.bookings ?? [])
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : 'Failed to load bookings')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  const { activeBookings, pastBookings } = useMemo(() => {
+    const active = []
+    const past = []
+    for (const b of bookings) {
+      const s = (b.status || '').toUpperCase()
+      if (s === 'COMPLETED' || s === 'CANCELLED') {
+        past.push(b)
+      } else {
+        active.push(b)
+      }
+    }
+    return { activeBookings: active, pastBookings: past }
+  }, [bookings])
+
+  const displayed = tab === 'active' ? activeBookings : pastBookings
+
+  return (
+    <div className="space-y-4 pb-8">
+      <AppStackScreenHeader title="My Bookings" backTo="/app" />
+
+      {/* Tab Bar */}
+      <GlassPanel className="p-1.5">
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100/90 p-0.5">
+          {[
+            { id: 'active', label: `Active (${activeBookings.length})` },
+            { id: 'past', label: `Past (${pastBookings.length})` },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`rounded-lg py-2.5 text-xs font-bold transition ${
+                tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </GlassPanel>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-brand" />
+        </div>
+      ) : error ? (
+        <GlassPanel className="p-6 text-center">
+          <p className="text-sm font-semibold text-rose-700">{error}</p>
+        </GlassPanel>
+      ) : displayed.length === 0 ? (
+        <GlassPanel className="p-8 text-center">
+          <Sparkles className="mx-auto h-10 w-10 text-slate-300" aria-hidden />
+          <p className="mt-3 text-sm font-semibold text-slate-600">
+            {tab === 'active' ? 'No active bookings' : 'No past bookings'}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            {tab === 'active' ? 'Book a service to get started!' : 'Your completed bookings will appear here.'}
+          </p>
+        </GlassPanel>
+      ) : (
+        <div className="space-y-3">
+          {displayed.map((booking, i) => {
+            const status = (booking.status || 'CREATED').toUpperCase()
+            const subcategory = typeof booking.subcategoryId === 'object' ? booking.subcategoryId : null
+            const isActive = status !== 'COMPLETED' && status !== 'CANCELLED'
+
+            return (
+              <motion.div
+                key={booking._id}
+                initial={reduce ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+              >
+                <GlassPanel
+                  className="cursor-pointer overflow-hidden p-0 transition hover:shadow-md"
+                  onClick={() => {
+                    if (isActive) {
+                      navigate(`/app/tracking/${booking._id}`)
+                    }
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-extrabold text-slate-900">
+                        {subcategory?.name || 'Service Booking'}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                        <Calendar className="h-3 w-3 shrink-0" aria-hidden />
+                        {booking.createdAt
+                          ? new Date(booking.createdAt).toLocaleDateString('en-IN', {
+                              day: 'numeric', month: 'short', year: 'numeric'
+                            })
+                          : '—'}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${STATUS_STYLES[status] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                        {status}
+                      </span>
+                      {booking.totalAmount && (
+                        <span className="text-sm font-bold text-slate-900">₹{booking.totalAmount}</span>
+                      )}
+                    </div>
+                  </div>
+                  {booking.laborId && typeof booking.laborId === 'object' && (
+                    <div className="flex items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-2 text-xs text-slate-600">
+                      <Clock className="h-3 w-3 shrink-0 text-brand" aria-hidden />
+                      Labour: {booking.laborId.name || 'Assigned'}
+                    </div>
+                  )}
+                </GlassPanel>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}

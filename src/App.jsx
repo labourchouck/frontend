@@ -8,11 +8,13 @@ import { AdminLayout } from './layouts/AdminLayout.jsx'
 import { LandingPage } from './pages/LandingPage'
 import { AuthEntryPage } from './pages/auth/AuthEntryPage.jsx'
 import { LabourCategoriesPage } from './pages/app/LabourCategoriesPage.jsx'
-import { appShellChildRoutes } from './routes/appRoutes.jsx' 
+import { appShellChildRoutes } from './routes/appRoutes.jsx'
 import { bootRoutes } from './routes/bootRoutes.jsx'
 import { corporateChildRoutes } from './routes/corporateRoutes.jsx'
 import { vendorChildRoutes } from './routes/vendorRoutes.jsx'
-import { AdminLabourCategoriesPage } from './pages/admin/AdminLabourCategoriesPage.jsx'
+import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage.jsx'
+import { AdminSubCategoriesPage } from './pages/admin/AdminSubCategoriesPage.jsx'
+import { AdminServicesPage } from './pages/admin/AdminServicesPage.jsx'
 import { AdminLoginPage } from './pages/admin/AdminLoginPage.jsx'
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage.jsx'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx'
@@ -30,6 +32,8 @@ import { AdminReportsPage } from './pages/admin/AdminReportsPage.jsx'
 import { AdminBannersPage } from './pages/admin/AdminBannersPage.jsx'
 import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage.jsx'
 import { AdminProfilePage } from './pages/admin/AdminProfilePage.jsx'
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage.jsx'
+import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'
 
@@ -45,7 +49,7 @@ function App() {
           <Route
             path="/app"
             element={
-              <ProtectedRoute roles={APP_B2C_ROLES}>
+              <ProtectedRoute roles={APP_B2C_ROLES} allowGuest>
                 <AppShell />
               </ProtectedRoute>
             }
@@ -94,7 +98,9 @@ function App() {
             }
           >
             <Route index element={<AdminDashboardPage />} />
-            <Route path="categories" element={<AdminLabourCategoriesPage />} />
+            <Route path="categories" element={<AdminCategoriesPage />} />
+            <Route path="sub-categories" element={<AdminSubCategoriesPage />} />
+            <Route path="services" element={<AdminServicesPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="labour" element={<AdminLabourPage />} />
             <Route path="business-verification" element={<AdminBusinessVerificationPage />} />
@@ -113,6 +119,7 @@ function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <BroadcastPopup />
       </AuthProvider>
     </BrowserRouter>
   )

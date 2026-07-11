@@ -18,6 +18,8 @@ import {
   Image,
   MessageSquare,
   UserCog,
+  Tag,
+  Wrench,
 } from 'lucide-react'
 
 /**
@@ -26,6 +28,8 @@ import {
  */
 export const ADMIN_LABOUR_HUB_PATHS = new Set([
   '/admin/categories',
+  '/admin/sub-categories',
+  '/admin/services',
   '/admin/users',
   '/admin/bookings',
   '/admin/allocations',
@@ -59,7 +63,14 @@ export const ADMIN_NAV_SECTIONS = [
     title: 'Workforce',
     items: [
       { to: '/admin/labour', label: 'Labour & KYC', icon: IdCard },
-      { to: '/admin/categories', label: 'Skill categories', icon: Layers },
+    ],
+  },
+  {
+    title: 'Skill categories',
+    items: [
+      { to: '/admin/categories', label: 'Categories', icon: Layers },
+      { to: '/admin/sub-categories', label: 'Sub-Categories', icon: Tag },
+      { to: '/admin/services', label: 'Services', icon: Wrench },
     ],
   },
   {
@@ -108,7 +119,9 @@ const ROUTE_TITLES = [
   { prefix: '/admin/allocations', title: 'Workforce allocation' },
   { prefix: '/admin/buildmart', title: 'BuildMart leads' },
   { prefix: '/admin/bookings', title: 'Bookings & requests' },
-  { prefix: '/admin/categories', title: 'Skill categories' },
+  { prefix: '/admin/services', title: 'Services' },
+  { prefix: '/admin/sub-categories', title: 'Sub-Categories' },
+  { prefix: '/admin/categories', title: 'Categories' },
   { prefix: '/admin/business-verification', title: 'Corporate & vendor KYC' },
   { prefix: '/admin/labour', title: 'Labour & KYC' },
   { prefix: '/admin/users', title: 'Individuals & corporates' },

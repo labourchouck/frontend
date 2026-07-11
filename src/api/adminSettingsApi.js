@@ -4,21 +4,21 @@ export const adminSettingsApi = {
   getSettings: () => {
     return apiRequest('/admin/settings', { method: 'GET' })
   },
-  
+
   updatePlatformFees: (payload) => {
     return apiRequest('/admin/settings/platform-fees', {
       method: 'PATCH',
       body: payload,
     })
   },
-  
+
   updateCommission: (payload) => {
     return apiRequest('/admin/settings/commission', {
       method: 'PATCH',
       body: payload,
     })
   },
-  
+
   updateWalletLimit: (payload) => {
     return apiRequest('/admin/settings/wallet-limit', {
       method: 'PATCH',

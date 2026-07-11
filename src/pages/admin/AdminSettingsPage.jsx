@@ -1,327 +1,341 @@
-import { useState, useEffect } from 'react'
-import { Settings, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Settings, Percent, IndianRupee, Wallet, Receipt, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
+import { adminSettingsApi } from '../../api/adminSettingsApi.js'
+import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
-import { adminSettingsApi } from '../../api/adminSettingsApi.js'
+
+const inputClass =
+  'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20'
+
+const labelClass = 'text-xs font-bold uppercase tracking-wider text-slate-500'
+
+function SettingsSection({ icon: Icon, title, description, children, accent = 'brand' }) {
+  return (
+    <GlassPanel className="overflow-hidden p-0">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-white px-5 py-4">
+        <div className="flex items-center gap-3">
+          <span className={`flex h-10 w-10 items-center justify-center rounded-xl bg-${accent}/10 text-${accent}`}>
+            <Icon className="h-5 w-5" aria-hidden />
+          </span>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900">{title}</h3>
+            <p className="text-xs text-slate-500">{description}</p>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-4 p-5">{children}</div>
+    </GlassPanel>
+  )
+}
+
+function Toast({ message, variant = 'success' }) {
+  if (!message) return null
+  const styles = variant === 'error'
+    ? 'border-rose-200 bg-rose-50 text-rose-900'
+    : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+  const Icon = variant === 'error' ? AlertTriangle : CheckCircle2
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className={`fixed left-4 right-4 top-20 z-50 mx-auto flex max-w-lg items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg ${styles}`}
+    >
+      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+      {message}
+    </motion.div>
+  )
+}
 
 export function AdminSettingsPage() {
-  const [settings, setSettings] = useState(null)
+  const reduce = useReducedMotion()
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  
-  // Loading states for individual saves
-  const [savingComm, setSavingComm] = useState(false)
-  const [savingPlatform, setSavingPlatform] = useState(false)
-  const [savingWallet, setSavingWallet] = useState(false)
-  const [savingGst, setSavingGst] = useState(false)
-  const [savingPenalty, setSavingPenalty] = useState(false)
+  const [saving, setSaving] = useState('')
+  const [toast, setToast] = useState({ message: '', variant: 'success' })
 
-  // Feedback messages
-  const [messages, setMessages] = useState({})
+  // Platform Fee
+  const [feeType, setFeeType] = useState('percentage')
+  const [feeValue, setFeeValue] = useState('')
+  const [feeActive, setFeeActive] = useState(true)
 
-  useEffect(() => {
-    loadSettings()
+  // Commission
+  const [commissionType, setCommissionType] = useState('global')
+  const [commissionPercent, setCommissionPercent] = useState('')
+  const [commissionActive, setCommissionActive] = useState(true)
+
+  // Wallet Limit
+  const [walletLimit, setWalletLimit] = useState('')
+
+  // GST
+  const [gstPercentage, setGstPercentage] = useState('')
+
+  // Cancellation Penalty
+  const [cancellationPenalty, setCancellationPenalty] = useState('')
+
+  const showToast = useCallback((message, variant = 'success') => {
+    setToast({ message, variant })
+    setTimeout(() => setToast({ message: '', variant: 'success' }), 3500)
   }, [])
 
-  const loadSettings = async () => {
-    try {
-      setLoading(true)
-      const res = await adminSettingsApi.getSettings()
-      setSettings(res.data?.settings || {})
-      setError('')
-    } catch (err) {
-      setError('Failed to load system settings')
-    } finally {
-      setLoading(false)
-    }
-  }
+  useEffect(() => {
+    let cancelled = false
+    adminSettingsApi.getSettings()
+      .then((res) => {
+        if (cancelled) return
+        const s = res.data?.settings || {}
+        // Platform Fee
+        if (s.platformFee) {
+          setFeeType(s.platformFee.type || 'percentage')
+          setFeeValue(String(s.platformFee.value ?? ''))
+          setFeeActive(s.platformFee.isActive !== false)
+        }
+        // Commission
+        if (s.commission) {
+          setCommissionType(s.commission.type || 'global')
+          setCommissionPercent(String(s.commission.globalPercentage ?? ''))
+          setCommissionActive(s.commission.isActive !== false)
+        }
+        // Wallet Limit
+        if (s.walletLimit != null) {
+          setWalletLimit(String(s.walletLimit))
+        }
+        // GST
+        if (s.gstPercentage != null) {
+          setGstPercentage(String(s.gstPercentage))
+        }
+        // Cancellation Penalty
+        if (s.cancellationPenalty != null) {
+          setCancellationPenalty(String(s.cancellationPenalty))
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) showToast(err instanceof ApiError ? err.message : 'Failed to load settings', 'error')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [showToast])
 
-  const showMessage = (key, type, text) => {
-    setMessages(prev => ({ ...prev, [key]: { type, text } }))
-    setTimeout(() => {
-      setMessages(prev => ({ ...prev, [key]: null }))
-    }, 5000)
-  }
-
-  const handleUpdateCommission = async (e) => {
-    e.preventDefault()
-    setSavingComm(true)
+  const handleSave = async (section, apiFn, payload) => {
+    setSaving(section)
     try {
-      await adminSettingsApi.updateCommission(settings.commission)
-      showMessage('commission', 'success', 'Commission updated successfully')
+      await apiFn(payload)
+      showToast(`${section} updated successfully`)
     } catch (err) {
-      showMessage('commission', 'error', err.response?.data?.message || 'Failed to update commission')
+      showToast(err instanceof ApiError ? err.message : `Failed to update ${section}`, 'error')
     } finally {
-      setSavingComm(false)
-    }
-  }
-
-  const handleUpdatePlatformFee = async (e) => {
-    e.preventDefault()
-    setSavingPlatform(true)
-    try {
-      await adminSettingsApi.updatePlatformFees(settings.platformFee)
-      showMessage('platform', 'success', 'Platform fees updated successfully')
-    } catch (err) {
-      showMessage('platform', 'error', err.response?.data?.message || 'Failed to update platform fees')
-    } finally {
-      setSavingPlatform(false)
-    }
-  }
-
-  const handleUpdateWalletLimit = async (e) => {
-    e.preventDefault()
-    setSavingWallet(true)
-    try {
-      await adminSettingsApi.updateWalletLimit({ walletLimit: settings.walletLimit })
-      showMessage('wallet', 'success', 'Wallet limit updated successfully')
-    } catch (err) {
-      showMessage('wallet', 'error', err.response?.data?.message || 'Failed to update wallet limit')
-    } finally {
-      setSavingWallet(false)
-    }
-  }
-
-  const handleUpdateGst = async (e) => {
-    e.preventDefault()
-    setSavingGst(true)
-    try {
-      await adminSettingsApi.updateGstPercentage({ gstPercentage: settings.gstPercentage })
-      showMessage('gst', 'success', 'GST updated successfully')
-    } catch (err) {
-      showMessage('gst', 'error', err.response?.data?.message || 'Failed to update GST')
-    } finally {
-      setSavingGst(false)
-    }
-  }
-
-  const handleUpdatePenalty = async (e) => {
-    e.preventDefault()
-    setSavingPenalty(true)
-    try {
-      await adminSettingsApi.updateCancellationPenalty({ cancellationPenalty: settings.cancellationPenalty })
-      showMessage('penalty', 'success', 'Cancellation penalty updated successfully')
-    } catch (err) {
-      showMessage('penalty', 'error', err.response?.data?.message || 'Failed to update cancellation penalty')
-    } finally {
-      setSavingPenalty(false)
+      setSaving('')
     }
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-brand" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="p-8 text-center text-red-500">
-        <p>{error}</p>
-        <button onClick={loadSettings} className="mt-4 px-4 py-2 bg-brand text-white rounded-lg">Retry</button>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     )
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">System Settings</h1>
-        <p className="text-gray-500 mt-1">Manage global platform configurations, fees, and rules</p>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <Toast message={toast.message} variant={toast.variant} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        {/* Commission Settings */}
-        <GlassPanel className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-brand" />
-            Global Commission
-          </h2>
-          
-          {messages.commission && (
-            <div className={`p-3 rounded-lg mb-4 text-sm flex items-start gap-2 ${messages.commission.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-              {messages.commission.type === 'success' ? <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
-              {messages.commission.text}
-            </div>
-          )}
-
-          <form onSubmit={handleUpdateCommission} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fee Type</label>
-              <div className="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600">
-                Percentage (%)
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Global Value</label>
-              <input 
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                value={settings.commission?.globalPercentage ?? ''}
-                onChange={(e) => setSettings({...settings, commission: {...settings.commission, globalPercentage: parseFloat(e.target.value), type: 'PERCENTAGE'}})}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand outline-none"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox"
-                id="commActive"
-                checked={settings.commission?.isActive ?? true}
-                onChange={(e) => setSettings({...settings, commission: {...settings.commission, isActive: e.target.checked}})}
-                className="w-4 h-4 text-brand rounded focus:ring-brand"
-              />
-              <label htmlFor="commActive" className="text-sm font-medium text-gray-700">Is Active</label>
-            </div>
-            
-            <AppPrimaryButton type="submit" disabled={savingComm} className="w-full justify-center">
-              {savingComm ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Save Commission'}
-            </AppPrimaryButton>
-          </form>
-        </GlassPanel>
-
-        {/* Platform Fees Settings */}
-        <GlassPanel className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-brand" />
-            Platform Fees (Customer)
-          </h2>
-          
-          {messages.platform && (
-            <div className={`p-3 rounded-lg mb-4 text-sm flex items-start gap-2 ${messages.platform.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-              {messages.platform.type === 'success' ? <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
-              {messages.platform.text}
-            </div>
-          )}
-
-          <form onSubmit={handleUpdatePlatformFee} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fee Type</label>
-              <div className="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600">
-                Fixed Amount (₹)
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fee Value</label>
-              <input 
-                type="number"
-                min="0"
-                step="1"
-                required
-                value={settings.platformFee?.value ?? ''}
-                onChange={(e) => setSettings({...settings, platformFee: {...settings.platformFee, value: parseFloat(e.target.value), type: 'FIXED'}})}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand outline-none"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox"
-                id="platActive"
-                checked={settings.platformFee?.isActive ?? true}
-                onChange={(e) => setSettings({...settings, platformFee: {...settings.platformFee, isActive: e.target.checked}})}
-                className="w-4 h-4 text-brand rounded focus:ring-brand"
-              />
-              <label htmlFor="platActive" className="text-sm font-medium text-gray-700">Is Active</label>
-            </div>
-            
-            <AppPrimaryButton type="submit" disabled={savingPlatform} className="w-full justify-center">
-              {savingPlatform ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Save Platform Fees'}
-            </AppPrimaryButton>
-          </form>
-        </GlassPanel>
-
-        {/* Miscellaneous Settings (Wallet, GST, Penalty) */}
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Minimum Wallet Limit */}
-          <GlassPanel className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Min. Wallet Limit</h2>
-            {messages.wallet && (
-              <div className={`p-2 rounded mb-2 text-xs ${messages.wallet.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-                {messages.wallet.text}
-              </div>
-            )}
-            <form onSubmit={handleUpdateWalletLimit} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Amount (₹)</label>
-                <input 
-                  type="number"
-                  min="0"
-                  required
-                  value={settings.walletLimit ?? ''}
-                  onChange={(e) => setSettings({...settings, walletLimit: parseInt(e.target.value)})}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand outline-none"
-                />
-              </div>
-              <AppPrimaryButton type="submit" disabled={savingWallet} className="w-full justify-center">
-                {savingWallet ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Limit'}
-              </AppPrimaryButton>
-            </form>
-          </GlassPanel>
-
-          {/* GST Percentage */}
-          <GlassPanel className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">GST Percentage</h2>
-            {messages.gst && (
-              <div className={`p-2 rounded mb-2 text-xs ${messages.gst.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-                {messages.gst.text}
-              </div>
-            )}
-            <form onSubmit={handleUpdateGst} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Percentage (%)</label>
-                <input 
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  required
-                  value={settings.gstPercentage ?? ''}
-                  onChange={(e) => setSettings({...settings, gstPercentage: parseFloat(e.target.value)})}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand outline-none"
-                />
-              </div>
-              <AppPrimaryButton type="submit" disabled={savingGst} className="w-full justify-center">
-                {savingGst ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save GST'}
-              </AppPrimaryButton>
-            </form>
-          </GlassPanel>
-
-          {/* Cancellation Penalty */}
-          <GlassPanel className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Cancellation Penalty</h2>
-            {messages.penalty && (
-              <div className={`p-2 rounded mb-2 text-xs ${messages.penalty.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
-                {messages.penalty.text}
-              </div>
-            )}
-            <form onSubmit={handleUpdatePenalty} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Fixed Amount (₹)</label>
-                <input 
-                  type="number"
-                  min="0"
-                  required
-                  value={settings.cancellationPenalty ?? ''}
-                  onChange={(e) => setSettings({...settings, cancellationPenalty: parseInt(e.target.value)})}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand outline-none"
-                />
-              </div>
-              <AppPrimaryButton type="submit" disabled={savingPenalty} className="w-full justify-center">
-                {savingPenalty ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Penalty'}
-              </AppPrimaryButton>
-            </form>
-          </GlassPanel>
-
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-emerald-600 text-white shadow-lg ring-4 ring-brand/10">
+            <Settings className="h-6 w-6" aria-hidden />
+          </span>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Platform Settings</h1>
+            <p className="text-sm text-slate-500">Configure fees, commission, wallet limits, GST, and penalties</p>
+          </div>
         </div>
+      </motion.div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Platform Fee */}
+        <SettingsSection
+          icon={Percent}
+          title="Platform Fee"
+          description="Fee charged to customers on each booking"
+        >
+          <div>
+            <label className={labelClass}>Fee Type</label>
+            <select
+              className={inputClass + ' mt-1.5'}
+              value={feeType}
+              onChange={(e) => setFeeType(e.target.value)}
+            >
+              <option value="percentage">Percentage (%)</option>
+              <option value="fixed">Fixed (₹)</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Value</label>
+            <input
+              className={inputClass + ' mt-1.5'}
+              type="number"
+              min={0}
+              placeholder={feeType === 'percentage' ? 'e.g. 5' : 'e.g. 50'}
+              value={feeValue}
+              onChange={(e) => setFeeValue(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="fee-active"
+              checked={feeActive}
+              onChange={(e) => setFeeActive(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+            />
+            <label htmlFor="fee-active" className="text-sm font-medium text-slate-700">Active</label>
+          </div>
+          <AppPrimaryButton
+            type="button"
+            loading={saving === 'Platform Fee'}
+            onClick={() => handleSave('Platform Fee', adminSettingsApi.updatePlatformFees, {
+              type: feeType,
+              value: Number(feeValue),
+              isActive: feeActive,
+            })}
+          >
+            Save Platform Fee
+          </AppPrimaryButton>
+        </SettingsSection>
+
+        {/* Commission */}
+        <SettingsSection
+          icon={IndianRupee}
+          title="Commission"
+          description="Percentage the platform takes from laborers"
+        >
+          <div>
+            <label className={labelClass}>Commission Percentage</label>
+            <input
+              className={inputClass + ' mt-1.5'}
+              type="number"
+              min={0}
+              max={100}
+              placeholder="e.g. 10"
+              value={commissionPercent}
+              onChange={(e) => setCommissionPercent(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="commission-active"
+              checked={commissionActive}
+              onChange={(e) => setCommissionActive(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+            />
+            <label htmlFor="commission-active" className="text-sm font-medium text-slate-700">Active</label>
+          </div>
+          <AppPrimaryButton
+            type="button"
+            loading={saving === 'Commission'}
+            onClick={() => handleSave('Commission', adminSettingsApi.updateCommission, {
+              type: commissionType,
+              globalPercentage: Number(commissionPercent),
+              isActive: commissionActive,
+            })}
+          >
+            Save Commission
+          </AppPrimaryButton>
+        </SettingsSection>
+
+        {/* Wallet Limit */}
+        <SettingsSection
+          icon={Wallet}
+          title="Wallet Limit"
+          description="Max cash liability a laborer can hold before being blocked"
+        >
+          <div>
+            <label className={labelClass}>Limit Amount (₹)</label>
+            <input
+              className={inputClass + ' mt-1.5'}
+              type="number"
+              min={0}
+              placeholder="e.g. 200"
+              value={walletLimit}
+              onChange={(e) => setWalletLimit(e.target.value)}
+            />
+          </div>
+          <AppPrimaryButton
+            type="button"
+            loading={saving === 'Wallet Limit'}
+            onClick={() => handleSave('Wallet Limit', adminSettingsApi.updateWalletLimit, {
+              walletLimit: Number(walletLimit),
+            })}
+          >
+            Save Wallet Limit
+          </AppPrimaryButton>
+        </SettingsSection>
+
+        {/* GST */}
+        <SettingsSection
+          icon={Receipt}
+          title="GST Percentage"
+          description="Tax applied on (basePrice + platformFee)"
+        >
+          <div>
+            <label className={labelClass}>GST (%)</label>
+            <input
+              className={inputClass + ' mt-1.5'}
+              type="number"
+              min={0}
+              max={100}
+              placeholder="e.g. 18"
+              value={gstPercentage}
+              onChange={(e) => setGstPercentage(e.target.value)}
+            />
+          </div>
+          <AppPrimaryButton
+            type="button"
+            loading={saving === 'GST'}
+            onClick={() => handleSave('GST', adminSettingsApi.updateGst, {
+              gstPercentage: Number(gstPercentage),
+            })}
+          >
+            Save GST
+          </AppPrimaryButton>
+        </SettingsSection>
+
+        {/* Cancellation Penalty */}
+        <SettingsSection
+          icon={AlertTriangle}
+          title="Cancellation Penalty"
+          description="Fixed penalty charged to labourers for cancelling an accepted job"
+          accent="amber-600"
+        >
+          <div>
+            <label className={labelClass}>Penalty Amount (₹)</label>
+            <input
+              className={inputClass + ' mt-1.5'}
+              type="number"
+              min={0}
+              placeholder="e.g. 50"
+              value={cancellationPenalty}
+              onChange={(e) => setCancellationPenalty(e.target.value)}
+            />
+          </div>
+          <AppPrimaryButton
+            type="button"
+            loading={saving === 'Penalty'}
+            onClick={() => handleSave('Penalty', adminSettingsApi.updatePenalty, {
+              cancellationPenalty: Number(cancellationPenalty),
+            })}
+          >
+            Save Penalty
+          </AppPrimaryButton>
+        </SettingsSection>
       </div>
     </div>
   )
