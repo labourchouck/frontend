@@ -12,7 +12,9 @@ import { appShellChildRoutes } from './routes/appRoutes.jsx'
 import { bootRoutes } from './routes/bootRoutes.jsx'
 import { corporateChildRoutes } from './routes/corporateRoutes.jsx'
 import { vendorChildRoutes } from './routes/vendorRoutes.jsx'
-import { AdminLabourCategoriesPage } from './pages/admin/AdminLabourCategoriesPage.jsx'
+import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage.jsx'
+import { AdminSubCategoriesPage } from './pages/admin/AdminSubCategoriesPage.jsx'
+import { AdminServicesPage } from './pages/admin/AdminServicesPage.jsx'
 import { AdminLoginPage } from './pages/admin/AdminLoginPage.jsx'
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage.jsx'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx'
@@ -91,7 +93,9 @@ function App() {
             }
           >
             <Route index element={<AdminDashboardPage />} />
-            <Route path="categories" element={<AdminLabourCategoriesPage />} />
+            <Route path="categories" element={<AdminCategoriesPage />} />
+            <Route path="sub-categories" element={<AdminSubCategoriesPage />} />
+            <Route path="services" element={<AdminServicesPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="labour" element={<AdminLabourPage />} />
             <Route path="business-verification" element={<AdminBusinessVerificationPage />} />

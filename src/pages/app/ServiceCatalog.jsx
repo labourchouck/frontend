@@ -35,18 +35,7 @@ export function ServiceCatalog() {
   }, [])
 
   const handleSubcategorySelect = useCallback((subcategory, category, group) => {
-    const prev = readBookingDraft() || {}
-    writeBookingDraft({
-      ...prev,
-      entryPoint: 'search',
-      groupId: String(group._id),
-      groupName: group.name,
-      categoryId: String(category._id),
-      categoryName: category.name || '',
-      matchMode: 'smart',
-      selectedWorkers: [],
-    })
-    navigate(buildBookingFlowPath('type', { categoryId: category._id, groupId: group._id }))
+    navigate(`/app/sub-category/${subcategory._id}`, { state: { cat: subcategory } })
   }, [navigate])
 
   if (loading) {

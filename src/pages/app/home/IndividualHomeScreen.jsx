@@ -93,9 +93,8 @@ export function IndividualHomeScreen({ user }) {
   }, [navigate])
 
   const handleQuickBookCategory = useCallback((cat) => {
-    setQuickBookCategory(cat)
-    setQuickBookModeOpen(true)
-  }, [])
+    navigate(`/app/sub-category/${cat._id}`, { state: { cat } })
+  }, [navigate])
 
   const handleQuickBookMode = useCallback(
     (mode) => {

@@ -19,6 +19,7 @@ import { JobTracking } from '../pages/app/JobTracking.jsx'
 import { MyBookings } from '../pages/app/MyBookings.jsx'
 import { ActiveJob } from '../pages/app/ActiveJob.jsx'
 import { LaborWallet } from '../pages/app/LaborWallet.jsx'
+import { AppSubCategoryServicePage } from '../pages/app/AppSubCategoryServicePage.jsx'
 import { USER_ROLES } from '../constants/userRoles.js'
 
 const BUILDMART_ROLES = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
@@ -57,6 +58,15 @@ export const appShellChildRoutes = (
       element={
         <RoleRoute allow={[USER_ROLES.INDIVIDUAL]} allowGuest>
           <ServiceCatalog />
+        </RoleRoute>
+      }
+    />
+    {/* New: Sub Category Service Page */}
+    <Route
+      path="sub-category/:id"
+      element={
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]} allowGuest>
+          <AppSubCategoryServicePage />
         </RoleRoute>
       }
     />

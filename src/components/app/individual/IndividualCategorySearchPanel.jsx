@@ -124,13 +124,7 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
   )
 
   const pickCategory = (cat) => {
-    const cid = String(cat._id)
-    if (categoryId === cid) {
-      setCategoryId(null)
-      return
-    }
-    setCategoryId(cid)
-    setGroupId(String(cat.groupId || groupId || ''))
+    navigate(`/app/sub-category/${cat._id}`, { state: { cat } })
   }
 
   const continueToBooking = useCallback(() => {
@@ -285,18 +279,7 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
           <p className="mt-12 text-center text-sm text-slate-500">No skills in this area yet.</p>
         ) : null}
       </div>
-
-      <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 mx-auto max-w-lg border-t border-slate-100 bg-white px-4 py-3">
-        <button type="button" disabled={!categoryId} onClick={continueToBooking} className={BTN_CONTINUE}>
-          Continue to book
-          <ChevronRight className="h-4 w-4" aria-hidden />
-        </button>
-        {selectedCategory ? (
-          <p className="mt-1.5 truncate text-center text-[11px] text-slate-500">
-            <span className="font-semibold text-slate-700">{selectedCategory.name}</span>
-          </p>
-        ) : null}
-      </div>
+      {/* Continue button removed because we navigate directly now */}
     </div>
   )
 }
