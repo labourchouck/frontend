@@ -1,5 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { bookingsApi } from '../../api/bookingsApi.js'
+import { AppPrimaryButton } from '../app/AppPrimaryButton.jsx'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -33,13 +35,38 @@ const STATUS_DOT = {
 /**
  * Full assignment brief — project timeline, site, supervisor, per-day attendance.
  */
-export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assignmentKind = 'active' }) {
+export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assignmentKind = 'active', onRefresh }) {
   const reduce = useReducedMotion()
 
   const detail = useMemo(() => {
     if (!open || !job) return null
     return buildAssignmentDetailSnapshot(readAttendanceEntries(), job, rawJob)
   }, [open, job, rawJob])
+
+  const [otp, setOtp] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const handleStatusUpdate = async (nextStatus, requireOtp) => {
+    if (requireOtp && !otp) {
+      setErrorMsg('OTP is required.')
+      return
+    }
+    setLoading(true)
+    setErrorMsg('')
+    try {
+      await bookingsApi.updateBookingStatus(rawJob._id, { status: nextStatus, otp })
+      setOtp('')
+      if (onRefresh) onRefresh()
+      if (nextStatus === 'COMPLETED') {
+        onClose()
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to update status.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (typeof document === 'undefined') return null
 
@@ -188,6 +215,79 @@ export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assign
                 </AppSecondaryButton>
               </GlassPanel>
             </section>
+
+            {rawJob && assignmentKind === 'active' && !['COMPLETED', 'CANCELLED'].includes(rawJob.status) ? (
+              <section>
+                <h2 className="mb-2 px-0.5 text-xs font-bold uppercase tracking-wider text-brand">
+                  Live Job Actions
+                </h2>
+                <GlassPanel className="space-y-3 border-brand/20 bg-brand/5 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-800">Current Status:</span>
+                    <AppBadge variant="brand">{rawJob.status}</AppBadge>
+                  </div>
+                  
+                  {errorMsg && (
+                    <p className="text-xs font-bold text-rose-600">{errorMsg}</p>
+                  )}
+
+                  {rawJob.status === 'ACCEPTED' && (
+                    <AppPrimaryButton 
+                      type="button" 
+                      onClick={() => handleStatusUpdate('EN_ROUTE', false)}
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      {loading ? 'Updating...' : 'I am En Route'}
+                    </AppPrimaryButton>
+                  )}
+
+                  {rawJob.status === 'EN_ROUTE' && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-600">Ask the customer for the Start OTP to begin.</p>
+                      <input 
+                        type="text" 
+                        placeholder="Enter Start OTP" 
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
+                        maxLength={4}
+                      />
+                      <AppPrimaryButton 
+                        type="button" 
+                        onClick={() => handleStatusUpdate('STARTED', true)}
+                        disabled={loading || otp.length < 4}
+                        className="w-full"
+                      >
+                        {loading ? 'Updating...' : 'Start Job'}
+                      </AppPrimaryButton>
+                    </div>
+                  )}
+
+                  {rawJob.status === 'STARTED' && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-600">Ask the customer for the Completion OTP to finish.</p>
+                      <input 
+                        type="text" 
+                        placeholder="Enter Completion OTP" 
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
+                        maxLength={4}
+                      />
+                      <AppPrimaryButton 
+                        type="button" 
+                        onClick={() => handleStatusUpdate('COMPLETED', true)}
+                        disabled={loading || otp.length < 4}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        {loading ? 'Updating...' : 'Complete Job'}
+                      </AppPrimaryButton>
+                    </div>
+                  )}
+                </GlassPanel>
+              </section>
+            ) : null}
 
             <section>
               <h2 className="mb-2 px-0.5 text-xs font-bold uppercase tracking-wider text-slate-400">Supervisor</h2>

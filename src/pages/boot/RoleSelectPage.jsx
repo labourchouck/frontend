@@ -44,6 +44,10 @@ export function RoleSelectPage() {
   }, [isAuthenticated, loading, navigate, realUser?.role, token, user?.role])
 
   function handleSelect(role) {
+    if (role === USER_ROLES.LABOUR) {
+      navigate('/auth', { replace: true, state: { defaultRole: role } })
+      return
+    }
     setBootRole(role)
     navigate(getRoleHomePath(role), { replace: true })
   }

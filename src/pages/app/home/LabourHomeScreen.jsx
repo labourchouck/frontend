@@ -55,12 +55,9 @@ import {
   readAttendanceEntries,
   subscribeAttendance,
 } from '../../../lib/labourAttendanceStorage.js'
-import {
-  loadJobDemoState,
-  nowIso,
-  saveJobDemoState,
-  subscribeJobDemo,
-} from '../../../lib/labourJobDemoStorage.js'
+import { useLabourSocket } from '../../../hooks/useLabourSocket.js'
+import { bookingsApi } from '../../../api/bookingsApi.js'
+import { broadcastsApi } from '../../../api/broadcastsApi.js'
 import { readWalletState, subscribeWallet } from '../../../lib/labourWalletStorage.js'
 import {
   buildAttendanceHistoryRows,
@@ -134,7 +131,19 @@ export function LabourHomeScreen({ user }) {
   const now = useNow(1000)
   const [entries, setEntries] = useState(readAttendanceEntries)
   const [wallet, setWallet] = useState(readWalletState)
-  const [jobs, setJobs] = useState(loadJobDemoState)
+  const [jobs, setJobs] = useState({ offers: [], active: [], history: [] }) // legacy fallback if needed
+  const { liveOffers, removeOfferLocal } = useLabourSocket()
+  const [activeBookings, setActiveBookings] = useState([])
+
+  const loadBookings = useCallback(() => {
+    bookingsApi.getMyBookings().then(res => {
+      setActiveBookings(res.data?.bookings || [])
+    }).catch(console.error)
+  }, [])
+  
+  useEffect(() => {
+    loadBookings()
+  }, [loadBookings])
   const [toast, setToast] = useState('')
   const [safetyIdx, setSafetyIdx] = useState(0)
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
@@ -161,7 +170,7 @@ export function LabourHomeScreen({ user }) {
 
   useEffect(() => subscribeAttendance(setEntries), [])
   useEffect(() => subscribeWallet(setWallet), [])
-  useEffect(() => subscribeJobDemo(setJobs), [])
+  // Removed dummy subscribeJobDemo
   useEffect(() => subscribeLabourNotifications(() => setNotifTick((t) => t + 1)), [])
 
   useEffect(() => {
@@ -192,9 +201,46 @@ export function LabourHomeScreen({ user }) {
   )
   const lastIn = useMemo(() => [...todayPunches].reverse().find((e) => e.type === 'in'), [todayPunches])
 
-  const todayAssignment = useMemo(() => pickTodayAssignment(jobs), [jobs])
+  const todayBooking = useMemo(() => {
+    return activeBookings.find(b => ['ACCEPTED', 'EN_ROUTE', 'STARTED'].includes(b.status))
+  }, [activeBookings])
+
+  const todayAssignment = useMemo(() => {
+    if (!todayBooking) return { job: null, kind: null, raw: null }
+    return {
+      kind: 'active',
+      raw: todayBooking,
+      job: {
+        _id: todayBooking._id,
+        siteName: todayBooking.address?.locationText || 'Assigned Site',
+        title: todayBooking.address?.locationText || 'Assigned Site',
+        role: todayBooking.subcategoryId?.name || 'Worker',
+        location: todayBooking.address?.locationText || '',
+        shiftLabel: todayBooking.durationKind === 'full_day' ? 'Full day shift' : 'Job',
+        rateLabel: `${formatInrFromPaise(todayBooking.laborShare * 100)} payout`,
+        contractor: todayBooking.userId?.name || 'Customer',
+        mapQuery: `${todayBooking.address?.coordinates?.coordinates[1]},${todayBooking.address?.coordinates?.coordinates[0]}`,
+        facilities: ['Water', 'Rest area'],
+        supervisor: todayBooking.userId?.name || 'Customer',
+        supervisorPhone: todayBooking.userId?.phone || '',
+      }
+    }
+  }, [todayBooking])
+  
   const todayJob = todayAssignment.job
-  const schedule = useMemo(() => buildUpcomingSchedule(jobs), [jobs])
+
+  const schedule = useMemo(() => {
+    const scheduled = activeBookings.filter(b => b.type === 'SCHEDULED' && ['ACCEPTED'].includes(b.status) && b._id !== todayBooking?._id)
+    return scheduled.map(b => ({
+      id: b._id,
+      when: new Date(b.scheduledAt).toLocaleDateString(),
+      siteName: b.address?.locationText,
+      role: b.subcategoryId?.name || 'Worker',
+      shiftLabel: b.timeSlot,
+      tone: 'brand'
+    }))
+  }, [activeBookings, todayBooking])
+
   const historyRows = useMemo(() => buildAttendanceHistoryRows(entries), [entries])
 
   const withdrawnPaise = useMemo(
@@ -278,34 +324,26 @@ export function LabourHomeScreen({ user }) {
     }
   }, [pendingCheckIn, performCheckIn])
 
-  const handleAcceptOffer = (offerId) => {
+  const handleAcceptOffer = async (offerId) => {
     if (!kycOk) {
       showToast('Complete Aadhaar KYC before accepting jobs.')
       navigate('/app/kyc')
       return
     }
-    const offer = jobs.offers.find((o) => o.id === offerId)
-    if (!offer) return
-    saveJobDemoState({
-      ...jobs,
-      offers: jobs.offers.filter((o) => o.id !== offerId),
-      active: [...jobs.active, { ...offer, acceptedAt: nowIso() }],
-    })
-    markNotificationRead(`job:${offerId}`)
-    setJobs(loadJobDemoState())
-    setNotifTick((t) => t + 1)
-    showToast('Job accepted — see Active in My Jobs.')
+    try {
+      await broadcastsApi.acceptBroadcast(offerId)
+      removeOfferLocal(offerId)
+      loadBookings() // Refresh active jobs
+      showToast('Job accepted — see Active in My Jobs.')
+    } catch (err) {
+      removeOfferLocal(offerId)
+      showToast(err.message || 'Failed to accept job. It might have expired.')
+    }
   }
 
   const openDrawer = () => window.dispatchEvent(new CustomEvent('lc-open-app-drawer'))
 
-  const alertOffers = useMemo(
-    () =>
-      jobs.offers
-        .slice(0, 3)
-        .map((o) => ({ ...o, km: offerDistanceKm(o.id) })),
-    [jobs.offers],
-  )
+  // Legacy alertOffers removed, we use liveOffers from socket
 
   const safetyBanner = SAFETY_BANNERS[safetyIdx]
 
@@ -691,52 +729,43 @@ export function LabourHomeScreen({ user }) {
           </GlassPanel>
         </motion.section>
 
-        {/* 6. Job alerts */}
-        {alertOffers.length > 0 ? (
+        {/* 6. Job alerts (Flash Broadcasts) */}
+        {liveOffers.length > 0 ? (
           <section aria-label="New job alerts">
-            <AppSectionHeader title="New assignments" className="mb-2 px-0.5" />
+            <AppSectionHeader title="New flash assignments" className="mb-2 px-0.5" />
             <ul className="space-y-3">
-              {alertOffers.map((offer) => (
-                <li key={offer.id}>
+              {liveOffers.map((offer) => (
+                <li key={offer.bookingId}>
                   <GlassPanel
-                    className={`relative overflow-hidden border-2 p-4 ${
-                      offer.urgency === 'high'
-                        ? 'border-amber-300/80 bg-amber-50/50'
-                        : 'border-slate-200/90'
-                    }`}
+                    className="relative overflow-hidden border-2 p-4 border-amber-300/80 bg-amber-50/50"
                   >
-                    {offer.urgency === 'high' ? (
-                      <motion.div
-                        className="pointer-events-none absolute inset-0 rounded-[inherit] ring-2 ring-amber-400/50"
-                        animate={reduce ? undefined : { opacity: [0.4, 0.9, 0.4] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        aria-hidden
-                      />
-                    ) : null}
+                    <motion.div
+                      className="pointer-events-none absolute inset-0 rounded-[inherit] ring-2 ring-amber-400/50"
+                      animate={reduce ? undefined : { opacity: [0.4, 0.9, 0.4] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      aria-hidden
+                    />
                     <div className="relative flex items-start gap-2">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
                         <Flame className="h-4 w-4" aria-hidden />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-amber-800">New job</p>
-                        <p className="text-sm font-extrabold text-slate-900">{offer.trade} needed</p>
+                        <p className="text-sm font-extrabold text-slate-900">{formatInrFromPaise((offer.laborShare || 0) * 100)} payout</p>
                         <p className="mt-0.5 text-xs text-slate-600">
-                          {offer.km} km away · {offer.rateLabel}
+                          {offer.radiusKm ? `${offer.radiusKm} km radius` : ''} · {offer.type}
                         </p>
-                        <p className="mt-0.5 truncate text-xs text-slate-500">{offer.site}</p>
+                        <p className="mt-0.5 truncate text-xs text-slate-500">{offer.address?.locationText}</p>
                       </div>
                     </div>
                     <div className="relative mt-3 flex gap-2">
                       <AppPrimaryButton
                         type="button"
-                        onClick={() => handleAcceptOffer(offer.id)}
+                        onClick={() => handleAcceptOffer(offer.bookingId)}
                         className="flex-1 py-2.5 text-xs"
                       >
                         Accept job
                       </AppPrimaryButton>
-                      <AppSecondaryButton as={Link} to="/app/jobs" className="shrink-0 py-2.5 text-xs">
-                        View
-                      </AppSecondaryButton>
                     </div>
                   </GlassPanel>
                 </li>
@@ -960,6 +989,7 @@ export function LabourHomeScreen({ user }) {
         job={todayJob}
         rawJob={todayAssignment.raw}
         assignmentKind={todayAssignment.kind}
+        onRefresh={loadBookings}
       />
     </motion.div>
   )

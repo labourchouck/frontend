@@ -15,6 +15,9 @@ import {
   BadgeIndianRupee,
   BarChart3,
   Settings,
+  Image,
+  MessageSquare,
+  UserCog,
 } from 'lucide-react'
 
 /**
@@ -66,6 +69,7 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/bookings', label: 'Bookings & requests', icon: ClipboardList },
       { to: '/admin/allocations', label: 'Workforce allocation', icon: Network },
       { to: '/admin/attendance', label: 'Attendance', icon: Clock },
+      { to: '/admin/complaints', label: 'Complaints', icon: MessageSquare },
     ],
   },
   {
@@ -80,13 +84,23 @@ export const ADMIN_NAV_SECTIONS = [
     items: [{ to: '/admin/reports', label: 'Reports & analytics', icon: BarChart3 }],
   },
   {
+    title: 'Content',
+    items: [{ to: '/admin/banners', label: 'Banners', icon: Image }],
+  },
+  {
     title: 'System',
-    items: [{ to: '/admin/settings', label: 'Settings', icon: Settings }],
+    items: [
+      { to: '/admin/profile', label: 'Profile', icon: UserCog },
+      { to: '/admin/settings', label: 'Settings', icon: Settings }
+    ],
   },
 ]
 
 const ROUTE_TITLES = [
+  { prefix: '/admin/profile', title: 'Profile' },
+  { prefix: '/admin/complaints', title: 'Complaints' },
   { prefix: '/admin/settings', title: 'Settings' },
+  { prefix: '/admin/banners', title: 'Banners' },
   { prefix: '/admin/reports', title: 'Reports & analytics' },
   { prefix: '/admin/pricing', title: 'Pricing & rates' },
   { prefix: '/admin/billing', title: 'Payments & billing' },

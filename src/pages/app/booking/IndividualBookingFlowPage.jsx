@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
@@ -14,6 +14,7 @@ import {
   MessageCircle,
   Navigation,
   Phone,
+  Star,
   Zap,
 } from 'lucide-react'
 import { AppStackScreenHeader } from '../../../components/app/AppStackScreenHeader.jsx'
@@ -21,22 +22,19 @@ import { AppButton } from '../../../components/app-ui/buttons/AppButton.jsx'
 import { AppTextInput } from '../../../components/app-ui/inputs/AppTextInput.jsx'
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
+import { bookingsApi } from '../../../api/bookingsApi.js'
+import { uploadMedia, assetUrlFromUpload } from '../../../api/uploadApi.js'
 import { BookingFindingScreen } from '../../../components/app/booking/BookingFindingScreen.jsx'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { BookingStepProgress } from '../../../components/app/booking/BookingStepProgress.jsx'
 import { BookingServiceHighlight } from '../../../components/app/booking/BookingServiceHighlight.jsx'
+import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
+import { useBookingSocket } from '../../../hooks/useBookingSocket.js'
 import {
-  BOOKING_JOB_TIMELINE,
   PAYMENT_METHODS,
-  bookingPayloadFromDraft,
-  createIndividualBookingRecord,
   durationKindLabel,
   durationKindToDays,
-  estimateIndividualBooking,
-  findBookingByRef,
   formatInr,
-  loadIndividualBookings,
-  saveIndividualBookings,
   todayISODate,
 } from '../../../lib/individualBookings.js'
 import {
@@ -46,8 +44,6 @@ import {
   writeBookingDraft,
 } from '../../../lib/individualBookingDraft.js'
 import { readAppUserLocation, writeAppUserLocation } from '../../../lib/appUserLocationStorage.js'
-import { useCreateRequestMutation } from '../../../store/api/workforceApi.js'
-import { enrichDiscoverLabourUi } from '../../../lib/discoverLabourDummyUi.js'
 import {
   APP_HOME_LOCATION,
   BOOKING_FLOW_PATH,
@@ -75,21 +71,28 @@ function BookingPrimaryButton({ children, className = '', ...rest }) {
 
 export function IndividualBookingFlowPage() {
   const navigate = useNavigate()
-  const [createRequest] = useCreateRequestMutation()
   const location = useLocation()
   const reduce = useReducedMotion()
   const [searchParams] = useSearchParams()
   const step = searchParams.get('step') || 'type'
-  const refParam = searchParams.get('ref')?.trim() || ''
+  
   const categoryIdParam = searchParams.get('categoryId')?.trim() || ''
   const groupIdParam = searchParams.get('groupId')?.trim() || ''
 
   const [draft, setDraft] = useState(() => readBookingDraft() || {})
   const [formError, setFormError] = useState('')
   const [typeSheetOpen, setTypeSheetOpen] = useState(false)
+  const [activeBookingId, setActiveBookingId] = useState(null)
   const [activeBooking, setActiveBooking] = useState(null)
   const [noMatch, setNoMatch] = useState(false)
   const [imageFiles, setImageFiles] = useState([])
+  
+  const [calculatedBill, setCalculatedBill] = useState(null)
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
+
+  const { bookingEvent } = useBookingSocket(activeBookingId)
 
   const syncDraft = useCallback((patch) => {
     setDraft((prev) => {
@@ -103,9 +106,8 @@ export function IndividualBookingFlowPage() {
     () => ({
       categoryId: draft.categoryId || categoryIdParam,
       groupId: draft.groupId || groupIdParam,
-      ref: refParam || undefined,
     }),
-    [categoryIdParam, draft.categoryId, draft.groupId, groupIdParam, refParam],
+    [categoryIdParam, draft.categoryId, draft.groupId, groupIdParam],
   )
 
   const goStep = useCallback(
@@ -133,6 +135,28 @@ export function IndividualBookingFlowPage() {
   }, [categoryIdParam, groupIdParam, syncDraft])
 
   useEffect(() => {
+    if (!bookingEvent) return
+    if (bookingEvent.type === 'BOOKING_ACCEPTED') {
+      goStep('active')
+      bookingsApi.getBookingStatus(activeBookingId).then(res => {
+        if (res.data?.booking) setActiveBooking(res.data.booking)
+      }).catch(err => console.error(err))
+    } else if (bookingEvent.type === 'BOOKING_FAILED') {
+      setNoMatch(true)
+    } else if (bookingEvent.type === 'BOOKING_STATUS_UPDATE') {
+      const newStatus = bookingEvent.data?.status
+      setActiveBooking(prev => prev ? { ...prev, status: newStatus } : null)
+      if (newStatus === 'COMPLETED') {
+        // Refresh booking details then show review prompt
+        bookingsApi.getBookingStatus(activeBookingId).then(res => {
+          if (res.data?.booking) setActiveBooking(res.data.booking)
+        }).catch(() => {})
+        setReviewOpen(true)
+      }
+    }
+  }, [bookingEvent, activeBookingId, goStep])
+
+  useEffect(() => {
     const cid = categoryIdParam
     const gid = groupIdParam
     if (!cid) return
@@ -149,8 +173,11 @@ export function IndividualBookingFlowPage() {
           if (gid && String(g._id) !== gid) continue
           const cat = (g.categories || []).find((c) => String(c._id) === String(cid))
           if (cat) {
+            const subcat = cat.subcategories?.[0]
+            const srv = subcat?.services?.[0]
             syncDraft({
               categoryId: String(cat._id),
+              serviceId: srv ? String(srv._id) : String(cat._id), 
               categoryName: cat.name || '',
               groupId: String(g._id),
               groupName: g.name || '',
@@ -167,18 +194,11 @@ export function IndividualBookingFlowPage() {
   }, [categoryIdParam, groupIdParam, syncDraft])
 
   useEffect(() => {
-    if (!refParam || activeBooking) return
-    const found = findBookingByRef(loadIndividualBookings(), refParam)
-    if (found) queueMicrotask(() => setActiveBooking(found))
-  }, [refParam, activeBooking])
-
-  useEffect(() => {
     if (location.pathname !== BOOKING_FLOW_PATH) return
-    if (refParam) return
     if (!draft.categoryId && !categoryIdParam && !['type'].includes(step)) {
       leaveFlow()
     }
-  }, [categoryIdParam, draft.categoryId, leaveFlow, location.pathname, refParam, step])
+  }, [categoryIdParam, draft.categoryId, leaveFlow, location.pathname, step])
 
   useEffect(() => {
     if (location.pathname !== BOOKING_FLOW_PATH) return
@@ -193,16 +213,6 @@ export function IndividualBookingFlowPage() {
       cancelled = true
     }
   }, [draft.bookingType, draft.entryPoint, goStep, location.pathname, step])
-
-  const estimate = useMemo(() => {
-    const lines = [
-      {
-        quantity: Math.max(1, (draft.selectedWorkers || []).length || 1),
-      },
-    ]
-    const days = durationKindToDays(draft.durationKind, draft.durationDays)
-    return estimateIndividualBooking({ lines, durationDays: days })
-  }, [draft.durationDays, draft.durationKind, draft.selectedWorkers])
 
   const pickLocation = () => {
     if (!navigator.geolocation) return
@@ -239,75 +249,69 @@ export function IndividualBookingFlowPage() {
         return false
       }
     }
-    if (draft.matchMode === 'manual' && !(draft.selectedWorkers || []).length) {
-      setFormError('Select at least one worker from the list first.')
-      return false
-    }
     setFormError('')
     return true
   }
 
+  const handleReviewBooking = async () => {
+    if (!validateDetails()) return
+    setIsCalculating(true)
+    try {
+      const days = durationKindToDays(draft.durationKind, draft.durationDays)
+      const res = await bookingsApi.calculateBill({
+        serviceId: draft.serviceId || draft.categoryId, // Fallback
+        durationDays: days
+      })
+      setCalculatedBill(res.data)
+      goStep('summary')
+    } catch (err) {
+      setFormError(err.message || 'Failed to calculate bill.')
+    } finally {
+      setIsCalculating(false)
+    }
+  }
+
   const confirmBooking = async () => {
     if (!validateDetails()) return
+    setIsCreating(true)
     writeAppUserLocation({ address: draft.address.trim(), lat: draft.lat, lng: draft.lng })
-    const payload = bookingPayloadFromDraft({
-      ...draft,
-      imageNames: imageFiles.map((f) => f.name),
-    })
-    const record = createIndividualBookingRecord(payload)
-    const stored = loadIndividualBookings()
-    saveIndividualBookings([record, ...stored])
 
     try {
-      await createRequest({
-        lines: [{ categoryId: draft.categoryId, quantity: draft.workers || 1 }],
-        startDate: draft.bookingType === 'scheduled' && draft.serviceDate ? draft.serviceDate : new Date().toISOString().slice(0, 10),
+      const uploadedImageUrls = []
+      for (const file of imageFiles) {
+        const res = await uploadMedia(file, 'job-posters')
+        const url = assetUrlFromUpload(res)
+        if (url) uploadedImageUrls.push(url)
+      }
+
+      const days = durationKindToDays(draft.durationKind, draft.durationDays)
+      const payload = {
+        serviceId: draft.serviceId || draft.categoryId,
+        type: draft.bookingType === 'scheduled' ? 'SCHEDULED' : 'INSTANT',
         locationText: draft.address.trim(),
-        notes: payload.notes,
-        bookingType: draft.bookingType,
-        scheduleType: 'daily',
-      }).unwrap()
-    } catch {
-      /* local history still saved; admin queue optional when offline */
+        lat: draft.lat || 28.6139, 
+        lng: draft.lng || 77.2090, 
+        paymentMethod: draft.paymentMethod || 'CASH', 
+        notes: draft.notes,
+        durationKind: draft.durationKind,
+        durationDays: days,
+        timeSlot: draft.timeSlot,
+        scheduledAt: draft.serviceDate,
+        imageNames: uploadedImageUrls,
+      }
+
+      const res = await bookingsApi.createBooking(payload)
+      const createdBooking = res.data.booking
+      setActiveBookingId(createdBooking._id)
+      patchBookingDraft({ lastRef: createdBooking._id })
+      setNoMatch(false)
+      goStep('searching')
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Failed to create booking')
+    } finally {
+      setIsCreating(false)
     }
-
-    setActiveBooking(record)
-    patchBookingDraft({ lastRef: record.ref })
-    goStep('searching')
-  }
-
-  const simulateAccept = useCallback(() => {
-    if (!activeBooking) return
-    const worker =
-      draft.matchMode === 'smart'
-        ? {
-            id: 'smart-match',
-            displayName: 'Matched worker',
-            photoUrl: enrichDiscoverLabourUi({ id: 'smart', displayName: 'Raju S.' }).photoUrl,
-            phone: '+91 98••• •••42',
-          }
-        : (draft.selectedWorkers || [])[0] || null
-
-    const updated = {
-      ...activeBooking,
-      status: 'accepted',
-      assignedWorker: worker,
-      jobTimelineStep: 'accepted',
-      etaMinutes: 22,
-    }
-    setActiveBooking(updated)
-    const stored = loadIndividualBookings().map((b) => (b.id === updated.id ? updated : b))
-    saveIndividualBookings(stored)
-    goStep('active')
-    setNoMatch(false)
-  }, [activeBooking, draft.matchMode, draft.selectedWorkers, goStep])
-
-  const handleFindingComplete = () => {
-    simulateAccept()
-  }
-
-  const handleNoMatch = () => {
-    setNoMatch(true)
   }
 
   const wizardIndex = step === 'type' ? 0 : step === 'details' ? 1 : step === 'summary' ? 2 : 3
@@ -319,8 +323,8 @@ export function IndividualBookingFlowPage() {
         <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
         <BookingFindingScreen
           categoryLabel={draft.categoryName}
-          onComplete={handleFindingComplete}
-          onNoMatch={handleNoMatch}
+          onComplete={() => {}} 
+          onNoMatch={() => {}} 
         />
       </div>
     )
@@ -329,17 +333,17 @@ export function IndividualBookingFlowPage() {
   if (noMatch) {
     return (
       <div className="space-y-4 pb-8">
-        <AppStackScreenHeader title="No match" onBack={() => navigate('/app/discover/labours')} />
+        <AppStackScreenHeader title="No match" onBack={() => navigate('/app/home')} />
         <GlassPanel className="p-6 text-center">
           <AlertCircle className="mx-auto h-10 w-10 text-amber-500" aria-hidden />
-          <p className="mt-3 text-sm font-bold text-slate-900">No labour accepted within 5 minutes</p>
-          <p className="mt-2 text-xs text-slate-600">You can retry with smart match or pick workers manually.</p>
+          <p className="mt-3 text-sm font-bold text-slate-900">No labour accepted within radius</p>
+          <p className="mt-2 text-xs text-slate-600">You can retry searching.</p>
           <motion.div layout className="mt-5 flex flex-col gap-2">
-            <BookingPrimaryButton type="button" onClick={() => { setNoMatch(false); goStep('searching') }}>
+            <BookingPrimaryButton type="button" onClick={() => { setNoMatch(false); confirmBooking() }}>
               Retry search
             </BookingPrimaryButton>
-            <AppButton type="button" variant="secondary" onClick={() => navigate('/app/discover/labours')}>
-              Change workers
+            <AppButton type="button" variant="secondary" onClick={() => navigate('/app/home')}>
+              Cancel
             </AppButton>
           </motion.div>
         </GlassPanel>
@@ -349,8 +353,9 @@ export function IndividualBookingFlowPage() {
 
   if (step === 'active' || step === 'payment') {
     const booking = activeBooking
-    const worker = booking?.assignedWorker || (draft.selectedWorkers || [])[0]
-    const timelineIdx = BOOKING_JOB_TIMELINE.findIndex((t) => t.id === (booking?.jobTimelineStep || 'accepted'))
+    const worker = booking?.laborId
+    const statusSequence = ['CREATED', 'BROADCASTING', 'ACCEPTED', 'EN_ROUTE', 'STARTED', 'COMPLETED']
+    const timelineIdx = booking ? statusSequence.indexOf(booking.status) - 2 : 0
 
     return (
       <div className="space-y-4 pb-8">
@@ -364,19 +369,19 @@ export function IndividualBookingFlowPage() {
           <GlassPanel className="overflow-hidden border-slate-200/90 p-0">
             <motion.div layout className="flex gap-4 p-4">
               <img
-                src={worker.photoUrl || enrichDiscoverLabourUi(worker).photoUrl}
+                src={worker.profilePic || 'https://ui-avatars.com/api/?name=W'}
                 alt=""
                 className="h-16 w-16 rounded-2xl object-cover ring-2 ring-white"
               />
               <div className="min-w-0 flex-1">
-                <p className="text-lg font-black text-slate-900">{worker.displayName}</p>
-                <p className="text-xs font-semibold text-brand">ETA · {booking?.etaMinutes || 20} min</p>
+                <p className="text-lg font-black text-slate-900">{worker.name}</p>
+                <p className="text-xs font-semibold text-brand">{worker.phone}</p>
                 <p className="mt-1 text-[11px] text-slate-500">{draft.categoryName}</p>
               </div>
             </motion.div>
             <div className="grid grid-cols-3 gap-2 border-t border-slate-100 bg-slate-50/80 p-3">
               <a
-                href={`tel:${(worker.phone || '+919876543210').replace(/\s/g, '')}`}
+                href={`tel:${worker.phone}`}
                 className="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2.5 text-[10px] font-bold text-slate-800 ring-1 ring-slate-200/90"
               >
                 <Phone className="h-4 w-4 text-brand" aria-hidden />
@@ -403,7 +408,12 @@ export function IndividualBookingFlowPage() {
         <div className="lc-booking-flow-card">
           <p className="lc-booking-flow-label">Status</p>
           <ol className="mt-3 space-y-2">
-            {BOOKING_JOB_TIMELINE.map((t, i) => {
+            {[
+              { id: 'accepted', label: 'Accepted' },
+              { id: 'en_route', label: 'En Route' },
+              { id: 'started', label: 'Job Started' },
+              { id: 'completed', label: 'Completed' },
+            ].map((t, i) => {
               const done = i <= Math.max(0, timelineIdx)
               return (
                 <li key={t.id} className="flex items-center gap-3">
@@ -420,6 +430,22 @@ export function IndividualBookingFlowPage() {
             })}
           </ol>
         </div>
+
+        {booking && (
+          <div className="lc-booking-flow-card">
+            <p className="lc-booking-flow-label mb-2">Security OTPs</p>
+            <div className="flex gap-4">
+              <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
+                <p className="text-[10px] text-slate-500 font-semibold">Start OTP</p>
+                <p className="text-xl font-black text-slate-800 tracking-widest">{booking.startOtp}</p>
+              </div>
+              <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
+                <p className="text-[10px] text-slate-500 font-semibold">Completion OTP</p>
+                <p className="text-xl font-black text-slate-800 tracking-widest">{booking.completionOtp}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {step === 'payment' ? (
           <motion.div layout className="space-y-4">
@@ -457,26 +483,26 @@ export function IndividualBookingFlowPage() {
             <div className="lc-booking-flow-card text-sm lc-booking-flow-body">
               <div className="flex justify-between font-semibold">
                 <span>Subtotal</span>
-                <span>{formatInr(estimate.estimatedSubtotal)}</span>
+                <span>{formatInr(booking?.basePrice || 0)}</span>
               </div>
               <div className="mt-1 flex justify-between lc-booking-flow-muted">
                 <span>Platform fee</span>
-                <span>{formatInr(estimate.platformFee)}</span>
+                <span>{formatInr(booking?.platformFee || 0)}</span>
               </div>
               <div className="mt-1 flex justify-between lc-booking-flow-muted">
                 <span>Taxes (GST)</span>
-                <span>{formatInr(estimate.gst)}</span>
+                <span>{formatInr(booking?.taxes || 0)}</span>
               </div>
               <div className="mt-2 flex justify-between border-t border-slate-200 pt-2 text-base font-extrabold text-black">
                 <span>Total</span>
-                <span>{formatInr(estimate.grandTotal)}</span>
+                <span>{formatInr(booking?.totalAmount || 0)}</span>
               </div>
             </div>
             <BookingPrimaryButton
               type="button"
               onClick={() => {
                 clearBookingDraft()
-                navigate(`/app/bookings?ref=${encodeURIComponent(booking?.ref || '')}`)
+                navigate(`/app/bookings`)
               }}
             >
               <CheckCircle2 className="h-4 w-4" aria-hidden />
@@ -484,13 +510,31 @@ export function IndividualBookingFlowPage() {
             </BookingPrimaryButton>
           </motion.div>
         ) : (
-          <div className="sticky bottom-2 z-10 pt-2">
+          <div className="sticky bottom-2 z-10 space-y-2 pt-2">
+            {activeBooking?.status === 'COMPLETED' ? (
+              <BookingPrimaryButton type="button" onClick={() => setReviewOpen(true)}>
+                <Star className="h-4 w-4" aria-hidden />
+                Rate your experience
+              </BookingPrimaryButton>
+            ) : null}
             <BookingPrimaryButton type="button" onClick={() => goStep('payment')}>
               <IndianRupee className="h-4 w-4" aria-hidden />
               Proceed to payment
             </BookingPrimaryButton>
           </div>
         )}
+
+        <BookingReviewModal
+          open={reviewOpen}
+          bookingId={activeBookingId}
+          workerName={activeBooking?.laborId?.fullName || activeBooking?.laborId?.name || ''}
+          onClose={() => setReviewOpen(false)}
+          onSubmitted={() => {
+            setReviewOpen(false)
+            clearBookingDraft()
+            navigate('/app/bookings', { replace: true })
+          }}
+        />
       </div>
     )
   }
@@ -549,19 +593,6 @@ export function IndividualBookingFlowPage() {
 
       {step === 'details' ? (
         <motion.div layout className="space-y-4">
-          {draft.matchMode === 'smart' && draft.categoryId ? (
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  `/app/discover/labours?categoryId=${encodeURIComponent(draft.categoryId)}&groupId=${encodeURIComponent(draft.groupId || '')}&promptMode=1`,
-                )
-              }
-              className="w-full rounded-2xl border border-dashed border-brand/35 bg-brand/5 py-2.5 text-xs font-bold text-brand"
-            >
-              Prefer to pick workers yourself? Browse list
-            </button>
-          ) : null}
           <div>
             <FieldLabel>Work location</FieldLabel>
             <AppTextInput
@@ -701,14 +732,14 @@ export function IndividualBookingFlowPage() {
             </p>
           ) : null}
 
-          <BookingPrimaryButton type="button" onClick={() => (validateDetails() ? goStep('summary') : null)}>
-            Review booking
+          <BookingPrimaryButton type="button" onClick={handleReviewBooking} disabled={isCalculating}>
+            {isCalculating ? 'Calculating...' : 'Review booking'}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </BookingPrimaryButton>
         </motion.div>
       ) : null}
 
-      {step === 'summary' ? (
+      {step === 'summary' && calculatedBill ? (
         <motion.div layout className="space-y-4">
           <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
             <div className="flex justify-between gap-2">
@@ -737,9 +768,7 @@ export function IndividualBookingFlowPage() {
             <div className="flex justify-between gap-2">
               <span className="shrink-0 lc-booking-flow-muted">Workers</span>
               <span className="text-right font-bold text-black">
-                {draft.matchMode === 'smart'
-                  ? 'Smart match'
-                  : (draft.selectedWorkers || []).map((w) => w.displayName).join(', ') || '—'}
+                Flash Broadcast Match
               </span>
             </div>
             <p className="flex items-start gap-2 font-medium text-black">
@@ -749,19 +778,19 @@ export function IndividualBookingFlowPage() {
             <div className="border-t border-slate-200 pt-3">
               <div className="flex justify-between font-semibold text-black">
                 <span>Estimated labour</span>
-                <span>{formatInr(estimate.estimatedSubtotal)}</span>
+                <span>{formatInr(calculatedBill.basePrice)}</span>
               </div>
               <div className="mt-1 flex justify-between lc-booking-flow-muted">
                 <span>Platform fee</span>
-                <span>{formatInr(estimate.platformFee)}</span>
+                <span>{formatInr(calculatedBill.platformFee)}</span>
               </div>
               <div className="flex justify-between lc-booking-flow-muted">
                 <span>Taxes</span>
-                <span>{formatInr(estimate.gst)}</span>
+                <span>{formatInr(calculatedBill.taxes)}</span>
               </div>
               <div className="mt-2 flex justify-between text-base font-extrabold text-black">
                 <span>Total</span>
-                <span>{formatInr(estimate.grandTotal)}</span>
+                <span>{formatInr(calculatedBill.totalAmount)}</span>
               </div>
             </div>
           </div>
@@ -770,8 +799,8 @@ export function IndividualBookingFlowPage() {
             <button type="button" className="lc-booking-btn-secondary flex-1" onClick={() => goStep('details')}>
               Edit details
             </button>
-            <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking}>
-              Confirm booking
+            <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking} disabled={isCreating}>
+              {isCreating ? 'Creating...' : 'Confirm booking'}
               <CheckCircle2 className="h-4 w-4" aria-hidden />
             </BookingPrimaryButton>
           </div>

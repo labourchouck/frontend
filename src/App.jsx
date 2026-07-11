@@ -24,7 +24,12 @@ import { AdminAllocationsPage } from './pages/admin/AdminAllocationsPage.jsx'
 import { AdminAttendancePage } from './pages/admin/AdminAttendancePage.jsx'
 import { AdminBillingPage } from './pages/admin/AdminBillingPage.jsx'
 import { AdminPricingPage } from './pages/admin/AdminPricingPage.jsx'
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage.jsx'
 import { AdminModulePlaceholder } from './components/admin/AdminModulePlaceholder.jsx'
+import { AdminReportsPage } from './pages/admin/AdminReportsPage.jsx'
+import { AdminBannersPage } from './pages/admin/AdminBannersPage.jsx'
+import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage.jsx'
+import { AdminProfilePage } from './pages/admin/AdminProfilePage.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'
 
@@ -99,26 +104,11 @@ function App() {
             <Route path="attendance" element={<AdminAttendancePage />} />
             <Route path="billing" element={<AdminBillingPage />} />
             <Route path="pricing" element={<AdminPricingPage />} />
-            <Route
-              path="reports"
-              element={
-                <AdminModulePlaceholder
-                  title="Reports & analytics"
-                  subtitle="Active workforce, site usage, revenue, and dues."
-                  bullets={['Dashboard KPIs', 'Payment ageing', 'Export datasets']}
-                />
-              }
-            />
-            <Route
-              path="settings"
-              element={
-                <AdminModulePlaceholder
-                  title="Settings"
-                  subtitle="Platform configuration and integrations."
-                  bullets={['OTP providers', 'Payment gateways', 'Feature flags']}
-                />
-              }
-            />
+            <Route path="banners" element={<AdminBannersPage />} />
+            <Route path="complaints" element={<AdminComplaintsPage />} />
+            <Route path="profile" element={<AdminProfilePage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

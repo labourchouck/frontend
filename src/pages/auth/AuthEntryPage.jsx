@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -87,13 +87,14 @@ const inputClass =
 
 export function AuthEntryPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { applySession } = useAuth()
   const reduce = useReducedMotion()
   const otpInputRefs = useRef([])
 
   const [mode, setMode] = useState('login')
   const [step, setStep] = useState('form')
-  const [role, setRole] = useState(USER_ROLES.INDIVIDUAL)
+  const [role, setRole] = useState(location.state?.defaultRole || USER_ROLES.INDIVIDUAL)
   const [phone, setPhone] = useState('')
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')

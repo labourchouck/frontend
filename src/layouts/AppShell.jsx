@@ -25,7 +25,7 @@ import { APP_HOME_LOCATION, APP_HOME_PATH, hasBookingFlowQuery } from '../lib/bo
 export function AppShell() {
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
-  const { logout, user } = useAuth()
+  const { logout, user, isGuest } = useAuth()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
@@ -316,17 +316,28 @@ export function AppShell() {
                 >
                   Visit website
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout()
-                    navigate(BOOT_ROUTES.SPLASH, { replace: true })
-                  }}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800 shadow-sm transition hover:bg-rose-50/90"
-                >
-                  <LogOut className="h-4 w-4" aria-hidden />
-                  Sign out
-                </button>
+                {isGuest ? (
+                  <Link
+                    to="/auth"
+                    onClick={() => setDrawerOpen(false)}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/5 py-3 text-sm font-semibold text-brand shadow-sm transition hover:bg-brand/10"
+                  >
+                    <LogOut className="h-4 w-4 rotate-180" aria-hidden />
+                    Login / Register
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout()
+                      navigate(BOOT_ROUTES.SPLASH, { replace: true })
+                    }}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800 shadow-sm transition hover:bg-rose-50/90"
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden />
+                    Sign out
+                  </button>
+                )}
               </div>
             </motion.aside>
           </>

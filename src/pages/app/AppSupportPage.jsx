@@ -31,6 +31,7 @@ import { ROLE_LABELS, USER_ROLES } from '../../constants/userRoles.js'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { AppSectionHeader } from '../../components/app-ui/layout/AppSectionHeader.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+import { complaintsApi } from '../../api/complaintsApi.js'
 
 const TOPICS_BY_ROLE = {
   [USER_ROLES.INDIVIDUAL]: [
@@ -257,13 +258,50 @@ export function AppSupportPage() {
   const [subject, setSubject] = useState('')
   const [details, setDetails] = useState('')
   const [sent, setSent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [activeTab, setActiveTab] = useState('new') // 'new' | 'history'
+  const [myComplaints, setMyComplaints] = useState(null) // null = not yet loaded
+  const [complaintsLoading, setComplaintsLoading] = useState(false)
+
+  const loadMyComplaints = async () => {
+    if (complaintsLoading) return
+    setComplaintsLoading(true)
+    try {
+      const res = await complaintsApi.getMyComplaints()
+      setMyComplaints(res.data?.complaints ?? res.data?.items ?? [])
+    } catch {
+      setMyComplaints([])
+    } finally {
+      setComplaintsLoading(false)
+    }
+  }
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    if (tab === 'history' && myComplaints === null) loadMyComplaints()
+  }
 
   const topicMeta = useMemo(() => topics.find((t) => t.id === topicId) ?? topics[0], [topics, topicId])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!subject.trim() || !details.trim()) return
-    setSent(true)
+    setFormError('')
+    setSubmitting(true)
+    try {
+      await complaintsApi.submitComplaint({
+        title: subject.trim(),
+        description: details.trim(),
+      })
+      setSent(true)
+      // refresh history if it was loaded
+      if (myComplaints !== null) loadMyComplaints()
+    } catch (err) {
+      setFormError(err?.message || 'Failed to submit. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const RoleIcon =
@@ -355,97 +393,184 @@ export function AppSupportPage() {
         transition={{ duration: 0.35, delay: 0.06 }}
       >
         <GlassPanel className="overflow-hidden border-slate-200/90 ring-1 ring-slate-100/90">
-          <div className="border-b border-slate-100 bg-linear-to-r from-brand/8 via-white to-white px-4 py-3.5">
+          {/* Panel header + tabs */}
+          <div className="border-b border-slate-100 bg-linear-to-r from-brand/8 via-white to-white px-4 pb-0 pt-3.5">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-brand" aria-hidden />
-              <h2 className="text-base font-extrabold text-slate-900">Report an issue</h2>
+              <h2 className="text-base font-extrabold text-slate-900">Complaints</h2>
             </div>
-            <p className="mt-1 text-xs text-slate-600">
-              Topic: <span className="font-bold text-brand">{topicMeta?.label}</span> — add booking refs, dates, or site
-              names when you can.
-            </p>
+            {/* Tabs */}
+            <div className="mt-3 flex gap-0 border-b border-slate-100">
+              {[{ id: 'new', label: 'New complaint' }, { id: 'history', label: 'My complaints' }].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`relative px-3 pb-2.5 pt-1 text-xs font-bold transition ${
+                    activeTab === tab.id
+                      ? 'text-brand after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-brand after:content-[\'\']'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="p-4">
             <AnimatePresence mode="wait">
-              {sent ? (
-                <motion.div
-                  key="success"
-                  initial={reduce ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="rounded-2xl border border-emerald-200/80 bg-linear-to-br from-emerald-50 to-white p-4 ring-1 ring-emerald-100"
-                >
-                  <div className="flex gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                      <CheckCircle2 className="h-6 w-6" aria-hidden />
-                    </span>
-                    <div>
-                      <p className="text-sm font-black text-slate-900">Ticket preview saved (demo)</p>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                        Nothing is sent yet. When the API is live, you&apos;ll get a ticket ID and status updates in this
-                        tab.
+
+              {/* ── NEW COMPLAINT TAB ── */}
+              {activeTab === 'new' ? (
+                <motion.div key="new-tab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  {sent ? (
+                    <motion.div
+                      key="success"
+                      initial={reduce ? false : { opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-2xl border border-emerald-200/80 bg-linear-to-br from-emerald-50 to-white p-4 ring-1 ring-emerald-100"
+                    >
+                      <div className="flex gap-3">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                          <CheckCircle2 className="h-6 w-6" aria-hidden />
+                        </span>
+                        <div>
+                          <p className="text-sm font-black text-slate-900">Complaint submitted!</p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            Your ticket is in the admin queue. You can track it under "My complaints".
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSent(false)
+                              setSubject('')
+                              setDetails('')
+                              setFormError('')
+                            }}
+                            className="mt-3 text-xs font-bold text-brand underline-offset-4 hover:underline"
+                          >
+                            Submit another
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.form
+                      key="form"
+                      onSubmit={handleSubmit}
+                      initial={reduce ? false : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-4"
+                    >
+                      {/* Topic info */}
+                      <p className="text-xs text-slate-500">
+                        Topic: <span className="font-bold text-brand">{topicMeta?.label}</span> — add booking refs, dates, or site names when you can.
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSent(false)
-                          setSubject('')
-                          setDetails('')
-                        }}
-                        className="mt-3 text-xs font-bold text-brand underline-offset-4 hover:underline"
-                      >
-                        Send another message
-                      </button>
-                    </div>
-                  </div>
+                      <div>
+                        <FieldLabel>Subject</FieldLabel>
+                        <input
+                          type="text"
+                          value={subject}
+                          onChange={(e) => setSubject(e.target.value)}
+                          placeholder="Short summary of the problem"
+                          required
+                          className="w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm font-medium shadow-sm outline-none focus:ring-2 focus:ring-brand/35"
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>Details</FieldLabel>
+                        <textarea
+                          value={details}
+                          onChange={(e) => setDetails(e.target.value)}
+                          required
+                          rows={4}
+                          placeholder="What happened? What did you expect?"
+                          className="w-full resize-none rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand/35"
+                        />
+                      </div>
+                      <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
+                        <p className="flex items-start gap-2 text-xs text-amber-950">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                          <span>
+                            <span className="font-bold">Urgent safety issue?</span> Call your supervisor and emergency
+                            services if anyone is at risk.
+                          </span>
+                        </p>
+                      </div>
+                      {formError ? (
+                        <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{formError}</p>
+                      ) : null}
+                      <AppPrimaryButton type="submit" className="w-full py-3.5 text-[15px]" disabled={submitting}>
+                        {submitting ? 'Submitting…' : 'Submit complaint'}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </AppPrimaryButton>
+                    </motion.form>
+                  )}
                 </motion.div>
-              ) : (
-                <motion.form
-                  key="form"
-                  onSubmit={handleSubmit}
-                  initial={reduce ? false : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <FieldLabel>Subject</FieldLabel>
-                    <input
-                      type="text"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      placeholder="Short summary of the problem"
-                      required
-                      className="w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm font-medium shadow-sm outline-none focus:ring-2 focus:ring-brand/35"
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel>Details</FieldLabel>
-                    <textarea
-                      value={details}
-                      onChange={(e) => setDetails(e.target.value)}
-                      required
-                      rows={5}
-                      placeholder="What happened? What did you expect?"
-                      className="w-full resize-none rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand/35"
-                    />
-                  </div>
-                  <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
-                    <p className="flex items-start gap-2 text-xs text-amber-950">
-                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                      <span>
-                        <span className="font-bold">Urgent safety issue?</span> Call your supervisor and emergency
-                        services if anyone is at risk. Priority flags ship with the ticketing backend.
+              ) : null}
+
+              {/* ── HISTORY TAB ── */}
+              {activeTab === 'history' ? (
+                <motion.div key="history-tab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+                  {complaintsLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-400">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-brand" />
+                      Loading…
+                    </div>
+                  ) : !myComplaints?.length ? (
+                    <div className="flex flex-col items-center gap-2 py-8 text-center">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                        <MessageSquare className="h-6 w-6" aria-hidden />
                       </span>
-                    </p>
-                  </div>
-                  <AppPrimaryButton type="submit" className="w-full py-3.5 text-[15px]">
-                    Submit to support queue
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </AppPrimaryButton>
-                </motion.form>
-              )}
+                      <p className="text-sm font-bold text-slate-600">No complaints yet</p>
+                      <p className="text-xs text-slate-400">Past tickets will appear here.</p>
+                    </div>
+                  ) : (
+                    myComplaints.map((c) => {
+                      const statusColor =
+                        c.status === 'RESOLVED'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : c.status === 'REJECTED'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'bg-amber-100 text-amber-700'
+                      return (
+                        <div
+                          key={c._id}
+                          className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="flex-1 text-sm font-bold text-slate-900 leading-snug">{c.title}</p>
+                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColor}`}>
+                              {c.status ?? 'OPEN'}
+                            </span>
+                          </div>
+                          {c.description ? (
+                            <p className="mt-1 line-clamp-2 text-xs text-slate-500">{c.description}</p>
+                          ) : null}
+                          {c.adminRemarks ? (
+                            <p className="mt-2 rounded-xl bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
+                              <span className="font-bold text-brand">Admin: </span>{c.adminRemarks}
+                            </p>
+                          ) : null}
+                          <p className="mt-2 text-[10px] text-slate-400">
+                            {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                          </p>
+                        </div>
+                      )
+                    })
+                  )}
+                  <button
+                    type="button"
+                    onClick={loadMyComplaints}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 transition hover:border-brand/25 hover:text-brand"
+                  >
+                    Refresh
+                  </button>
+                </motion.div>
+              ) : null}
+
             </AnimatePresence>
           </div>
         </GlassPanel>
