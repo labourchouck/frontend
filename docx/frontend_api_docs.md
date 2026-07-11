@@ -28,6 +28,46 @@ Allows the admin to configure the fixed penalty amount charged to labourers if t
   ```
 - **Response:** See `frontend_api_responses.json` (`update_penalty_response`)
 
+## Admin Category & Services APIs
+
+### 2a. Admin Labour Services CRUD
+Allows the admin to manage services nested under a specific subcategory.
+- **Create Service Endpoint:** `POST /api/v1/admin/labour-services`
+- **Auth:** `Admin` (Bearer Token)
+- **Request Body:**
+  ```json
+  {
+    "subcategoryId": "64d0f...",
+    "name": "Plumbing Leak Repair",
+    "description": "Fix minor pipe leaks",
+    "basePrice": 500,
+    "estimatedDurationMins": 120,
+    "iconUrl": "https://res.cloudinary.com/..."
+  }
+  ```
+- **Update Service Endpoint:** `PATCH /api/v1/admin/labour-services/:id`
+- **Request Body:** Same fields as above, all optional.
+
+### 2b. Admin Hard Delete APIs
+Allows the admin to permanently delete records from the database.
+- **Delete Category:** `DELETE /api/v1/admin/labour-categories/:id`
+- **Delete Subcategory:** `DELETE /api/v1/admin/labour-subcategories/:id`
+- **Delete Service:** `DELETE /api/v1/admin/labour-services/:id`
+- **Auth:** `Admin` (Bearer Token)
+
+### 2c. Admin Services Search / Pagination
+Fetches services with search and pagination capabilities.
+- **Endpoint:** `GET /api/v1/admin/labour-services/search?q=plumber&page=1&limit=10`
+- **Auth:** `Admin` (Bearer Token)
+- **Response Format:** Returns a list of `services` matching the query and `pagination` object (total, page, limit, pages).
+
+### 2b. Public Category & Services List
+Fetches the entire category catalogue, now with nested `services` arrays.
+- **Endpoint:** `GET /api/v1/labour-categories/grouped`
+- **Response Format:**
+  - `groups` > `categories` > `subcategories` > `services`
+  - Each service contains `_id`, `name`, `description`, `basePrice`, `estimatedDurationMins`, `iconUrl`.
+
 ## User Booking APIs
 
 ### 3. Calculate Bill
@@ -37,13 +77,13 @@ Calculates the breakdown of a booking before creation. It now dynamically applie
 - **Request Body:**
   ```json
   {
-    "subcategoryId": "64d0f...",
+    "serviceId": "64d0f...",
     "durationDays": 1
   }
   ```
 - **Response Data Fields Updated:**
   The response now includes a `taxes` field in the calculation.
-  - `basePrice`: Price of subcategory
+  - `basePrice`: Price of service
   - `platformFee`: Flat or percentage fee of platform
   - `taxes`: Calculated from `(basePrice + platformFee) * gstPercentage / 100`
   - `totalAmount`: Final amount payable by customer (`basePrice + platformFee + taxes`)
@@ -56,7 +96,7 @@ Creates a new booking, applies GST automatically, and triggers the broadcast seq
 - **Request Body:**
   ```json
   {
-    "subcategoryId": "64d0f...",
+    "serviceId": "64d0f...",
     "type": "SCHEDULED",
     "locationText": "Sector 14, Gurugram",
     "lat": 28.4595,
@@ -150,6 +190,157 @@ Labourers use this API to progress the job status.
   { "status": "COMPLETED", "otp": "8390" }
   ```
 - **Note:** Customers can see the `startOtp` and `completionOtp` in their `GET /api/v1/bookings/:id` API response. Labourers cannot see the OTP via the API; they must physically ask the customer.
+
+## Review & Rating APIs
+
+### 10. Submit a Review
+Customers can submit a review and rating for a labourer after a job is completed.
+- **Endpoint:** `POST /api/v1/reviews`
+- **Auth:** `User` (Bearer Token)
+- **Request Body:**
+  ```json
+  {
+    "bookingId": "64d...",
+    "rating": 5,
+    "comment": "Very good work!"
+  }
+  ```
+
+### 11. Get Reviews for a Labourer
+Fetches all reviews and ratings for a specific labourer.
+- **Endpoint:** `GET /api/v1/reviews/user/:userId`
+- **Auth:** `User` / `Labour` (Bearer Token)
+- **Response Format:** Returns an array of review objects containing `rating`, `comment`, and the reviewer's details.
+
+## Wallet & Withdrawal APIs
+
+### 12. Request Wallet Withdrawal (Labour)
+Allows a labourer to withdraw their earnings to their bank account.
+- **Endpoint:** `POST /api/v1/wallets/withdraw`
+- **Auth:** `Labour` (Bearer Token)
+- **Request Body:**
+  ```json
+  {
+    "amount": 500,
+    "bankDetails": {
+      "accountNumber": "1234567890",
+      "ifscCode": "HDFC0001234",
+      "accountHolderName": "Raju",
+      "bankName": "HDFC Bank"
+    }
+  }
+  ```
+
+### 13. Get My Withdrawal History (Labour)
+Fetches the history and status (PENDING, APPROVED, REJECTED) of withdrawal requests.
+- **Endpoint:** `GET /api/v1/wallets/withdrawals`
+- **Auth:** `Labour` (Bearer Token)
+
+### 14. Admin: Process Withdrawal (Admin)
+Allows the admin to approve or reject a withdrawal request.
+- **Endpoint:** `PATCH /api/v1/admin/wallets/withdrawals/:id`
+- **Auth:** `Admin` (Bearer Token)
+- **Request Body:**
+  ```json
+  {
+    "status": "APPROVED",
+    "adminRemarks": "Processed via NEFT"
+  }
+  ```
+
+## Complaint Management APIs
+
+### 15. Submit a Complaint (Customer / Labour)
+Allows users to file a complaint against each other.
+- **Endpoint:** `POST /api/v1/complaints`
+- **Auth:** `User` / `Labour` (Bearer Token)
+- **Request Body:**
+  ```json
+  {
+    "complaineeId": "64d...",
+    "bookingId": "64d...",
+    "title": "Unprofessional Behavior",
+    "description": "The worker arrived very late and left early."
+  }
+  ```
+
+### 16. Get My Complaints (Customer / Labour)
+Fetches all complaints submitted by the logged-in user.
+- **Endpoint:** `GET /api/v1/complaints/my`
+- **Auth:** `User` / `Labour` (Bearer Token)
+
+### 17. Admin: Get All Complaints
+Fetches complaints for the admin dashboard (can filter by status).
+- **Endpoint:** `GET /api/v1/admin/complaints?status=OPEN`
+- **Auth:** `Admin` (Bearer Token)
+
+### 18. Admin: Process Complaint
+Allows the admin to update the status of a complaint and add remarks.
+- **Endpoint:** `PATCH /api/v1/admin/complaints/:id`
+- **Auth:** `Admin` (Bearer Token)
+- **Request Body:**
+  ```json
+  {
+    "status": "RESOLVED",
+    "adminRemarks": "Warned the worker. Issue settled."
+  }
+  ```
+
+## Dashboard APIs
+
+### 19. Admin: Get Dashboard Statistics
+Fetches aggregated data for the admin dashboard, including revenue, user counts, bookings, and pending actions (withdrawals/complaints).
+- **Endpoint:** `GET /api/v1/admin/dashboard/stats`
+- **Auth:** `Admin` (Bearer Token)
+- **Response Format:**
+  ```json
+  {
+    "data": {
+      "revenue": {
+        "platformEarnings": 1500,
+        "taxesCollected": 270,
+        "grossTransactionVolume": 10500
+      },
+      "users": {
+        "customers": 120,
+        "labourers": 45,
+        "contractors": 5
+      },
+      "actionable": {
+        "pendingWithdrawals": 2,
+        "openComplaints": 1
+      },
+      "bookings": {
+        "active": 3,
+        "completed": 42,
+        "total": 50
+      }
+    }
+  }
+  ```
+
+## Banner Management APIs
+
+> [!IMPORTANT]
+> **Frontend Integration Note:** The app currently uses dummy static images for banners in the Customer/User Panel. You must remove the dummy logic and use the new dynamic API `GET /api/v1/banners` to fetch and render the active banners.
+
+### 20. Admin: Manage Banners (CRUD)
+Allows the admin to add, update, list, and delete promotional banners.
+- **Get All Banners (Admin):** `GET /api/v1/admin/banners`
+- **Create Banner:** `POST /api/v1/admin/banners`
+  - **Content-Type:** `multipart/form-data`
+  - Body: `file` (the image file), `targetUrl` (string), `isActive` (boolean), `sortOrder` (number)
+- **Update Banner:** `PATCH /api/v1/admin/banners/:id`
+  - **Content-Type:** `multipart/form-data`
+  - Body: `file` (optional new image), `targetUrl`, `isActive`, `sortOrder`
+- **Delete Banner:** `DELETE /api/v1/admin/banners/:id`
+- **Auth:** `Admin` (Bearer Token)
+
+### 21. User: Get Active Banners
+Fetches the list of active banners to be displayed dynamically in the user panel.
+- **Endpoint:** `GET /api/v1/banners`
+- **Auth:** Public / `User` (Bearer Token optional depending on route setup)
+- **Response Format:** Returns an array of banner objects sorted by `sortOrder`.
 
 ---
 
