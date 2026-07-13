@@ -25,7 +25,7 @@ export function IndividualHomeRecentlyBooked({ bookings, loading, formatDay }) {
   return (
     <section className="mb-6" aria-label="Recently booked">
       <div className="lc-home-section-head">
-        <h3>Recently booked</h3>
+        <h3>Ongoing bookings</h3>
         <Link to="/app/bookings" className="lc-home-view-all">
           View all &gt;
         </Link>
@@ -33,32 +33,46 @@ export function IndividualHomeRecentlyBooked({ bookings, loading, formatDay }) {
 
       <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
         {bookings.map((b) => {
-          const primaryLine = (b.lines || [])[0]
-          const itemLabel = primaryLine?.categoryName || 'Labour booking'
-          const day = formatDay(b.serviceDate)
-          const img = primaryLine?.categoryId
-            ? getCategoryImageUrl({ _id: primaryLine.categoryId, name: itemLabel })
+          const itemLabel = b.serviceId?.name || b.subcategoryId?.name || 'Labour booking'
+          const day = formatDay(b.scheduledAt || b.createdAt)
+          const img = b.subcategoryId?._id
+            ? getCategoryImageUrl({ _id: b.subcategoryId._id, name: itemLabel })
             : FALLBACK_BOOKING_IMG
+            
+          let statusLabel = 'Active request'
+          let statusColor = 'text-brand'
+          let StatusIcon = Star
+          
+          if (b.status === 'BROADCASTING') {
+            statusLabel = 'Finding labour...'
+            statusColor = 'text-amber-500'
+          } else if (b.status === 'ACCEPTED' || b.status === 'EN_ROUTE') {
+            statusLabel = 'Worker assigned'
+            statusColor = 'text-emerald-500'
+          } else if (b.status === 'STARTED') {
+            statusLabel = 'Work in progress'
+            statusColor = 'text-sky-500'
+          }
 
           return (
             <Link
-              key={b.id || b.ref}
-              to={`/app/bookings?ref=${encodeURIComponent(b.ref || '')}`}
-              className="lc-home-service-card snap-start"
+              key={b._id}
+              to={`/app/tracking/${b._id}`}
+              className="flex w-[280px] shrink-0 snap-start items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-brand/30 hover:shadow-md"
             >
-              <img src={img} alt="" className="lc-home-service-card-img" loading="lazy" />
-              <div className="lc-home-service-card-body">
-                <div className="flex items-start justify-between gap-1">
-                  <p className="line-clamp-1 text-sm font-bold text-slate-900">{itemLabel}</p>
-                  <span className="shrink-0 text-xs font-bold text-brand">View</span>
-                </div>
+              <img src={img} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" loading="lazy" />
+              <div className="flex-1 min-w-0">
+                <p className="line-clamp-1 text-sm font-bold text-slate-900">{itemLabel}</p>
                 <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-slate-500">
-                  {day} · Site booking
+                  {day} · {b.type === 'SCHEDULED' ? 'Scheduled' : 'Instant'}
                 </p>
-                <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-slate-600">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" aria-hidden />
-                  Active request
+                <p className={`mt-1 flex items-center gap-1 text-[10px] font-semibold ${statusColor}`}>
+                  <StatusIcon className="h-3 w-3 fill-current" aria-hidden />
+                  {statusLabel}
                 </p>
+              </div>
+              <div className="flex shrink-0 items-center justify-center rounded-full bg-brand/10 px-3 py-1.5 text-[10px] font-extrabold text-brand uppercase tracking-wider">
+                Track
               </div>
             </Link>
           )

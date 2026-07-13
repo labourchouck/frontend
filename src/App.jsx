@@ -32,6 +32,8 @@ import { AdminReportsPage } from './pages/admin/AdminReportsPage.jsx'
 import { AdminBannersPage } from './pages/admin/AdminBannersPage.jsx'
 import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage.jsx'
 import { AdminProfilePage } from './pages/admin/AdminProfilePage.jsx'
+import { AdminZonesPage } from './pages/admin/AdminZonesPage.jsx'
+import { AdminTimeSlotsPage } from './pages/admin/AdminTimeSlotsPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
@@ -115,6 +117,8 @@ function App() {
             <Route path="profile" element={<AdminProfilePage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="zones" element={<AdminZonesPage />} />
+            <Route path="time-slots" element={<AdminTimeSlotsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

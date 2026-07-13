@@ -20,6 +20,7 @@ import {
   UserCog,
   Tag,
   Wrench,
+  Map,
 } from 'lucide-react'
 
 /**
@@ -81,6 +82,7 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/allocations', label: 'Workforce allocation', icon: Network },
       { to: '/admin/attendance', label: 'Attendance', icon: Clock },
       { to: '/admin/complaints', label: 'Complaints', icon: MessageSquare },
+      { to: '/admin/zones', label: 'Manage Radius', icon: Map },
     ],
   },
   {
@@ -102,7 +104,8 @@ export const ADMIN_NAV_SECTIONS = [
     title: 'System',
     items: [
       { to: '/admin/profile', label: 'Profile', icon: UserCog },
-      { to: '/admin/settings', label: 'Settings', icon: Settings }
+      { to: '/admin/settings', label: 'Settings', icon: Settings },
+      { to: '/admin/time-slots', label: 'Time Slots', icon: Clock },
     ],
   },
 ]
@@ -125,6 +128,8 @@ const ROUTE_TITLES = [
   { prefix: '/admin/business-verification', title: 'Corporate & vendor KYC' },
   { prefix: '/admin/labour', title: 'Labour & KYC' },
   { prefix: '/admin/users', title: 'Individuals & corporates' },
+  { prefix: '/admin/zones', title: 'Manage Radius' },
+  { prefix: '/admin/time-slots', title: 'Time Slots' },
   { prefix: '/admin', title: 'Dashboard' },
 ]
 

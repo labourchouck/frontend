@@ -38,5 +38,15 @@ export const adminSettingsApi = {
       method: 'PATCH',
       body: payload,
     })
-  }
+  },
+
+  updateTimeSlots: (payload) => {
+    return apiRequest('/admin/settings/time-slots', {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
 }
+
+// Public endpoint (no admin auth) — used in Checkout to fetch time slots
+export const getPublicSettings = () => apiRequest('/admin/settings/public', { method: 'GET' })

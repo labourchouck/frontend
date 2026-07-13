@@ -11,6 +11,7 @@ import { BookingModeSheet } from '../../../components/app/booking/BookingModeShe
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { writeBookingDraft, readBookingDraft } from '../../../lib/individualBookingDraft.js'
 import { fetchDiscoverLabour, fetchDiscoverLabours } from '../../../api/discoverLaboursApi.js'
+import { bookingsApi } from '../../../api/bookingsApi.js'
 import { ApiError } from '../../../api/http.js'
 import { LabourPublicDetailSheet } from '../labour/LabourPublicDetailSheet.jsx'
 import { enrichDiscoverLabourUi, DEMO_LABOUR_ROWS } from '../../../lib/discoverLabourDummyUi.js'
@@ -72,11 +73,12 @@ export function IndividualHomeScreen({ user }) {
   }, [bookings])
 
   const ongoingBookings = useMemo(() => {
-    return sortedBookings.filter((b) => String(b?.status).toLowerCase() === 'pending_review').slice(0, 2)
+    const activeStatuses = ['CREATED', 'BROADCASTING', 'ACCEPTED', 'ASSIGNED', 'EN_ROUTE', 'STARTED']
+    return sortedBookings.filter((b) => activeStatuses.includes(b?.status)).slice(0, 3)
   }, [sortedBookings])
 
   const recentBookings = useMemo(() => {
-    return ongoingBookings.length ? ongoingBookings : sortedBookings.slice(0, 2)
+    return ongoingBookings.length ? ongoingBookings : sortedBookings.slice(0, 3)
   }, [ongoingBookings, sortedBookings])
 
   useEffect(() => {
@@ -189,17 +191,21 @@ export function IndividualHomeScreen({ user }) {
 
   useEffect(() => {
     let cancelled = false
-    const t = window.setTimeout(() => {
-      if (cancelled) return
-      const stored = loadIndividualBookings()
-      setBookings(displayBookingsList(stored))
-      setBookingsLoading(false)
-    }, 420)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(t)
-    }
+    bookingsApi.getMyBookings()
+      .then((res) => {
+        if (!cancelled) {
+          setBookings(res.data?.bookings || [])
+          setBookingsLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('Failed to load bookings', err)
+          setBookings([])
+          setBookingsLoading(false)
+        }
+      })
+    return () => { cancelled = true }
   }, [])
 
   const openDetail = useCallback((id) => {
