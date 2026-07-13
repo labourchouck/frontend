@@ -25,30 +25,70 @@ function categoryId(c) {
   return String(c._id)
 }
 
-function SelectRow({ label, subtitle, selected, onToggle }) {
+function SelectRow({ label, subtitle, selected, onToggle, pricing, onUpdatePrice }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3.5 text-left transition active:scale-[0.99] ${
-        selected
-          ? 'border border-brand/30 bg-linear-to-r from-brand/10 via-white to-emerald-50/50 shadow-sm ring-2 ring-brand/20'
-          : 'border border-slate-200/90 bg-white hover:border-brand/20'
-      }`}
-    >
-      <span
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-          selected ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-white'
-        }`}
-        aria-hidden
+    <div className={`flex w-full flex-col overflow-hidden rounded-2xl border transition ${
+      selected
+        ? 'border-brand/30 bg-linear-to-r from-brand/10 via-white to-emerald-50/50 shadow-sm ring-2 ring-brand/20'
+        : 'border-slate-200/90 bg-white hover:border-brand/20'
+    }`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 px-3.5 py-3.5 text-left active:scale-[0.99]"
       >
-        {selected ? <Check className="h-4 w-4 stroke-[3]" /> : null}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-slate-900">{label}</span>
-        {subtitle ? <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{subtitle}</span> : null}
-      </span>
-    </button>
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+            selected ? 'border-brand bg-brand text-white' : 'border-slate-200 bg-white'
+          }`}
+          aria-hidden
+        >
+          {selected ? <Check className="h-4 w-4 stroke-[3]" /> : null}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-slate-900">{label}</span>
+          {subtitle ? <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{subtitle}</span> : null}
+        </span>
+      </button>
+
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-brand/10 bg-white/50 px-3.5 py-3"
+          >
+            <p className="mb-2 text-xs font-bold text-slate-600">Set your price range for this service</p>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={pricing?.minPrice || ''}
+                  onChange={(e) => onUpdatePrice('minPrice', e.target.value)}
+                  placeholder="Min price"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-7 pr-3 text-sm font-bold text-slate-800 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+              </div>
+              <span className="text-sm font-bold text-slate-400">to</span>
+              <div className="flex-1 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={pricing?.maxPrice || ''}
+                  onChange={(e) => onUpdatePrice('maxPrice', e.target.value)}
+                  placeholder="Max price"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-7 pr-3 text-sm font-bold text-slate-800 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -96,7 +136,7 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
 
   const [groups, setGroups] = useState([])
   const [meta, setMeta] = useState({ profileKind: 'profile', tradeKind: 'trade' })
-  const [selected, setSelected] = useState(() => new Set())
+  const [selected, setSelected] = useState(() => new Map())
   const [hubSearch, setHubSearch] = useState('')
   const [roleSearch, setRoleSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -116,7 +156,7 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
   }, [groups, meta.tradeKind])
 
   const tradeSelectedCount = useMemo(
-    () => [...selected].filter((id) => tradeCategoryIds.has(id)).length,
+    () => [...selected.keys()].filter((id) => tradeCategoryIds.has(id)).length,
     [selected, tradeCategoryIds],
   )
 
@@ -155,8 +195,15 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
   const syncFromUser = useCallback(() => {
     let raw = user?.labourProfile?.subcategoryIds
     if (!raw || raw.length === 0) raw = user?.labourProfile?.categoryIds ?? []
-    const ids = raw.map((x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x)))
-    setSelected(new Set(ids))
+    const m = new Map()
+    const pricings = user?.labourProfile?.servicePricing || []
+    
+    raw.forEach((x) => {
+      const id = typeof x === 'object' && x?._id ? String(x._id) : String(x)
+      const pricing = pricings.find(p => String(p.subcategoryId) === id)
+      m.set(id, { minPrice: pricing?.minPrice || '', maxPrice: pricing?.maxPrice || '' })
+    })
+    setSelected(m)
   }, [user])
 
   useEffect(() => {
@@ -197,9 +244,24 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
   function toggle(id) {
     const key = String(id)
     setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
+      const next = new Map(prev)
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.clear()
+        next.set(key, { minPrice: '', maxPrice: '' })
+      }
+      return next
+    })
+  }
+
+  function updatePrice(id, field, value) {
+    setSelected((prev) => {
+      const next = new Map(prev)
+      const current = next.get(id)
+      if (current) {
+        next.set(id, { ...current, [field]: value })
+      }
       return next
     })
   }
@@ -222,9 +284,27 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
       setError('Choose at least one role in any work area.')
       return
     }
+    
+    const servicesPayload = []
+    for (const [id, pricing] of selected.entries()) {
+      if (!pricing.minPrice || !pricing.maxPrice) {
+        setError('Please enter both minimum and maximum price for all selected roles.')
+        return
+      }
+      if (Number(pricing.minPrice) > Number(pricing.maxPrice)) {
+        setError('Maximum price must be greater than or equal to minimum price.')
+        return
+      }
+      servicesPayload.push({
+        subcategoryId: id,
+        minPrice: Number(pricing.minPrice),
+        maxPrice: Number(pricing.maxPrice)
+      })
+    }
+
     setSaving(true)
     try {
-      const res = await updateMyLabourCategories([...selected])
+      const res = await updateMyLabourCategories(servicesPayload)
       dispatch(setUser(res.data.user))
       onComplete?.()
     } catch (e) {
@@ -305,8 +385,8 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
         {step === 'areas' ? (
           <p className="mt-2 text-xs leading-relaxed text-slate-600">
             {variant === 'auth'
-              ? 'Pick the trades you actually work — we use this to match you to nearby jobs.'
-              : 'Open a work area, then tick every role you can do on site.'}
+              ? 'Pick the single trade you work in — we use this to match you to nearby jobs. You can only select one.'
+              : 'Open a work area, then choose the single category you work in. You can only select one.'}
           </p>
         ) : activeGroup?.description ? (
           <p className="mt-2 text-xs leading-relaxed text-slate-600">{activeGroup.description}</p>
@@ -387,12 +467,14 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
                           const id = categoryId(c)
                           return (
                             <li key={id}>
-                              <SelectRow
-                                label={c.name}
-                                subtitle={c.subtitle || undefined}
-                                selected={selected.has(id)}
-                                onToggle={() => toggle(id)}
-                              />
+                                <SelectRow
+                                  label={c.name}
+                                  subtitle={c.subtitle || undefined}
+                                  selected={selected.has(id)}
+                                  onToggle={() => toggle(id)}
+                                  pricing={selected.get(id)}
+                                  onUpdatePrice={(field, val) => updatePrice(id, field, val)}
+                                />
                             </li>
                           )
                         })}
@@ -429,6 +511,8 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
                           subtitle={c.subtitle || undefined}
                           selected={selected.has(id)}
                           onToggle={() => toggle(id)}
+                          pricing={selected.get(id)}
+                          onUpdatePrice={(field, val) => updatePrice(id, field, val)}
                         />
                       </li>
                     )

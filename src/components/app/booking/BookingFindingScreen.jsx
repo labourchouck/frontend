@@ -1,40 +1,27 @@
 import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Loader2, MapPin, Radio, Sparkles } from 'lucide-react'
+import { MapPin, Search, Navigation, UserCheck } from 'lucide-react'
 
 const MESSAGES = [
-  'Request sent to nearby workers…',
-  'Checking availability in your area…',
-  'Matching skills to your job…',
-  'Almost there — confirming response…',
+  'Broadcasting request to nearby workers...',
+  'Scanning your area...',
+  'Waiting for workers to accept...',
+  'Matching skills and pricing...',
 ]
 
-export function BookingFindingScreen({ categoryLabel, onComplete, onNoMatch }) {
+export function BookingFindingScreen({ categoryLabel }) {
   const reduce = useReducedMotion()
   const [msgIndex, setMsgIndex] = useState(0)
-  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     const msgTimer = window.setInterval(() => {
       setMsgIndex((i) => (i + 1) % MESSAGES.length)
-    }, 2200)
-    const progTimer = window.setInterval(() => {
-      setProgress((p) => Math.min(100, p + 4))
-    }, 180)
-    const doneTimer = window.setTimeout(() => {
-      onComplete?.()
-    }, 5200)
-    const failTimer = window.setTimeout(() => {
-      if (Math.random() < 0.08) onNoMatch?.()
-    }, 4800)
+    }, 3000)
 
     return () => {
       window.clearInterval(msgTimer)
-      window.clearInterval(progTimer)
-      window.clearTimeout(doneTimer)
-      window.clearTimeout(failTimer)
     }
-  }, [onComplete, onNoMatch])
+  }, [])
 
   return (
     <motion.div
@@ -42,66 +29,74 @@ export function BookingFindingScreen({ categoryLabel, onComplete, onNoMatch }) {
       animate={{ opacity: 1 }}
       className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-10 text-center"
     >
-      <motion.div
-        className="relative flex h-44 w-44 items-center justify-center"
-        animate={reduce ? undefined : { scale: [1, 1.04, 1] }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        <motion.span
-          className="absolute inset-0 rounded-full border-2 border-brand/30"
-          animate={reduce ? undefined : { scale: [0.6, 1.35], opacity: [0.55, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+      <div className="relative flex h-56 w-56 items-center justify-center rounded-full bg-slate-50 shadow-inner overflow-hidden ring-4 ring-slate-50/50">
+        {/* Radar circles */}
+        <div className="absolute inset-4 rounded-full border border-brand/20"></div>
+        <div className="absolute inset-12 rounded-full border border-brand/20"></div>
+        <div className="absolute inset-20 rounded-full border border-brand/20"></div>
+        
+        {/* Radar sweep */}
+        <motion.div
+          className="absolute inset-0 rounded-full origin-center"
+          style={{
+            background: 'conic-gradient(from 0deg, transparent 70%, rgba(16, 185, 129, 0.4) 100%)',
+          }}
+          animate={reduce ? undefined : { rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
         />
-        <motion.span
-          className="absolute inset-4 rounded-full border-2 border-brand/45"
-          animate={reduce ? undefined : { scale: [0.7, 1.2], opacity: [0.5, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeOut', delay: 0.35 }}
-        />
-        <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-brand to-emerald-600 text-white shadow-xl shadow-brand/30">
-          <Radio className="h-9 w-9" aria-hidden />
+        
+        {/* Center Pin */}
+        <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-brand/40 ring-4 ring-white">
+          <MapPin className="h-6 w-6" aria-hidden />
         </span>
-        <motion.span
-          className="absolute -bottom-1 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-brand shadow-md ring-1 ring-brand/20"
-          animate={reduce ? undefined : { opacity: [1, 0.7, 1] }}
-          transition={{ duration: 1.2, repeat: Infinity }}
-        >
-          <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-          Live
-        </motion.span>
-      </motion.div>
+        
+        {/* Ping blips - random dots that appear and fade */}
+        <motion.div
+          className="absolute top-12 right-16 h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+          animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+          transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+        />
+        <motion.div
+          className="absolute bottom-16 left-12 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+          animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+          transition={{ duration: 2.5, repeat: Infinity, delay: 1.2 }}
+        />
+        <motion.div
+          className="absolute top-24 left-10 h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+          animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+          transition={{ duration: 4, repeat: Infinity, delay: 0.8 }}
+        />
+      </div>
 
-      <h2 className="mt-8 text-xl font-black tracking-tight text-slate-900">Finding available labour near you</h2>
+      <h2 className="mt-10 text-2xl font-black tracking-tight text-slate-900">Scanning for workers</h2>
       {categoryLabel ? (
-        <p className="mt-1 text-sm font-semibold text-brand">{categoryLabel}</p>
+        <p className="mt-2 text-xs font-bold text-brand bg-brand/10 px-4 py-1.5 rounded-full uppercase tracking-wider">{categoryLabel}</p>
       ) : null}
-      <motion.p
-        key={msgIndex}
-        initial={reduce ? false : { opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-3 max-w-xs text-sm font-medium text-slate-600"
-      >
-        {MESSAGES[msgIndex]}
-      </motion.p>
+      
+      <div className="mt-4 h-6">
+        <motion.p
+          key={msgIndex}
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="max-w-xs text-sm font-medium text-slate-600"
+        >
+          {MESSAGES[msgIndex]}
+        </motion.p>
+      </div>
 
-      <motion.div className="mt-6 w-full max-w-xs">
-        <motion.div className="h-2 overflow-hidden rounded-full bg-slate-100">
-          <motion.div
-            className="h-full rounded-full bg-linear-to-r from-brand to-emerald-500"
-            style={{ width: `${progress}%` }}
-            transition={{ duration: 0.2 }}
-          />
-        </motion.div>
-        <p className="mt-2 text-[11px] font-semibold text-slate-500">Est. response · 2–5 min</p>
-      </motion.div>
-
-      <div className="mt-8 flex flex-wrap justify-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-900 ring-1 ring-emerald-200/80">
-          <Sparkles className="h-3.5 w-3.5" aria-hidden />
-          Request sent
+      <div className="mt-10 flex flex-wrap justify-center gap-3">
+        <span className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-[11px] font-bold text-slate-700 shadow-sm ring-1 ring-slate-200">
+          <Search className="h-3.5 w-3.5 text-brand" aria-hidden />
+          Broadcasting
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1.5 text-[11px] font-bold text-sky-900 ring-1 ring-sky-200/80">
-          <MapPin className="h-3.5 w-3.5" aria-hidden />
-          Searching nearby
+        <span className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-[11px] font-bold text-slate-700 shadow-sm ring-1 ring-slate-200">
+          <Navigation className="h-3.5 w-3.5 text-emerald-500" aria-hidden />
+          Up to 5 min wait
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-[11px] font-bold text-slate-700 shadow-sm ring-1 ring-slate-200">
+          <UserCheck className="h-3.5 w-3.5 text-blue-500" aria-hidden />
+          Verified profiles
         </span>
       </div>
     </motion.div>

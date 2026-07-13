@@ -48,11 +48,11 @@ export function AppJobsPage() {
 
   const demo = useMemo(
     () => ({
-      offers: [...apiBuckets.offers, ...localDemo.offers.filter((o) => !isApiAssignment(o))],
-      active: [...apiBuckets.active, ...localDemo.active.filter((o) => !isApiAssignment(o))],
-      history: [...apiBuckets.history, ...localDemo.history.filter((o) => !isApiAssignment(o))],
+      offers: [...apiBuckets.offers],
+      active: [...apiBuckets.active],
+      history: [...apiBuckets.history],
     }),
-    [apiBuckets, localDemo],
+    [apiBuckets],
   )
   const [confirmingOfferId, setConfirmingOfferId] = useState(null)
   const [detailJob, setDetailJob] = useState(null)
@@ -214,14 +214,6 @@ export function AppJobsPage() {
         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
           {thisMonthCount} completed this month
         </p>
-        <button
-          type="button"
-          onClick={handleResetDemo}
-          className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-brand"
-        >
-          <RotateCcw className="h-3 w-3" aria-hidden />
-          Reload samples
-        </button>
       </div>
 
       <LabourJobsTabBar tab={tab} onChange={setTab} counts={tabCounts} />
@@ -237,9 +229,6 @@ export function AppJobsPage() {
           (demo.offers.length === 0 ? (
             <div className="space-y-3 pt-2">
               <AppEmptyState icon={Sparkles} title={emptyCopy.title} subtitle={emptyCopy.subtitle} />
-              <AppButton type="button" variant="secondary" className="mx-auto w-full max-w-xs" onClick={handleResetDemo}>
-                Reload sample offers
-              </AppButton>
             </div>
           ) : (
             demo.offers.map((offer, i) => (

@@ -419,7 +419,7 @@ export function AdminLabourPage() {
                         <span className="block text-slate-500">{formatSkillLine(u)}</span>
                       </td>
                       <td className="px-4 py-3">
-                        {u.labourProfile?.kycSubmittedAt && u.labourProfile?.kycStatus !== KYC_STATUS.VERIFIED ? (
+                        {u.labourProfile?.kycStatus === KYC_STATUS.PENDING ? (
                           <button
                             type="button"
                             onClick={() => setReviewUserId(u._id)}
@@ -470,7 +470,7 @@ export function AdminLabourPage() {
                   <KycPill status={u.labourProfile?.kycStatus} submittedAt={u.labourProfile?.kycSubmittedAt} />
                   <span className="text-[11px] text-slate-500">Last: {formatLastLoginDisplay(u.lastLoginAt) || '—'}</span>
                 </div>
-                {u.labourProfile?.kycSubmittedAt && u.labourProfile?.kycStatus !== KYC_STATUS.VERIFIED ? (
+                {u.labourProfile?.kycStatus === KYC_STATUS.PENDING ? (
                   <button
                     type="button"
                     onClick={() => setReviewUserId(u._id)}
@@ -620,7 +620,7 @@ export function AdminLabourPage() {
                     <AppPrimaryButton
                       type="button"
                       className="flex-1 py-3 text-sm"
-                      disabled={reviewBusy || !detailUser.labourProfile?.kycSubmittedAt || !detailUser.labourProfile?.kycVideoUrl}
+                      disabled={reviewBusy}
                       onClick={() => runKycReview('approved')}
                     >
                       {reviewBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}

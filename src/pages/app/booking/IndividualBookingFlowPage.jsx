@@ -342,8 +342,8 @@ export function IndividualBookingFlowPage() {
         <AppStackScreenHeader title="No match" onBack={() => navigate('/app/home')} />
         <GlassPanel className="p-6 text-center">
           <AlertCircle className="mx-auto h-10 w-10 text-amber-500" aria-hidden />
-          <p className="mt-3 text-sm font-bold text-slate-900">No labour accepted within radius</p>
-          <p className="mt-2 text-xs text-slate-600">You can retry searching.</p>
+          <p className="mt-3 text-sm font-bold text-slate-900">Labourers are currently not available</p>
+          <p className="mt-2 text-xs text-slate-600">Please try searching again in a few minutes.</p>
           <motion.div layout className="mt-5 flex flex-col gap-2">
             <BookingPrimaryButton type="button" onClick={() => { setNoMatch(false); confirmBooking() }}>
               Retry search
