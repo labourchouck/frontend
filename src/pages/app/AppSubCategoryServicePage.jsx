@@ -1,15 +1,46 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams, Navigate } from 'react-router-dom'
-import { ArrowLeft, Wrench, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { ArrowLeft, Wrench, ChevronDown, ChevronUp, ChevronDown } from 'lucide-react'
 import { getCategoryImageUrl } from '../../lib/labourCategoryDisplay.js'
+import { BookingTypeSheet } from '../../components/app/booking/BookingTypeSheet.jsx'
+import { readBookingDraft, writeBookingDraft } from '../../lib/individualBookingDraft.js'
+import { buildBookingFlowPath } from '../../lib/bookingFlowNavigation.js'
 
 export function AppSubCategoryServicePage() {
   const { id } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const [expandedId, setExpandedId] = useState(null)
-  
+
+  const [expandedServiceId, setExpandedServiceId] = useState(null)
+  const [bookingTypeOpen, setBookingTypeOpen] = useState(false)
+  const [bookingService, setBookingService] = useState(null)
+
   const cat = location.state?.cat
+
+  const handleQuickBookType = useCallback(
+    (bookingType) => {
+      if (!bookingService || !cat) return
+      const prev = readBookingDraft() || {}
+      writeBookingDraft({
+        ...prev,
+        entryPoint: 'category',
+        groupId: String(cat.groupId || ''),
+        groupName: cat.groupName || '',
+        categoryId: String(cat._id),
+        categoryName: cat.name || '',
+        serviceId: String(bookingService._id),
+        serviceName: bookingService.name || '',
+        bookingType,
+        matchMode: 'smart',
+        selectedWorkers: [],
+      })
+      setBookingTypeOpen(false)
+      setBookingService(null)
+      navigate(buildBookingFlowPath('details', { categoryId: cat._id }))
+    },
+    [navigate, cat, bookingService]
+  )
 
   if (!cat) {
     // If user refreshes or visits directly, redirect back
@@ -50,7 +81,7 @@ export function AppSubCategoryServicePage() {
           <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500 pl-1">
             Available Services
           </h2>
-          
+
           {services.length === 0 ? (
             <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center">
               <Wrench className="mx-auto h-8 w-8 text-slate-300 mb-3" />
@@ -58,25 +89,25 @@ export function AppSubCategoryServicePage() {
               <p className="text-xs text-slate-400 mt-1">Check back later.</p>
             </div>
           ) : (
-            <div className="grid gap-3 pb-8">
+            <div className="grid gap-3">
               {services.map((service) => {
-                const isExpanded = expandedId === service._id
-                
+                const isExpanded = expandedServiceId === service._id;
                 return (
-                  <div 
-                    key={service._id} 
-                    className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden transition-all duration-200"
+                  <div
+                    key={service._id}
+                    className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
                   >
-                    <div 
-                      onClick={() => setExpandedId(isExpanded ? null : service._id)}
-                      className="p-3 flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition"
+                    <button
+                      type="button"
+                      onClick={() => setExpandedServiceId(prev => prev === service._id ? null : service._id)}
+                      className="w-full p-3 flex items-center gap-4 text-left transition hover:bg-slate-50"
                     >
                       <div className="h-16 w-16 shrink-0 rounded-xl overflow-hidden bg-slate-100 shadow-inner">
                         {service.iconUrl ? (
-                          <img 
-                            src={getCategoryImageUrl({ name: service.name, imageUrl: service.iconUrl })} 
-                            alt={service.name} 
-                            className="h-full w-full object-cover" 
+                          <img
+                            src={getCategoryImageUrl({ name: service.name, imageUrl: service.iconUrl })}
+                            alt={service.name}
+                            className="h-full w-full object-cover"
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center">
@@ -84,56 +115,55 @@ export function AppSubCategoryServicePage() {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-slate-900 truncate text-sm">{service.name}</h3>
-                        {!isExpanded && service.description ? (
-                           <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{service.description}</p>
+                        {service.description && !isExpanded ? (
+                          <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{service.description}</p>
                         ) : null}
                       </div>
-                      
-                      <div className="shrink-0 text-right pr-2">
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Base Price</p>
-                        <p className="font-mono text-sm font-bold text-emerald-600 mt-0.5">₹{service.basePrice}</p>
-                      </div>
 
-                      <div className="shrink-0 text-slate-400">
-                        {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                      </div>
-                    </div>
-                    
-                    {/* Expanded details */}
-                    {isExpanded && (
-                      <div className="px-4 pb-4 pt-2 border-t border-slate-100 bg-slate-50/50">
-                        {service.description && (
-                          <p className="text-sm text-slate-600 leading-relaxed mb-4">{service.description}</p>
-                        )}
-                        
-                        <div className="mb-4 flex items-center justify-between text-sm text-slate-600 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                          <div className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <span className="font-medium">Estimated Duration</span>
-                          </div>
-                          <span className="font-bold text-slate-900">{service.estimatedDurationMins ? `${service.estimatedDurationMins} mins` : 'N/A'}</span>
+                      <div className="shrink-0 text-right flex items-center gap-2 pr-1">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase text-slate-400">Base Price</p>
+                          <p className="font-mono text-sm font-bold text-emerald-600 mt-0.5">₹{service.basePrice}</p>
                         </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </div>
+                    </button>
 
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <button 
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-1 bg-slate-50/50 border-t border-slate-100 space-y-3">
+                        {service.description && (
+                          <div>
+                            <p className="text-[10px] font-bold uppercase text-slate-400">Description</p>
+                            <p className="text-sm font-medium text-slate-700 leading-relaxed mt-0.5">{service.description}</p>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase text-slate-400">Est. Duration</p>
+                            <p className="text-sm font-medium text-slate-700">{service.estimatedDurationMins || 'N/A'} mins</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase text-slate-400">Status</p>
+                            <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${service.isActive !== false ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-slate-200'
+                              }`}>
+                              {service.isActive !== false ? 'Active' : 'Hidden'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <button
                             type="button"
-                            onClick={() => navigate(`/app/checkout?subcategoryId=${service._id}&name=${encodeURIComponent(service.name)}&type=INSTANT`, { state: { cat } })}
-                            className="w-full bg-brand hover:bg-brand/90 text-white font-bold py-3 rounded-xl transition shadow-sm shadow-brand/20 active:scale-[0.98] flex flex-col items-center justify-center"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setBookingService(service)
+                              setBookingTypeOpen(true)
+                            }}
+                            className="rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-sm transition active:scale-95"
                           >
-                            <span className="text-sm">Instant</span>
-                            <span className="text-[10px] font-medium opacity-80 mt-0.5">Book right now</span>
-                          </button>
-                          
-                          <button 
-                            type="button"
-                            onClick={() => navigate(`/app/checkout?subcategoryId=${service._id}&name=${encodeURIComponent(service.name)}&type=SCHEDULED`, { state: { cat } })}
-                            className="w-full bg-white border border-brand text-brand hover:bg-brand/5 font-bold py-3 rounded-xl transition shadow-sm active:scale-[0.98] flex flex-col items-center justify-center"
-                          >
-                            <span className="text-sm">Schedule</span>
-                            <span className="text-[10px] font-medium opacity-80 mt-0.5">Book for later</span>
+                            Book
                           </button>
                         </div>
                       </div>
@@ -145,6 +175,16 @@ export function AppSubCategoryServicePage() {
           )}
         </section>
       </div>
+      <BookingTypeSheet
+        open={bookingTypeOpen}
+        onClose={() => {
+          setBookingTypeOpen(false)
+          setBookingService(null)
+        }}
+        value={null}
+        categoryLabel={bookingService?.name || cat?.name}
+        onSelect={handleQuickBookType}
+      />
     </div>
   )
 }
