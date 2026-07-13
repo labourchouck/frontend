@@ -121,7 +121,7 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
   )
 
   const hasTradeSelected = tradeSelectedCount > 0
-  const hasExistingCategories = (user?.labourProfile?.categoryIds?.length ?? 0) > 0
+  const hasExistingCategories = (user?.labourProfile?.subcategoryIds?.length ?? user?.labourProfile?.categoryIds?.length ?? 0) > 0
   const profileGroups = useMemo(() => groups.filter((g) => g.kind === meta.profileKind), [groups, meta.profileKind])
   const tradeGroups = useMemo(() => groups.filter((g) => g.kind === meta.tradeKind), [groups, meta.tradeKind])
 
@@ -153,7 +153,8 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
   }, [tradeGroups, hubSearch])
 
   const syncFromUser = useCallback(() => {
-    const raw = user?.labourProfile?.categoryIds ?? []
+    let raw = user?.labourProfile?.subcategoryIds
+    if (!raw || raw.length === 0) raw = user?.labourProfile?.categoryIds ?? []
     const ids = raw.map((x) => (typeof x === 'object' && x?._id ? String(x._id) : String(x)))
     setSelected(new Set(ids))
   }, [user])

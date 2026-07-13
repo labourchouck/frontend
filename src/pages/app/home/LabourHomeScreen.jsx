@@ -153,6 +153,27 @@ export function LabourHomeScreen({ user }) {
   const [notifTick, setNotifTick] = useState(0)
   const [assignmentDetailOpen, setAssignmentDetailOpen] = useState(false)
   const { setOnline } = useLabourPresence()
+  const [isAvailable, setIsAvailable] = useState(user?.labourProfile?.availabilityStatus !== 'offline')
+
+  const handleToggleAvailability = async () => {
+    const nextStatus = isAvailable ? 'offline' : 'available'
+    setIsAvailable(!isAvailable) // Optimistic update
+    
+    // Also sync with attendance online presence
+    setOnline(!isAvailable)
+    
+    try {
+      // We will need to import locationApi below
+      const { updateLabourStatus } = await import('../../../api/locationApi.js')
+      await updateLabourStatus(nextStatus)
+      showToast(nextStatus === 'available' ? 'You are now online for job requests' : 'You are offline for requests')
+    } catch (err) {
+      console.error('Failed to update status:', err)
+      showToast('Failed to update status')
+      setIsAvailable(isAvailable) // Revert on failure
+      setOnline(isAvailable)
+    }
+  }
 
   const firstName = user?.fullName?.split(/\s/)?.[0]
   const greeting = getTimeGreeting()
@@ -316,6 +337,14 @@ export function LabourHomeScreen({ user }) {
   const handleWorkAreaSaved = useCallback(() => {
     const next = readAppUserLocation()
     setAppLocation(next)
+    
+    // Sync location to backend so the broadcasting engine knows where they are
+    if (next && next.lat && next.lng) {
+      import('../../../api/locationApi.js').then(({ updateLabourLocation }) => {
+        updateLabourLocation(next.lat, next.lng).catch(err => console.error('Failed to sync location to backend:', err))
+      })
+    }
+
     if (pendingCheckIn && hasAppUserLocation(next)) {
       setPendingCheckIn(false)
       if (lastTodayType(readAttendanceEntries()) !== 'in') {
@@ -591,7 +620,43 @@ export function LabourHomeScreen({ user }) {
           </GlassPanel>
         </motion.section>
 
-        {/* 3. Today's job */}
+        {/* 3. Job requests toggle */}
+        <motion.section
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          aria-labelledby="availability-heading"
+        >
+          <GlassPanel className="border-slate-200/90 p-4 flex items-center justify-between">
+            <div>
+              <h2 id="availability-heading" className="text-base font-extrabold text-slate-900">
+                Receive Job Requests
+              </h2>
+              <p className="mt-0.5 text-xs font-medium text-slate-500">
+                {isAvailable ? 'You will receive new job alerts.' : 'You are currently offline.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleAvailability}
+              className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${
+                isAvailable ? 'bg-brand' : 'bg-slate-300'
+              }`}
+              role="switch"
+              aria-checked={isAvailable}
+            >
+              <span className="sr-only">Toggle Job Requests</span>
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  isAvailable ? 'translate-x-3' : '-translate-x-3'
+                }`}
+              />
+            </button>
+          </GlassPanel>
+        </motion.section>
+
+        {/* 4. Today's job */}
         <motion.section
           initial={reduce ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import { useSelector } from 'react-redux'
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '')
 
 export function useLabourSocket() {
   const { token } = useSelector((state) => state.auth)

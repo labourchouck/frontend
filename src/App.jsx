@@ -32,7 +32,7 @@ import { AdminReportsPage } from './pages/admin/AdminReportsPage.jsx'
 import { AdminBannersPage } from './pages/admin/AdminBannersPage.jsx'
 import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage.jsx'
 import { AdminProfilePage } from './pages/admin/AdminProfilePage.jsx'
-import { AdminSettingsPage } from './pages/admin/AdminSettingsPage.jsx'
+
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'

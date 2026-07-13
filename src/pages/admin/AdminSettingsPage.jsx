@@ -300,7 +300,7 @@ export function AdminSettingsPage() {
           <AppPrimaryButton
             type="button"
             loading={saving === 'GST'}
-            onClick={() => handleSave('GST', adminSettingsApi.updateGst, {
+            onClick={() => handleSave('GST', adminSettingsApi.updateGstPercentage, {
               gstPercentage: Number(gstPercentage),
             })}
           >
@@ -329,7 +329,7 @@ export function AdminSettingsPage() {
           <AppPrimaryButton
             type="button"
             loading={saving === 'Penalty'}
-            onClick={() => handleSave('Penalty', adminSettingsApi.updatePenalty, {
+            onClick={() => handleSave('Penalty', adminSettingsApi.updateCancellationPenalty, {
               cancellationPenalty: Number(cancellationPenalty),
             })}
           >
