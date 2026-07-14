@@ -68,7 +68,7 @@ export function IndividualHomeownerBookings() {
     const type = searchParams.get('type')
     if (type !== 'instant' && type !== 'scheduled') return
     writeBookingDraft({ bookingType: type, entryPoint: 'search', matchMode: 'smart' })
-    navigate(buildBookingFlowPath('type'), { replace: true })
+    navigate('/app/search', { replace: true })
   }, [searchParams, navigate])
 
   const clearDetailRef = useCallback(() => {

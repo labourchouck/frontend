@@ -38,6 +38,7 @@ import {
   durationKindToDays,
   formatInr,
   todayISODate,
+  maxISODate,
 } from '../../../lib/individualBookings.js'
 import {
   clearBookingDraft,
@@ -206,10 +207,11 @@ export function IndividualBookingFlowPage() {
 
   useEffect(() => {
     if (location.pathname !== BOOKING_FLOW_PATH) return
-    if (!draft.categoryId && !categoryIdParam && !['type'].includes(step)) {
-      leaveFlow()
+    if (!draft.categoryId && !categoryIdParam) {
+      // If they somehow enter without a category, they need to pick one.
+      navigate('/app/search', { replace: true })
     }
-  }, [categoryIdParam, draft.categoryId, leaveFlow, location.pathname, step])
+  }, [categoryIdParam, draft.categoryId, navigate, location.pathname])
 
   useEffect(() => {
     if (location.pathname !== BOOKING_FLOW_PATH) return
@@ -467,6 +469,31 @@ export function IndividualBookingFlowPage() {
       <div className="pb-8">
         <AppStackScreenHeader title="Matching labour" onBack={() => goStep('summary')} />
         <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
+        
+        <div className="px-4 mt-6">
+          <div className="lc-booking-flow-card">
+            <p className="lc-booking-flow-label mb-2">Booking Details</p>
+            <div className="space-y-2 text-sm text-slate-700">
+              <div className="flex justify-between">
+                <span className="font-semibold text-slate-500">Date</span>
+                <span className="font-medium text-slate-900">{draft.bookingType === 'scheduled' ? new Date(draft.serviceDate).toLocaleDateString() : 'ASAP'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold text-slate-500">Time</span>
+                <span className="font-medium text-slate-900">{draft.bookingType === 'scheduled' ? draft.timeSlot : 'Earliest available'}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold text-slate-500">Location</span>
+                <span className="text-right line-clamp-2 mt-0.5 text-slate-900 font-medium">{draft.address}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 mt-2">
+                <span>Total Bill</span>
+                <span>₹{draft.billAmount?.toLocaleString('en-IN') || 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <BookingFindingScreen
           categoryLabel={draft.categoryName}
           onComplete={() => { }}
@@ -577,16 +604,40 @@ export function IndividualBookingFlowPage() {
         </div>
 
         {booking && (
-          <div className="lc-booking-flow-card">
-            <p className="lc-booking-flow-label mb-2">Security OTPs</p>
-            <div className="flex gap-4">
-              <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <p className="text-[10px] text-slate-500 font-semibold">Start OTP</p>
-                <p className="text-xl font-black text-slate-800 tracking-widest">{booking.startOtp}</p>
+          <div className="space-y-4">
+            <div className="lc-booking-flow-card">
+              <p className="lc-booking-flow-label mb-2">Booking Details</p>
+              <div className="space-y-2 text-sm text-slate-700">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-slate-500">Date</span>
+                  <span className="font-medium text-slate-900">{booking.type === 'SCHEDULED' ? new Date(booking.scheduledAt).toLocaleDateString() : 'ASAP'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-slate-500">Time</span>
+                  <span className="font-medium text-slate-900">{booking.type === 'SCHEDULED' ? booking.timeSlot : 'Earliest available'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-slate-500">Location</span>
+                  <span className="text-right line-clamp-2 mt-0.5 text-slate-900 font-medium">{booking.address?.locationText}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 mt-2">
+                  <span>Total Bill</span>
+                  <span>₹{booking.totalAmount?.toLocaleString('en-IN') || 0}</span>
+                </div>
               </div>
-              <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <p className="text-[10px] text-slate-500 font-semibold">Completion OTP</p>
-                <p className="text-xl font-black text-slate-800 tracking-widest">{booking.completionOtp}</p>
+            </div>
+
+            <div className="lc-booking-flow-card">
+              <p className="lc-booking-flow-label mb-2">Security OTPs</p>
+              <div className="flex gap-4">
+                <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
+                  <p className="text-[10px] text-slate-500 font-semibold">Start OTP</p>
+                  <p className="text-xl font-black text-slate-800 tracking-widest">{booking.startOtp}</p>
+                </div>
+                <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
+                  <p className="text-[10px] text-slate-500 font-semibold">Completion OTP</p>
+                  <p className="text-xl font-black text-slate-800 tracking-widest">{booking.completionOtp}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -851,6 +902,7 @@ export function IndividualBookingFlowPage() {
                   <input
                     type="date"
                     min={todayISODate()}
+                    max={maxISODate(5)}
                     value={draft.serviceDate || ''}
                     onChange={(e) => syncDraft({ serviceDate: e.target.value })}
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black"
@@ -970,6 +1022,7 @@ export function IndividualBookingFlowPage() {
           onSelect={(id) => {
             syncDraft({ bookingType: id })
             setTypeSheetOpen(false)
+            goStep('details')
           }}
         />
       </div>

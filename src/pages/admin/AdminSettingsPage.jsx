@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Settings, Percent, IndianRupee, Wallet, Receipt, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
+import { Settings, Percent, IndianRupee, Wallet, Receipt, AlertTriangle, CheckCircle2, Loader2, Clock } from 'lucide-react'
 import { adminSettingsApi } from '../../api/adminSettingsApi.js'
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
@@ -74,6 +74,10 @@ export function AdminSettingsPage() {
   // Cancellation Penalty
   const [cancellationPenalty, setCancellationPenalty] = useState('')
 
+  // Time Slots
+  const [timeSlots, setTimeSlots] = useState([])
+  const [newTimeSlot, setNewTimeSlot] = useState('')
+
   const showToast = useCallback((message, variant = 'success') => {
     setToast({ message, variant })
     setTimeout(() => setToast({ message: '', variant: 'success' }), 3500)
@@ -108,6 +112,10 @@ export function AdminSettingsPage() {
         // Cancellation Penalty
         if (s.cancellationPenalty != null) {
           setCancellationPenalty(String(s.cancellationPenalty))
+        }
+        // Time Slots
+        if (s.timeSlots && Array.isArray(s.timeSlots)) {
+          setTimeSlots(s.timeSlots)
         }
       })
       .catch((err) => {
@@ -334,6 +342,75 @@ export function AdminSettingsPage() {
             })}
           >
             Save Penalty
+          </AppPrimaryButton>
+        </SettingsSection>
+
+        {/* Time Slots */}
+        <SettingsSection
+          icon={Clock}
+          title="Time Slots"
+          description="Available time slots for scheduled bookings"
+          accent="indigo-600"
+        >
+          <div>
+            <label className={labelClass}>Current Slots</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {timeSlots.map((slot, index) => (
+                <div key={index} className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700">
+                  {slot}
+                  <button
+                    type="button"
+                    onClick={() => setTimeSlots(prev => prev.filter((_, i) => i !== index))}
+                    className="text-slate-400 hover:text-rose-500 transition px-1"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+              {timeSlots.length === 0 && <span className="text-xs text-slate-400">No time slots configured.</span>}
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Add New Slot</label>
+            <div className="mt-1.5 flex gap-2">
+              <input
+                className={inputClass + ' flex-1'}
+                type="text"
+                placeholder="e.g. 08:00 AM"
+                value={newTimeSlot}
+                onChange={(e) => setNewTimeSlot(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (newTimeSlot.trim()) {
+                      setTimeSlots(prev => [...prev, newTimeSlot.trim()])
+                      setNewTimeSlot('')
+                    }
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newTimeSlot.trim()) {
+                    setTimeSlots(prev => [...prev, newTimeSlot.trim()])
+                    setNewTimeSlot('')
+                  }
+                }}
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800 transition"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+          <AppPrimaryButton
+            type="button"
+            loading={saving === 'Time Slots'}
+            onClick={() => handleSave('Time Slots', adminSettingsApi.updateTimeSlots, {
+              timeSlots,
+            })}
+          >
+            Save Time Slots
           </AppPrimaryButton>
         </SettingsSection>
       </div>

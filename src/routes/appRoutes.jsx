@@ -31,7 +31,7 @@ export const appShellChildRoutes = (
     <Route
       path="booking/flow"
       element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]} allowGuest>
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]} allowGuest>
           <IndividualBookingFlowPage />
         </RoleRoute>
       }
@@ -39,7 +39,7 @@ export const appShellChildRoutes = (
     <Route
       path="bookings"
       element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]}>
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]}>
           <AppBookingsPage />
         </RoleRoute>
       }
