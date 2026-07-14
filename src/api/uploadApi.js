@@ -12,17 +12,11 @@ function unwrapUploadResponse(res) {
   return json
 }
 
-/**
- * POST /uploads/media — images & videos (profile, categories, job poster, KYC video).
- * @param {File} file
- * @param {string} folder — e.g. UPLOAD_FOLDERS.PROFILES
- */
-export async function uploadMedia(file, folder) {
+export function uploadMedia(file, folder) {
   const fd = new FormData()
   fd.append('file', file)
   fd.append('folder', folder)
-  const res = await apiClient.post('/uploads/media', fd)
-  return unwrapUploadResponse(res)
+  return apiRequest('/uploads/media', { method: 'POST', body: fd })
 }
 
 /**
@@ -30,18 +24,16 @@ export async function uploadMedia(file, folder) {
  * @param {File} file
  * @param {string} folder — e.g. UPLOAD_FOLDERS.KYC_DOCUMENTS
  */
-export async function uploadDocument(file, folder) {
+export function uploadDocument(file, folder) {
   const fd = new FormData()
   fd.append('file', file)
   fd.append('folder', folder)
-  const res = await apiClient.post('/uploads/document', fd)
-  return unwrapUploadResponse(res)
+  return apiRequest('/uploads/document', { method: 'POST', body: fd })
 }
 
 /** GET /uploads/config */
-export async function fetchUploadConfig() {
-  const res = await apiClient.get('/uploads/config')
-  return unwrapUploadResponse(res)
+export function fetchUploadConfig() {
+  return apiRequest('/uploads/config')
 }
 
 /** @param {{ data?: { asset?: { url?: string } } }} envelope — api success body */

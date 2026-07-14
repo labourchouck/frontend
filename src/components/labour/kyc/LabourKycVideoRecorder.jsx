@@ -97,7 +97,8 @@ export function LabourKycVideoRecorder({ previewUrl, onRecorded, onClear, disabl
         clearTimer()
         setRecording(false)
         stopCamera()
-        const type = recorder.mimeType || mimeType || 'video/webm'
+        const rawType = recorder.mimeType || mimeType || 'video/webm'
+        const type = rawType.split(';')[0]
         const blob = new Blob(chunksRef.current, { type })
         if (!blob.size) {
           setError('Recording failed. Please record again.')

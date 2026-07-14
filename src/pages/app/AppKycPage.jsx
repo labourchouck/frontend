@@ -53,8 +53,10 @@ async function videoFileForSubmit(videoFile, videoPreviewUrl) {
   if (!videoPreviewUrl) return null
   const res = await fetch(videoPreviewUrl)
   const blob = await res.blob()
-  const ext = blob.type.includes('mp4') ? 'mp4' : 'webm'
-  return new File([blob], `kyc-video-${Date.now()}.${ext}`, { type: blob.type || 'video/webm' })
+  const rawType = blob.type || 'video/webm'
+  const type = rawType.split(';')[0]
+  const ext = type.includes('mp4') ? 'mp4' : 'webm'
+  return new File([blob], `kyc-video-${Date.now()}.${ext}`, { type })
 }
 
 export function AppKycPage() {
@@ -196,8 +198,8 @@ export function AppKycPage() {
     }
   }
 
-  const showForm = ui.phase === 'submit' || ui.phase === 'failed' || ui.phase === 'review'
-  const compactForm = ui.phase === 'review'
+  const showForm = ui.phase === 'submit' || ui.phase === 'failed'
+  const compactForm = false
 
   return (
     <div className="space-y-4 pb-8">
@@ -275,36 +277,40 @@ export function AppKycPage() {
         </GlassPanel>
       ) : null}
 
-      <GlassPanel className="border-slate-200/90 p-4">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Verification journey</p>
-        <div className="mt-3">
-          <LabourKycWorkflowTimeline
-            activeIndex={workflowStep}
-            tone={ui.tone}
-            steps={isResubmit ? KYC_WORKFLOW_RESUBMIT : KYC_WORKFLOW}
-          />
-        </div>
-      </GlassPanel>
+      {ui.phase !== 'review' ? (
+        <>
+          <GlassPanel className="border-slate-200/90 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Verification journey</p>
+            <div className="mt-3">
+              <LabourKycWorkflowTimeline
+                activeIndex={workflowStep}
+                tone={ui.tone}
+                steps={isResubmit ? KYC_WORKFLOW_RESUBMIT : KYC_WORKFLOW}
+              />
+            </div>
+          </GlassPanel>
 
-      <GlassPanel className="border-violet-200/50 bg-linear-to-br from-violet-50/80 to-white p-4">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-800/80">Why verify?</p>
-        <ul className="mt-3 space-y-2.5">
-          {KYC_BENEFITS.map((b, i) => {
-            const Icon = BENEFIT_ICONS[i] || ShieldCheck
-            return (
-              <li key={b.title} className="flex gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-700">
-                  <Icon className="h-4 w-4" aria-hidden />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">{b.title}</p>
-                  <p className="text-xs text-slate-600">{b.desc}</p>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </GlassPanel>
+          <GlassPanel className="border-violet-200/50 bg-linear-to-br from-violet-50/80 to-white p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-800/80">Why verify?</p>
+            <ul className="mt-3 space-y-2.5">
+              {KYC_BENEFITS.map((b, i) => {
+                const Icon = BENEFIT_ICONS[i] || ShieldCheck
+                return (
+                  <li key={b.title} className="flex gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-700">
+                      <Icon className="h-4 w-4" aria-hidden />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{b.title}</p>
+                      <p className="text-xs text-slate-600">{b.desc}</p>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </GlassPanel>
+        </>
+      ) : null}
 
       {showForm ? (
         <GlassPanel className="border-slate-200/90 p-4 sm:p-5">
