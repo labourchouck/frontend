@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
@@ -23,6 +23,7 @@ import { AppTextInput } from '../../../components/app-ui/inputs/AppTextInput.jsx
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { bookingsApi } from '../../../api/bookingsApi.js'
+import { getPublicSettings } from '../../../api/adminSettingsApi.js'
 import { uploadMedia, assetUrlFromUpload } from '../../../api/uploadApi.js'
 import { BookingFindingScreen } from '../../../components/app/booking/BookingFindingScreen.jsx'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
@@ -37,6 +38,7 @@ import {
   durationKindToDays,
   formatInr,
   todayISODate,
+  maxISODate,
 } from '../../../lib/individualBookings.js'
 import {
   clearBookingDraft,
@@ -73,7 +75,6 @@ function BookingPrimaryButton({ children, className = '', ...rest }) {
 export function IndividualBookingFlowPage() {
   const navigate = useNavigate()
   const { isGuest } = useAuth()
-  const [createRequest] = useCreateRequestMutation()
   const location = useLocation()
   const reduce = useReducedMotion()
   const [searchParams] = useSearchParams()
@@ -94,6 +95,14 @@ export function IndividualBookingFlowPage() {
   const [isCalculating, setIsCalculating] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+
+  const [timeSlots, setTimeSlots] = useState([])
+  const [timeSlotsLoading, setTimeSlotsLoading] = useState(true)
+
+  const inputRef = useRef(null)
+  const mapRef = useRef(null)
+  const mapInstance = useRef(null)
+  const markerInstance = useRef(null)
 
   const { bookingEvent } = useBookingSocket(activeBookingId)
 
@@ -198,10 +207,11 @@ export function IndividualBookingFlowPage() {
 
   useEffect(() => {
     if (location.pathname !== BOOKING_FLOW_PATH) return
-    if (!draft.categoryId && !categoryIdParam && !['type'].includes(step)) {
-      leaveFlow()
+    if (!draft.categoryId && !categoryIdParam) {
+      // If they somehow enter without a category, they need to pick one.
+      navigate('/app/search', { replace: true })
     }
-  }, [categoryIdParam, draft.categoryId, leaveFlow, location.pathname, step])
+  }, [categoryIdParam, draft.categoryId, navigate, location.pathname])
 
   useEffect(() => {
     if (location.pathname !== BOOKING_FLOW_PATH) return
@@ -216,6 +226,138 @@ export function IndividualBookingFlowPage() {
       cancelled = true
     }
   }, [draft.bookingType, draft.entryPoint, goStep, location.pathname, step])
+
+  useEffect(() => {
+    let cancelled = false
+    getPublicSettings()
+      .then((res) => {
+        if (!cancelled) {
+          const slots = res.data?.timeSlots
+          if (Array.isArray(slots) && slots.length > 0) {
+            setTimeSlots(slots)
+          } else {
+            setTimeSlots(['08:00 AM', '10:00 AM', '12:00 PM', '02:00 PM', '04:00 PM', '06:00 PM'])
+          }
+          setTimeSlotsLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTimeSlots(['08:00 AM', '10:00 AM', '12:00 PM', '02:00 PM', '04:00 PM', '06:00 PM'])
+          setTimeSlotsLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  const filteredTimeSlots = useMemo(() => {
+    if (!draft.serviceDate) return timeSlots
+    const now = new Date()
+    const selectedDate = new Date(draft.serviceDate)
+    const isToday = selectedDate.toDateString() === now.toDateString()
+    if (!isToday) return timeSlots
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    
+    return timeSlots.filter(slot => {
+      const match = slot.match(/(\d+):(\d+) (AM|PM)/)
+      if (!match) return true
+      let [ , h, m, ampm ] = match
+      h = parseInt(h, 10)
+      m = parseInt(m, 10)
+      if (ampm === 'PM' && h < 12) h += 12
+      if (ampm === 'AM' && h === 12) h = 0
+      
+      const slotMinutes = h * 60 + m
+      return slotMinutes > currentMinutes + 30
+    })
+  }, [draft.serviceDate, timeSlots])
+
+  useEffect(() => {
+    if (step !== 'details') return
+    if (window.google?.maps?.places && window.google?.maps?.Map) {
+      initMaps()
+      return
+    }
+    
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
+
+    if (!document.querySelector('#google-maps-script')) {
+      const script = document.createElement('script')
+      script.id = 'google-maps-script'
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
+      script.async = true
+      script.onload = initMaps
+      document.head.appendChild(script)
+    } else {
+      const script = document.querySelector('#google-maps-script')
+      script.addEventListener('load', initMaps)
+    }
+
+    function initMaps() {
+      if (inputRef.current) {
+        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+          fields: ['formatted_address', 'geometry', 'name'],
+          types: ['geocode', 'establishment'],
+        })
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace()
+          if (place.geometry && place.geometry.location) {
+            syncDraft({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              address: place.formatted_address || place.name || ''
+            })
+          }
+        })
+      }
+
+      if (mapRef.current && !mapInstance.current) {
+        const currentPos = { 
+          lat: draft.lat || 28.7041, 
+          lng: draft.lng || 77.1025 
+        }
+        
+        mapInstance.current = new window.google.maps.Map(mapRef.current, {
+          center: currentPos,
+          zoom: 15,
+          disableDefaultUI: true,
+          zoomControl: true,
+        })
+        
+        markerInstance.current = new window.google.maps.Marker({
+          position: currentPos,
+          map: mapInstance.current,
+          draggable: true,
+          animation: window.google.maps.Animation.DROP,
+        })
+
+        markerInstance.current.addListener('dragend', () => {
+          const pos = markerInstance.current.getPosition()
+          const lat = pos.lat()
+          const lng = pos.lng()
+          
+          const geocoder = new window.google.maps.Geocoder()
+          geocoder.geocode({ location: pos }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              syncDraft({ lat, lng, address: results[0].formatted_address })
+            } else {
+              syncDraft({ lat, lng })
+            }
+          })
+        })
+      }
+    }
+  }, [step, syncDraft])
+
+  useEffect(() => {
+    if (mapInstance.current && markerInstance.current && draft.lat && draft.lng) {
+      const pos = { lat: draft.lat, lng: draft.lng }
+      mapInstance.current.panTo(pos)
+      markerInstance.current.setPosition(pos)
+    }
+  }, [draft.lat, draft.lng])
 
   const pickLocation = () => {
     if (!navigator.geolocation) return
@@ -327,6 +469,31 @@ export function IndividualBookingFlowPage() {
       <div className="pb-8">
         <AppStackScreenHeader title="Matching labour" onBack={() => goStep('summary')} />
         <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
+        
+        <div className="px-4 mt-6">
+          <div className="lc-booking-flow-card">
+            <p className="lc-booking-flow-label mb-2">Booking Details</p>
+            <div className="space-y-2 text-sm text-slate-700">
+              <div className="flex justify-between">
+                <span className="font-semibold text-slate-500">Date</span>
+                <span className="font-medium text-slate-900">{draft.bookingType === 'scheduled' ? new Date(draft.serviceDate).toLocaleDateString() : 'ASAP'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold text-slate-500">Time</span>
+                <span className="font-medium text-slate-900">{draft.bookingType === 'scheduled' ? draft.timeSlot : 'Earliest available'}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold text-slate-500">Location</span>
+                <span className="text-right line-clamp-2 mt-0.5 text-slate-900 font-medium">{draft.address}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 mt-2">
+                <span>Total Bill</span>
+                <span>₹{draft.billAmount?.toLocaleString('en-IN') || 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <BookingFindingScreen
           categoryLabel={draft.categoryName}
           onComplete={() => { }}
@@ -437,16 +604,40 @@ export function IndividualBookingFlowPage() {
         </div>
 
         {booking && (
-          <div className="lc-booking-flow-card">
-            <p className="lc-booking-flow-label mb-2">Security OTPs</p>
-            <div className="flex gap-4">
-              <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <p className="text-[10px] text-slate-500 font-semibold">Start OTP</p>
-                <p className="text-xl font-black text-slate-800 tracking-widest">{booking.startOtp}</p>
+          <div className="space-y-4">
+            <div className="lc-booking-flow-card">
+              <p className="lc-booking-flow-label mb-2">Booking Details</p>
+              <div className="space-y-2 text-sm text-slate-700">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-slate-500">Date</span>
+                  <span className="font-medium text-slate-900">{booking.type === 'SCHEDULED' ? new Date(booking.scheduledAt).toLocaleDateString() : 'ASAP'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-slate-500">Time</span>
+                  <span className="font-medium text-slate-900">{booking.type === 'SCHEDULED' ? booking.timeSlot : 'Earliest available'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-slate-500">Location</span>
+                  <span className="text-right line-clamp-2 mt-0.5 text-slate-900 font-medium">{booking.address?.locationText}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 mt-2">
+                  <span>Total Bill</span>
+                  <span>₹{booking.totalAmount?.toLocaleString('en-IN') || 0}</span>
+                </div>
               </div>
-              <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
-                <p className="text-[10px] text-slate-500 font-semibold">Completion OTP</p>
-                <p className="text-xl font-black text-slate-800 tracking-widest">{booking.completionOtp}</p>
+            </div>
+
+            <div className="lc-booking-flow-card">
+              <p className="lc-booking-flow-label mb-2">Security OTPs</p>
+              <div className="flex gap-4">
+                <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
+                  <p className="text-[10px] text-slate-500 font-semibold">Start OTP</p>
+                  <p className="text-xl font-black text-slate-800 tracking-widest">{booking.startOtp}</p>
+                </div>
+                <div className="flex-1 rounded-xl bg-slate-50 border border-slate-200 p-3 text-center">
+                  <p className="text-[10px] text-slate-500 font-semibold">Completion OTP</p>
+                  <p className="text-xl font-black text-slate-800 tracking-widest">{booking.completionOtp}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -600,12 +791,17 @@ export function IndividualBookingFlowPage() {
           <motion.div layout className="space-y-4">
             <div>
               <FieldLabel>Work location</FieldLabel>
-              <AppTextInput
+              <input
+                ref={inputRef}
+                type="text"
                 value={draft.address || ''}
                 onChange={(e) => syncDraft({ address: e.target.value })}
                 placeholder="House, street, area, city"
-                inputClassName="text-black font-semibold placeholder:text-black/40"
-                leftSlot={<MapPin className="h-4 w-4 text-black/50" aria-hidden />}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+              <div 
+                ref={mapRef} 
+                className="mt-3 h-48 w-full rounded-xl bg-slate-100 ring-1 ring-black/5 overflow-hidden" 
               />
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
@@ -706,6 +902,7 @@ export function IndividualBookingFlowPage() {
                   <input
                     type="date"
                     min={todayISODate()}
+                    max={maxISODate(5)}
                     value={draft.serviceDate || ''}
                     onChange={(e) => syncDraft({ serviceDate: e.target.value })}
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black"
@@ -714,7 +911,7 @@ export function IndividualBookingFlowPage() {
                 <div>
                   <FieldLabel>Time slot</FieldLabel>
                   <div className="grid grid-cols-2 gap-2">
-                    {TIME_SLOTS.map((slot) => (
+                    {filteredTimeSlots.map((slot) => (
                       <button
                         key={slot}
                         type="button"
@@ -725,6 +922,11 @@ export function IndividualBookingFlowPage() {
                         {slot}
                       </button>
                     ))}
+                    {filteredTimeSlots.length === 0 && (
+                      <div className="col-span-2 rounded-xl bg-slate-50 p-3 text-center text-xs text-slate-500 border border-slate-100">
+                        No time slots available for this date.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -820,6 +1022,7 @@ export function IndividualBookingFlowPage() {
           onSelect={(id) => {
             syncDraft({ bookingType: id })
             setTypeSheetOpen(false)
+            goStep('details')
           }}
         />
       </div>

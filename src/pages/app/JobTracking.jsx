@@ -146,6 +146,29 @@ export function JobTracking() {
         </p>
       </GlassPanel>
 
+      {/* Booking Details */}
+      <GlassPanel className="p-4">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Booking Details</p>
+        <div className="space-y-2 text-sm text-slate-700">
+          <div className="flex justify-between">
+            <span className="font-semibold text-slate-500">Date</span>
+            <span className="font-medium text-slate-900">{booking.type === 'SCHEDULED' ? new Date(booking.scheduledAt).toLocaleDateString() : 'ASAP'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-semibold text-slate-500">Time</span>
+            <span className="font-medium text-slate-900">{booking.type === 'SCHEDULED' ? booking.timeSlot : 'Earliest available'}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-semibold text-slate-500">Location</span>
+            <span className="text-right line-clamp-2 mt-0.5 text-slate-900 font-medium">{booking.address?.locationText}</span>
+          </div>
+          <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 mt-2">
+            <span>Total Bill</span>
+            <span>₹{booking.totalAmount?.toLocaleString('en-IN') || 0}</span>
+          </div>
+        </div>
+      </GlassPanel>
+
       {/* Progress Stepper */}
       <GlassPanel className="p-5">
         <ol className="space-y-3">

@@ -15,7 +15,7 @@ export function AppSubCategoryServicePage() {
   const [bookingTypeOpen, setBookingTypeOpen] = useState(false)
   const [bookingService, setBookingService] = useState(null)
 
-  const cat = location.state?.cat
+  const [cat] = useState(() => location.state?.cat)
 
   const handleQuickBookType = useCallback(
     (bookingType) => {
