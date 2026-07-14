@@ -12,17 +12,35 @@ function unwrapUploadResponse(res) {
   return json
 }
 
+async function wrapUploadCall(requestFn) {
+  try {
+    const res = await requestFn()
+    return unwrapUploadResponse(res)
+  } catch (e) {
+    if (e.isAxiosError) {
+      const json = e.response?.data ?? {}
+      const message = typeof json.message === 'string' ? json.message : e.message || 'Upload failed'
+      throw new ApiError(message, {
+        status: e.response?.status,
+        code: json.code,
+      })
+    }
+    throw e
+  }
+}
+
 /**
  * POST /uploads/media — images & videos (profile, categories, job poster, KYC video).
  * @param {File} file
  * @param {string} folder — e.g. UPLOAD_FOLDERS.PROFILES
  */
-export async function uploadMedia(file, folder) {
-  const fd = new FormData()
-  fd.append('file', file)
-  fd.append('folder', folder)
-  const res = await apiClient.post('/uploads/media', fd)
-  return unwrapUploadResponse(res)
+export function uploadMedia(file, folder) {
+  return wrapUploadCall(async () => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('folder', folder)
+    return apiClient.post('/uploads/media', fd)
+  })
 }
 
 /**
@@ -30,12 +48,13 @@ export async function uploadMedia(file, folder) {
  * @param {File} file
  * @param {string} folder — e.g. UPLOAD_FOLDERS.KYC_DOCUMENTS
  */
-export async function uploadDocument(file, folder) {
-  const fd = new FormData()
-  fd.append('file', file)
-  fd.append('folder', folder)
-  const res = await apiClient.post('/uploads/document', fd)
-  return unwrapUploadResponse(res)
+export function uploadDocument(file, folder) {
+  return wrapUploadCall(async () => {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('folder', folder)
+    return apiClient.post('/uploads/document', fd)
+  })
 }
 
 /** GET /uploads/config */
