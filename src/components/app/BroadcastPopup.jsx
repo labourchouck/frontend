@@ -35,9 +35,15 @@ export function BroadcastPopup() {
       setResponding(false)
     }
 
-    socket.on('NEW_BROADCAST', handleBroadcast)
+    socket.on('BOOKING_RECEIVED', handleBroadcast)
+    const handleExpired = (data) => {
+      setIncoming((prev) => (prev?.bookingId === data.bookingId ? null : prev))
+    }
+    socket.on('BOOKING_EXPIRED', handleExpired)
+
     return () => {
-      socket.off('NEW_BROADCAST', handleBroadcast)
+      socket.off('BOOKING_RECEIVED', handleBroadcast)
+      socket.off('BOOKING_EXPIRED', handleExpired)
     }
   }, [socket, isLabour])
 
@@ -50,7 +56,7 @@ export function BroadcastPopup() {
         if (prev <= 1) {
           // Auto-reject on timeout
           clearInterval(timerRef.current)
-          broadcastsApi.rejectBroadcast(incoming.logId).catch(() => {})
+          if (incoming?.bookingId) broadcastsApi.rejectBroadcast(incoming.bookingId).catch(() => {})
           setIncoming(null)
           return 0
         }
@@ -68,7 +74,7 @@ export function BroadcastPopup() {
     setResponding(true)
     setError('')
     try {
-      await broadcastsApi.acceptBroadcast(incoming.logId)
+      await broadcastsApi.acceptBroadcast(incoming.bookingId)
       if (timerRef.current) clearInterval(timerRef.current)
       const bookingId = incoming.bookingId
       setIncoming(null)
@@ -83,7 +89,7 @@ export function BroadcastPopup() {
     if (!incoming) return
     setResponding(true)
     try {
-      await broadcastsApi.rejectBroadcast(incoming.logId)
+      await broadcastsApi.rejectBroadcast(incoming.bookingId)
     } catch {
       /* ignore */
     } finally {
@@ -142,6 +148,22 @@ export function BroadcastPopup() {
                   <span className="text-sm font-extrabold text-amber-700">{timeLeft}s</span>
                 </div>
               </div>
+
+              {/* Customer Details */}
+              {incoming.customer && (
+                <div className="mt-4 rounded-2xl bg-brand/5 p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-brand/80">Customer</p>
+                    <p className="text-sm font-bold text-slate-900">{incoming.customer.name}</p>
+                  </div>
+                  {incoming.customer.phone && (
+                    <div className="text-right">
+                      <p className="text-xs font-semibold text-brand/80">Phone</p>
+                      <p className="text-sm font-bold text-slate-900">{incoming.customer.phone}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Details */}
               <div className="mt-4 space-y-2 rounded-2xl bg-slate-50 p-3">

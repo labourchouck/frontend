@@ -352,6 +352,35 @@ export function IndividualBookingFlowPage() {
   }, [step, syncDraft])
 
   useEffect(() => {
+    if (step === 'summary' && !calculatedBill) {
+      if (!draft.categoryId && !draft.serviceId) {
+        goStep('type')
+        return
+      }
+      let cancelled = false
+      setIsCalculating(true)
+      const days = durationKindToDays(draft.durationKind, draft.durationDays)
+      bookingsApi.calculateBill({
+        serviceId: draft.serviceId || draft.categoryId,
+        durationDays: days
+      }).then(res => {
+        if (!cancelled) {
+          setCalculatedBill(res.data)
+          syncDraft({ billAmount: res.data.totalAmount })
+        }
+      }).catch(err => {
+        if (!cancelled) {
+          setFormError(err.message || 'Failed to calculate bill.')
+          goStep('details')
+        }
+      }).finally(() => {
+        if (!cancelled) setIsCalculating(false)
+      })
+      return () => { cancelled = true }
+    }
+  }, [step, calculatedBill, draft.categoryId, draft.serviceId, draft.durationKind, draft.durationDays, goStep])
+
+  useEffect(() => {
     if (mapInstance.current && markerInstance.current && draft.lat && draft.lng) {
       const pos = { lat: draft.lat, lng: draft.lng }
       mapInstance.current.panTo(pos)
@@ -408,6 +437,7 @@ export function IndividualBookingFlowPage() {
         durationDays: days
       })
       setCalculatedBill(res.data)
+      syncDraft({ billAmount: res.data.totalAmount })
       goStep('summary')
     } catch (err) {
       setFormError(err.message || 'Failed to calculate bill.')
@@ -736,7 +766,7 @@ export function IndividualBookingFlowPage() {
   }
 
   const flowTitle =
-    step === 'type' ? 'Booking type' : step === 'details' ? 'Job details' : 'Review & confirm'
+    step === 'type' ? 'Booking type' : step === 'details' ? 'Job details' : step === 'summary' ? 'Billing' : 'Review & confirm'
 
   return (
     <div className="-mx-4 space-y-4 bg-white pb-8">
@@ -946,7 +976,13 @@ export function IndividualBookingFlowPage() {
           </motion.div>
         ) : null}
 
-        {step === 'summary' && calculatedBill ? (
+        {step === 'summary' ? (
+          !calculatedBill ? (
+            <div className="flex flex-col items-center justify-center p-8 gap-3">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+              <span className="text-sm font-semibold text-slate-500">Loading billing details...</span>
+            </div>
+          ) : (
           <motion.div layout className="space-y-4">
             <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
               <div className="flex justify-between gap-2">
@@ -984,7 +1020,7 @@ export function IndividualBookingFlowPage() {
               </p>
               <div className="border-t border-slate-200 pt-3">
                 <div className="flex justify-between font-semibold text-black">
-                  <span>Estimated labour</span>
+                  <span>Service fee</span>
                   <span>{formatInr(calculatedBill.basePrice)}</span>
                 </div>
                 <div className="mt-1 flex justify-between lc-booking-flow-muted">
@@ -1007,11 +1043,12 @@ export function IndividualBookingFlowPage() {
                 Edit details
               </button>
               <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking} disabled={isCreating}>
-                {isCreating ? 'Creating...' : 'Confirm booking'}
+                {isCreating ? 'Sending req...' : 'Send req'}
                 <CheckCircle2 className="h-4 w-4" aria-hidden />
               </BookingPrimaryButton>
             </div>
           </motion.div>
+          )
         ) : null}
 
         <BookingTypeSheet
