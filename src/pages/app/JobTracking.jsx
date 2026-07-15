@@ -38,6 +38,7 @@ export function JobTracking() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showReview, setShowReview] = useState(false)
+  const [labourLocation, setLabourLocation] = useState(null)
 
   // Fetch booking on mount
   useEffect(() => {
@@ -89,12 +90,20 @@ export function JobTracking() {
       }
     }
 
+    const handleLocationUpdate = (data) => {
+      if (data.bookingId === bookingId && data.lat && data.lng) {
+        setLabourLocation({ lat: data.lat, lng: data.lng })
+      }
+    }
+
     socket.on('BOOKING_ACCEPTED', handleAccepted)
     socket.on('BOOKING_STATUS_UPDATE', handleStatusUpdate)
+    socket.on('LABOUR_LOCATION_UPDATE', handleLocationUpdate)
 
     return () => {
       socket.off('BOOKING_ACCEPTED', handleAccepted)
       socket.off('BOOKING_STATUS_UPDATE', handleStatusUpdate)
+      socket.off('LABOUR_LOCATION_UPDATE', handleLocationUpdate)
     }
   }, [socket, bookingId, dispatch])
 
@@ -145,6 +154,28 @@ export function JobTracking() {
           {BOOKING_STEPS[currentStepIndex]?.label || booking.status}
         </p>
       </GlassPanel>
+
+      {/* Map Tracking */}
+      {booking.status === 'EN_ROUTE' && labourLocation && (
+        <GlassPanel className="overflow-hidden p-0">
+          <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-brand" /> Live Tracking
+            </p>
+          </div>
+          <div className="h-48 w-full bg-slate-100 relative">
+            <iframe
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://maps.google.com/maps?q=${labourLocation.lat},${labourLocation.lng}&z=15&output=embed`}
+            />
+          </div>
+        </GlassPanel>
+      )}
 
       {/* Booking Details */}
       <GlassPanel className="p-4">

@@ -11,6 +11,7 @@ import {
   Navigation,
   Play,
   X,
+  Clock,
 } from 'lucide-react'
 import { bookingsApi } from '../../api/bookingsApi.js'
 import { ApiError } from '../../api/http.js'
@@ -104,6 +105,33 @@ export function ActiveJob() {
     }
   }, [bookingId, navigate])
 
+  // Track location if EN_ROUTE
+  useEffect(() => {
+    if (!socket || !booking || booking.status !== 'EN_ROUTE') return
+
+    let watchId
+    if ('geolocation' in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          socket.emit('LABOUR_LOCATION_UPDATE', {
+            bookingId: booking._id,
+            customerId: booking.userId?._id || booking.userId,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          })
+        },
+        (error) => {
+          console.error('Error tracking location:', error)
+        },
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+      )
+    }
+
+    return () => {
+      if (watchId !== undefined) navigator.geolocation.clearWatch(watchId)
+    }
+  }, [socket, booking])
+
   const handleCancel = useCallback(async () => {
     const confirmed = window.confirm(
       'Are you sure? A ₹50 penalty will be applied to your wallet.'
@@ -149,6 +177,10 @@ export function ActiveJob() {
   const isCompleted = status === 'COMPLETED'
   const isCancelled = status === 'CANCELLED'
   const customer = booking.userId && typeof booking.userId === 'object' ? booking.userId : null
+
+  // Check if it's too early to start a scheduled job (more than 30 mins away)
+  const isTooEarly = booking.type === 'SCHEDULED' && booking.status === 'ACCEPTED' && 
+    (new Date(booking.scheduledAt).getTime() - Date.now() > 30 * 60 * 1000)
 
   return (
     <div className="space-y-4 pb-8">
@@ -240,37 +272,45 @@ export function ActiveJob() {
       {/* Action Button */}
       {config && !isCompleted && !isCancelled && (
         <div className="space-y-3">
-          <button
-            type="button"
-            disabled={updating}
-            onClick={() => handleStatusUpdate(config.next)}
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
-          >
-            {updating ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <>
-                <config.icon className="h-5 w-5" aria-hidden />
-                {config.label}
-                <ArrowRight className="h-5 w-5" aria-hidden />
-              </>
-            )}
-          </button>
-          <p className="text-center text-xs text-slate-500">{config.description}</p>
-        </div>
-      )}
+          {isTooEarly ? (
+            <GlassPanel className="p-4 text-center">
+              <Clock className="mx-auto h-8 w-8 text-amber-500 mb-2" />
+              <p className="text-sm font-bold text-slate-800">Scheduled for later</p>
+              <p className="text-xs text-slate-500 mt-1">
+                You can start your journey 30 minutes before the scheduled time.
+              </p>
+            </GlassPanel>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={updating}
+                onClick={() => handleStatusUpdate(config.next)}
+                className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
+              >
+                {updating ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    <config.icon className="h-5 w-5" />
+                    {config.label}
+                  </>
+                )}
+              </button>
 
-      {/* Cancel Button */}
-      {!isCompleted && !isCancelled && (
-        <button
-          type="button"
-          disabled={updating}
-          onClick={handleCancel}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-rose-200 bg-white px-4 py-3 text-sm font-bold text-rose-600 transition hover:bg-rose-50 active:scale-[0.98] disabled:opacity-50"
-        >
-          <X className="h-4 w-4" aria-hidden />
-          Cancel Job
-        </button>
+              {status === 'ACCEPTED' && (
+                <button
+                  type="button"
+                  disabled={updating}
+                  onClick={handleCancel}
+                  className="w-full rounded-2xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-extrabold text-slate-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 active:scale-[0.98] disabled:opacity-50"
+                >
+                  Cancel Booking
+                </button>
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   )
