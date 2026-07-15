@@ -44,6 +44,7 @@ export function AppShell() {
   const hideShellHeader =
     pathname.startsWith('/app/booking/flow') ||
     pathname.startsWith('/app/tracking') ||
+    pathname.startsWith('/app/sub-category/') ||
     pathname === '/app/bookings' ||
     pathname === '/app/search' ||
     pathname === '/app/support' ||

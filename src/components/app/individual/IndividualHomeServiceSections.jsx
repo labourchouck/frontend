@@ -1,4 +1,5 @@
 import { ChevronRight, Loader2, Wrench } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { getCategoryImageUrl } from '../../../lib/labourCategoryDisplay.js'
 
 const LAYOUTS = [
@@ -92,32 +93,60 @@ function CarouselLayout({ categories, onQuickBook }) {
 }
 
 function ListLayout({ categories, onQuickBook }) {
-  const items = categories.slice(0, 6)
+  const navigate = useNavigate();
+  const allServices = categories.flatMap(cat => 
+    (cat.services || []).map(s => ({ ...s, parentCat: cat }))
+  );
+  const items = allServices.slice(0, 4);
+
   return (
-    <ul className="space-y-2">
-      {items.map((cat) => (
-        <li key={String(cat._id)}>
-          <button
-            type="button"
-            onClick={() => onQuickBook?.(cat)}
-            className="lc-home-service-list-row"
-          >
-            <ServiceImage
-              src={getCategoryImageUrl(cat)}
-              alt=""
-              className="h-14 w-14 shrink-0 rounded-xl"
-            />
-            <span className="min-w-0 flex-1 text-left">
-              <span className="block truncate text-sm font-bold text-slate-900">{cat.name}</span>
-              <span className="block truncate text-xs font-medium text-slate-500">
-                {cat.subtitle || cat.groupName}
+    <div className="space-y-3">
+      <ul className="space-y-2">
+        {items.map((svc) => (
+          <li key={String(svc._id)}>
+            <button
+              type="button"
+              onClick={() => onQuickBook?.(svc.parentCat)}
+              className="lc-home-service-list-row"
+            >
+              <div className="h-14 w-14 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden">
+                {svc.iconUrl ? (
+                  <img src={getCategoryImageUrl({ name: svc.name, imageUrl: svc.iconUrl })} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <ServiceImage
+                    src={getCategoryImageUrl(svc.parentCat)}
+                    alt=""
+                    className="h-14 w-14 shrink-0 rounded-xl"
+                  />
+                )}
+              </div>
+              <span className="min-w-0 flex-1 text-left ml-1">
+                <span className="block truncate text-sm font-bold text-slate-900">{svc.name}</span>
+                <span className="block truncate text-xs font-medium text-slate-500">
+                  {svc.parentCat.name}
+                </span>
               </span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />
-          </button>
-        </li>
-      ))}
-    </ul>
+              <span className="shrink-0 text-sm font-bold text-emerald-600">
+                ₹{svc.basePrice}
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 ml-2" aria-hidden />
+            </button>
+          </li>
+        ))}
+        {items.length === 0 && (
+          <li className="text-sm text-slate-500 py-4 text-center">No services available.</li>
+        )}
+      </ul>
+      <div className="flex justify-end pr-1 pt-1">
+        <button 
+          type="button" 
+          onClick={() => navigate('/app/search')}
+          className="text-xs font-bold text-brand transition hover:underline"
+        >
+          See more
+        </button>
+      </div>
+    </div>
   )
 }
 
