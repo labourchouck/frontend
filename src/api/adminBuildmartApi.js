@@ -34,3 +34,67 @@ export function buildWhatsAppLeadUrl(lead) {
     .join('\n')
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
 }
+
+export async function fetchAdminMartCategories() {
+  const data = await apiRequest('/buildmart/admin/categories');
+  return data;
+}
+export async function createAdminMartCategory(payload) {
+  const data = await apiRequest('/buildmart/admin/categories', { method: 'POST', body: payload });
+  return data;
+}
+export async function updateAdminMartCategory(id, payload) {
+  const data = await apiRequest('/buildmart/admin/categories/' + id, { method: 'PUT', body: payload });
+  return data;
+}
+export async function deleteAdminMartCategory(id) {
+  const data = await apiRequest('/buildmart/admin/categories/' + id, { method: 'DELETE' });
+  return data;
+}
+
+export async function fetchAdminMartProducts() {
+  const data = await apiRequest('/buildmart/admin/products');
+  return data;
+}
+export async function createAdminMartProduct(payload) {
+  const data = await apiRequest('/buildmart/admin/products', { method: 'POST', body: payload });
+  return data;
+}
+export async function updateAdminMartProduct(id, payload) {
+  const data = await apiRequest('/buildmart/admin/products/' + id, { method: 'PUT', body: payload });
+  return data;
+}
+export async function deleteAdminMartProduct(id) {
+  const data = await apiRequest('/buildmart/admin/products/' + id, { method: 'DELETE' });
+  return data;
+}
+
+export async function fetchAdminMartBanners() {
+  const data = await apiRequest('/buildmart/admin/banners');
+  return data;
+}
+export async function createAdminMartBanner(payload) {
+  const data = await apiRequest('/buildmart/admin/banners', { method: 'POST', body: payload });
+  return data;
+}
+export async function updateAdminMartBanner(id, payload) {
+  const data = await apiRequest('/buildmart/admin/banners/' + id, { method: 'PUT', body: payload });
+  return data;
+}
+export async function deleteAdminMartBanner(id) {
+  const data = await apiRequest('/buildmart/admin/banners/' + id, { method: 'DELETE' });
+  return data;
+}
+
+export async function fetchAppMartCategories() {
+  const data = await apiRequest('/buildmart/app/categories');
+  return data;
+}
+export async function fetchAppMartProducts() {
+  const data = await apiRequest('/buildmart/app/products');
+  return data;
+}
+export async function fetchAppMartBanners() {
+  const data = await apiRequest('/buildmart/app/banners');
+  return data;
+}

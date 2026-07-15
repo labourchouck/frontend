@@ -20,7 +20,7 @@ import { AdminDashboardPage } from './pages/admin/AdminDashboardPage.jsx'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx'
 import { AdminLabourPage } from './pages/admin/AdminLabourPage.jsx'
 import { AdminBusinessVerificationPage } from './pages/admin/AdminBusinessVerificationPage.jsx'
-import { AdminBuildMartLeadsPage } from './pages/admin/AdminBuildMartLeadsPage.jsx'
+import { AdminMartPage } from './pages/admin/AdminMartPage.jsx'
 import { AdminBookingsPage } from './pages/admin/AdminBookingsPage.jsx'
 import { AdminAllocationsPage } from './pages/admin/AdminAllocationsPage.jsx'
 import { AdminAttendancePage } from './pages/admin/AdminAttendancePage.jsx'
@@ -106,7 +106,7 @@ function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="labour" element={<AdminLabourPage />} />
             <Route path="business-verification" element={<AdminBusinessVerificationPage />} />
-            <Route path="buildmart" element={<AdminBuildMartLeadsPage />} />
+            <Route path="mart" element={<AdminMartPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="allocations" element={<AdminAllocationsPage />} />
             <Route path="attendance" element={<AdminAttendancePage />} />
