@@ -300,7 +300,8 @@ export function AdminLabourPage() {
           if (!c.filter) {
             return (
               <motion.div
-        initial={reduce ? false : { opacity: 0, y: 10 }}
+                key={c.key}
+                initial={reduce ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.04 * i }}
               >
@@ -420,13 +421,17 @@ export function AdminLabourPage() {
                       </td>
                       <td className="px-4 py-3">
                         {u.labourProfile?.kycStatus === KYC_STATUS.PENDING ? (
-                          <button
-                            type="button"
-                            onClick={() => setReviewUserId(u._id)}
-                            className="rounded-lg border border-brand/30 bg-brand/10 px-2.5 py-1.5 text-[11px] font-bold text-brand transition hover:bg-brand/15"
-                          >
-                            Review video KYC
-                          </button>
+                          u.labourProfile?.kycSubmittedAt ? (
+                            <button
+                              type="button"
+                              onClick={() => setReviewUserId(u._id)}
+                              className="rounded-lg border border-brand/30 bg-brand/10 px-2.5 py-1.5 text-[11px] font-bold text-brand transition hover:bg-brand/15"
+                            >
+                              Review video KYC
+                            </button>
+                          ) : (
+                            <span className="text-xs text-slate-400">Not submitted</span>
+                          )
                         ) : (
                           <span className="text-xs text-slate-400">—</span>
                         )}
@@ -470,7 +475,7 @@ export function AdminLabourPage() {
                   <KycPill status={u.labourProfile?.kycStatus} submittedAt={u.labourProfile?.kycSubmittedAt} />
                   <span className="text-[11px] text-slate-500">Last: {formatLastLoginDisplay(u.lastLoginAt) || '—'}</span>
                 </div>
-                {u.labourProfile?.kycStatus === KYC_STATUS.PENDING ? (
+                {u.labourProfile?.kycStatus === KYC_STATUS.PENDING && u.labourProfile?.kycSubmittedAt ? (
                   <button
                     type="button"
                     onClick={() => setReviewUserId(u._id)}

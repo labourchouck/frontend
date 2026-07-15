@@ -58,9 +58,8 @@ export function uploadDocument(file, folder) {
 }
 
 /** GET /uploads/config */
-export async function fetchUploadConfig() {
-  const res = await apiClient.get('/uploads/config')
-  return unwrapUploadResponse(res)
+export function fetchUploadConfig() {
+  return apiRequest('/uploads/config')
 }
 
 /** @param {{ data?: { asset?: { url?: string } } }} envelope — api success body */
