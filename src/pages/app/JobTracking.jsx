@@ -21,6 +21,7 @@ import { ReviewModal } from '../../components/app/ReviewModal.jsx'
 
 const BOOKING_STEPS = [
   { id: 'CREATED', label: 'Booking Created' },
+  { id: 'BROADCASTING', label: 'Searching for Workers' },
   { id: 'ACCEPTED', label: 'Labour Accepted' },
   { id: 'EN_ROUTE', label: 'On the Way' },
   { id: 'STARTED', label: 'Work Started' },
@@ -151,7 +152,9 @@ export function JobTracking() {
       <GlassPanel className="border-brand/20 bg-brand/5 px-4 py-3 text-center">
         <p className="text-xs font-bold uppercase tracking-wider text-brand">Current Status</p>
         <p className="mt-1 text-lg font-extrabold text-slate-900">
-          {BOOKING_STEPS[currentStepIndex]?.label || booking.status}
+          {booking.type === 'SCHEDULED' && booking.status === 'CREATED' 
+            ? 'Scheduled (Awaiting Worker)' 
+            : BOOKING_STEPS[currentStepIndex]?.label || booking.status}
         </p>
       </GlassPanel>
 

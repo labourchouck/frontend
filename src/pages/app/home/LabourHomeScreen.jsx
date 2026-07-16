@@ -136,10 +136,15 @@ export function LabourHomeScreen({ user }) {
   const [activeBookings, setActiveBookings] = useState([])
 
   const loadBookings = useCallback(() => {
+    if (!user) return
     bookingsApi.getMyBookings().then(res => {
       setActiveBookings(res.data?.bookings || [])
-    }).catch(console.error)
-  }, [])
+    }).catch(err => {
+      if (err?.message !== 'Authentication required' && err?.status !== 401) {
+        console.error('Failed to load bookings:', err)
+      }
+    })
+  }, [user])
   
   useEffect(() => {
     loadBookings()

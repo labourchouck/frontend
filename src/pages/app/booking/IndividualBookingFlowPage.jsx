@@ -495,7 +495,7 @@ export function IndividualBookingFlowPage() {
       setActiveBookingId(createdBooking._id)
       patchBookingDraft({ lastRef: createdBooking._id })
       setNoMatch(false)
-      goStep('searching')
+      goStep(draft.bookingType === 'scheduled' ? 'scheduled_success' : 'searching')
     } catch (err) {
       console.error(err)
       alert(err.message || 'Failed to create booking')
@@ -505,6 +505,39 @@ export function IndividualBookingFlowPage() {
   }
 
   const wizardIndex = step === 'type' ? 0 : step === 'details' ? 1 : step === 'summary' ? 2 : 3
+
+  if (step === 'scheduled_success') {
+    return (
+      <div className="space-y-4 pb-8">
+        <AppStackScreenHeader title="Booking confirmed" onBack={() => navigate('/app/bookings')} />
+        <GlassPanel className="p-6 text-center">
+          <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-500" aria-hidden />
+          <p className="mt-4 text-lg font-black text-slate-900">Your job is scheduled!</p>
+          <p className="mt-2 text-sm font-medium text-slate-600">
+            We have confirmed your requirement. A worker will be assigned to you before your scheduled time.
+          </p>
+          <div className="mt-4 text-left rounded-xl bg-slate-50 border border-slate-100 p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500 font-semibold">Date</span>
+              <span className="text-slate-900 font-bold">{new Date(draft.serviceDate).toLocaleDateString()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500 font-semibold">Time slot</span>
+              <span className="text-slate-900 font-bold">{draft.timeSlot}</span>
+            </div>
+          </div>
+          <motion.div layout className="mt-6 flex flex-col gap-2">
+            <BookingPrimaryButton type="button" onClick={() => { clearBookingDraft(); navigate('/app/bookings', { replace: true }) }}>
+              View my bookings
+            </BookingPrimaryButton>
+            <AppButton type="button" variant="secondary" onClick={() => { clearBookingDraft(); navigate('/app/home', { replace: true }) }}>
+              Back to home
+            </AppButton>
+          </motion.div>
+        </GlassPanel>
+      </div>
+    )
+  }
 
   if (step === 'searching' && !noMatch) {
     return (
