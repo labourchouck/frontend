@@ -2,30 +2,55 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
-import { BUILDMART_BANNERS } from '../../data/buildmartCatalog.js'
+import { fetchAppMartBanners } from '../../api/buildmartApi.js'
 
 export function BuildMartHeroCarousel() {
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const [index, setIndex] = useState(0)
-
-  const next = useCallback(() => {
-    setIndex((i) => (i + 1) % BUILDMART_BANNERS.length)
-  }, [])
+  const [banners, setBanners] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (reduce) return undefined
+    fetchAppMartBanners()
+      .then((res) => {
+        const data = res?.data ?? res ?? []
+        // Only show active banners
+        setBanners(data.filter((b) => b.active))
+      })
+      .catch((err) => console.error('Failed to load banners:', err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const next = useCallback(() => {
+    if (banners.length > 0) {
+      setIndex((i) => (i + 1) % banners.length)
+    }
+  }, [banners.length])
+
+  useEffect(() => {
+    if (reduce || banners.length <= 1) return undefined
     const t = window.setInterval(next, 4800)
     return () => window.clearInterval(t)
-  }, [next, reduce])
+  }, [next, reduce, banners.length])
 
-  const banner = BUILDMART_BANNERS[index]
+  if (loading) {
+    return (
+      <div className="min-h-[11.5rem] animate-pulse rounded-3xl bg-slate-200/50 shadow-sm" />
+    )
+  }
+
+  if (banners.length === 0) {
+    return null
+  }
+
+  const banner = banners[index] || banners[0]
 
   return (
     <section className="space-y-2" aria-label="Offers and deals">
       <div className="relative overflow-hidden rounded-3xl shadow-[0_20px_50px_-28px_rgba(232,93,42,0.55)] ring-1 ring-orange-200/60">
         <motion.div
-          key={banner.id}
+          key={banner._id || banner.id}
           className="relative min-h-[11.5rem]"
           initial={reduce ? false : { opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
@@ -33,13 +58,13 @@ export function BuildMartHeroCarousel() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
           <img
-            src={banner.image}
-            alt=""
+            src={banner.imageUrl || banner.image}
+            alt={banner.title || ''}
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
           />
           <motion.div
-            className={`absolute inset-0 bg-gradient-to-br ${banner.gradient}`}
+            className={`absolute inset-0 bg-gradient-to-br ${banner.gradient || 'from-stone-800/90 via-orange-900/75 to-stone-950/95'}`}
             initial={false}
             animate={{ opacity: 0.92 }}
           />
@@ -60,16 +85,18 @@ export function BuildMartHeroCarousel() {
             </span>
             <h2 className="mt-2 text-xl font-extrabold tracking-tight drop-shadow-sm">{banner.title}</h2>
             <p className="mt-1 max-w-[18rem] text-sm font-medium text-white/88">{banner.subtitle}</p>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(`/app/buildmart?category=${encodeURIComponent(banner.categoryId)}`)
-              }
-              className="mt-4 inline-flex w-fit items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-extrabold text-orange-700 shadow-lg transition hover:brightness-105 active:scale-[0.99]"
-            >
-              {banner.cta}
-              <ChevronRight className="h-4 w-4" aria-hidden />
-            </button>
+            {banner.cta && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/app/buildmart?category=${encodeURIComponent(banner.categoryId || '')}`)
+                }
+                className="mt-4 inline-flex w-fit items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-extrabold text-orange-700 shadow-lg transition hover:brightness-105 active:scale-[0.99]"
+              >
+                {banner.cta}
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </button>
+            )}
           </motion.div>
         </motion.div>
 
@@ -84,9 +111,9 @@ export function BuildMartHeroCarousel() {
         role="tablist"
         aria-label="Banner slides"
       >
-        {BUILDMART_BANNERS.map((b, i) => (
+        {banners.map((b, i) => (
           <button
-            key={b.id}
+            key={b._id || b.id}
             type="button"
             role="tab"
             aria-selected={i === index}

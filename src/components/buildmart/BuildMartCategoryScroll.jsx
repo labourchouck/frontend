@@ -1,8 +1,21 @@
+import { useState, useEffect } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { BUILDMART_CATEGORIES } from '../../data/buildmartCatalog.js'
+import * as Icons from 'lucide-react'
+import { fetchAppMartCategories } from '../../api/adminBuildmartApi.js'
+import { Package } from 'lucide-react'
 
 export function BuildMartCategoryScroll({ activeId, onSelect }) {
   const reduce = useReducedMotion()
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+    fetchAppMartCategories()
+      .then((res) => {
+        const data = res?.data ?? res ?? []
+        if (Array.isArray(data)) setCategories(data)
+      })
+      .catch((err) => console.error('Failed to load mart categories', err))
+  }, [])
 
   return (
     <section aria-label="Material categories">
@@ -31,9 +44,23 @@ export function BuildMartCategoryScroll({ activeId, onSelect }) {
           </span>
         </button>
 
-        {BUILDMART_CATEGORIES.map((cat, i) => {
-          const Icon = cat.icon
+        {categories.map((cat, i) => {
           const active = activeId === cat.id
+          
+          let InnerIcon = <Package className="h-6 w-6" aria-hidden />
+          const IconStr = cat.icon
+          if (IconStr) {
+             if (IconStr.startsWith('http') || IconStr.startsWith('/') || IconStr.startsWith('data:')) {
+               InnerIcon = <img src={IconStr} alt={cat.name || cat.label} className="h-full w-full object-cover" />
+             } else if (Icons[IconStr]) {
+               const LucideIcon = Icons[IconStr]
+               InnerIcon = <LucideIcon className="h-6 w-6" aria-hidden />
+             }
+          }
+          
+          // Use legacy tone or new color. If neither, fallback to a generic style.
+          const toneClass = cat.tone || cat.color || 'bg-slate-100 text-slate-800 ring-slate-200/80'
+
           return (
             <motion.button
               key={cat.id}
@@ -46,18 +73,18 @@ export function BuildMartCategoryScroll({ activeId, onSelect }) {
               whileTap={reduce ? undefined : { scale: 0.94 }}
             >
               <span
-                className={`flex h-14 w-14 items-center justify-center rounded-2xl ring-2 transition-all duration-300 ${active
+                className={`flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl ring-2 transition-all duration-300 ${active
                     ? 'buildmart-gradient text-white ring-orange-300/60 buildmart-glow scale-105'
-                    : `${cat.tone} shadow-sm ring-transparent`
+                    : `${toneClass} shadow-sm ring-transparent`
                   }`}
               >
-                <Icon className="h-6 w-6" aria-hidden />
+                {InnerIcon}
               </span>
               <span
                 className={`max-w-[4.5rem] truncate text-[10px] font-bold ${active ? 'text-bm-terracotta' : 'text-slate-600'
                   }`}
               >
-                {cat.label}
+                {cat.name || cat.label}
               </span>
             </motion.button>
           )

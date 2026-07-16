@@ -8,12 +8,15 @@ import { BuildMartProductCard } from '../../../components/buildmart/BuildMartPro
 import { AppListSkeleton } from '../../../components/app-ui/feedback/AppListSkeleton.jsx'
 import { getBuildMartProductsByCategory } from '../../../data/buildmartCatalog.js'
 
+import { fetchAppMartProducts } from '../../../api/buildmartApi.js'
+
 export function BuildMartHomePage() {
   const reduce = useReducedMotion()
   const [searchParams, setSearchParams] = useSearchParams()
   const categoryFromUrl = searchParams.get('category') || ''
   const [categoryId, setCategoryId] = useState(categoryFromUrl)
   const [search, setSearch] = useState('')
+  const [allProducts, setAllProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -21,31 +24,37 @@ export function BuildMartHomePage() {
   }, [categoryFromUrl])
 
   useEffect(() => {
-    const t = window.setTimeout(() => setLoading(false), 420)
-    return () => window.clearTimeout(t)
-  }, [categoryId])
+    setLoading(true)
+    fetchAppMartProducts()
+      .then((res) => {
+        setAllProducts(res?.data ?? res ?? [])
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false))
+  }, [])
 
   const handleCategory = (id) => {
     setCategoryId(id)
-    setLoading(true)
     if (id) setSearchParams({ category: id })
     else setSearchParams({})
-    window.setTimeout(() => setLoading(false), 320)
   }
 
   const products = useMemo(() => {
-    let list = getBuildMartProductsByCategory(categoryId)
+    let list = allProducts
+    if (categoryId) {
+      list = list.filter((p) => p.categoryId === categoryId)
+    }
     const q = search.trim().toLowerCase()
     if (q) {
       list = list.filter(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.brand.toLowerCase().includes(q) ||
-          p.shortDescription.toLowerCase().includes(q),
+          (p.name?.toLowerCase() || '').includes(q) ||
+          (p.brand?.toLowerCase() || '').includes(q) ||
+          (p.description?.toLowerCase() || '').includes(q)
       )
     }
     return list
-  }, [categoryId, search])
+  }, [allProducts, categoryId, search])
 
   return (
     <div className="buildmart-gradient-soft -mx-4 min-h-[calc(100dvh-8rem)] px-4 pb-4">

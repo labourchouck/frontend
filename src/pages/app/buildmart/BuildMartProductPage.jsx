@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
@@ -15,11 +15,8 @@ import { BuildMartImageCarousel } from '../../../components/buildmart/BuildMartI
 import { BuildMartVariantPicker } from '../../../components/buildmart/BuildMartVariantPicker.jsx'
 import { BuildMartProductCard } from '../../../components/buildmart/BuildMartProductCard.jsx'
 import { BuildMartRequestQuoteSheet } from '../../../components/buildmart/BuildMartRequestQuoteSheet.jsx'
-import {
-  formatBuildMartPrice,
-  getBuildMartProduct,
-  getRelatedProducts,
-} from '../../../data/buildmartCatalog.js'
+import { formatBuildMartPrice } from '../../../data/buildmartCatalog.js'
+import { fetchAppMartProducts } from '../../../api/buildmartApi.js'
 import { AppBadge } from '../../../components/app-ui/data-display/AppBadge.jsx'
 
 const AVAILABILITY = {
@@ -31,16 +28,46 @@ const AVAILABILITY = {
 export function BuildMartProductPage() {
   const { productId } = useParams()
   const reduce = useReducedMotion()
-  const product = getBuildMartProduct(productId)
-  const [variantId, setVariantId] = useState(product?.variants[0]?.id)
+  
+  const [allProducts, setAllProducts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [quoteOpen, setQuoteOpen] = useState(false)
 
+  useEffect(() => {
+    setLoading(true)
+    fetchAppMartProducts()
+      .then((res) => {
+        setAllProducts(res?.data ?? res ?? [])
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const product = useMemo(() => {
+    return allProducts.find((p) => (p.id || p._id) === productId) || null
+  }, [allProducts, productId])
+
+  const [variantId, setVariantId] = useState(null)
+  
+  useEffect(() => {
+    if (product && product.variants?.length > 0 && !variantId) {
+      setVariantId(product.variants[0].id)
+    }
+  }, [product, variantId])
+
   const variant = useMemo(
-    () => product?.variants.find((v) => v.id === variantId) ?? product?.variants[0],
+    () => (product?.variants || []).find((v) => v.id === variantId) ?? product?.variants?.[0],
     [product, variantId],
   )
 
-  const related = useMemo(() => getRelatedProducts(product?.relatedIds ?? []), [product])
+  const related = useMemo(() => {
+    if (!product || !product.relatedIds) return []
+    return allProducts.filter(p => product.relatedIds.includes(p.id || p._id))
+  }, [product, allProducts])
+
+  if (loading) {
+    return <div className="p-8 text-center text-slate-500">Loading product...</div>
+  }
 
   if (!product) return <Navigate to="/app/buildmart" replace />
 
@@ -105,6 +132,7 @@ export function BuildMartProductPage() {
         </section>
       ) : null}
 
+      {product.specs?.length > 0 && (
       <section className="rounded-3xl border border-slate-200/80 bg-white p-4">
         <h2 className="text-sm font-extrabold text-slate-900">Specifications</h2>
         <dl className="mt-3 divide-y divide-slate-100">
@@ -122,6 +150,7 @@ export function BuildMartProductPage() {
           ))}
         </dl>
       </section>
+      )}
 
       <section className="flex gap-3 rounded-3xl border border-slate-200/80 bg-white p-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-bm-orange">
@@ -139,10 +168,10 @@ export function BuildMartProductPage() {
             <ShieldCheck className="h-5 w-5" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-extrabold text-slate-900">{product.supplier.name}</p>
+            <p className="text-sm font-extrabold text-slate-900">{product.supplier?.name || 'Local Supplier'}</p>
             <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden />
-              {product.supplier.rating} · {product.supplier.city}
+              {product.supplier?.rating || '4.5'} · {product.supplier?.city || 'India'}
             </p>
             <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
               <BadgeCheck className="h-3.5 w-3.5" aria-hidden />

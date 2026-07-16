@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { createAdminMartBanner, updateAdminMartBanner } from '../../api/adminBuildmartApi.js'
+import { createAdminMartBanner, updateAdminMartBanner, fetchAdminMartBannerById } from '../../api/adminBuildmartApi.js'
 import { AppPrimaryButton } from '../app/AppPrimaryButton.jsx'
 
 export function EditMartBannerModal({ item, open, onClose, onSaved }) {
@@ -11,14 +11,36 @@ export function EditMartBannerModal({ item, open, onClose, onSaved }) {
   const [image, setImage] = useState('')
   const [active, setActive] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [fetching, setFetching] = useState(false)
   
   useEffect(() => {
     if (item) {
-      setId(item.id)
-      setLabel(item.label)
-      setTitle(item.title || '')
-      setImage(item.image || '')
-      setActive(item.active)
+      const bannerId = item._id || item.id;
+      setFetching(true)
+      fetchAdminMartBannerById(bannerId)
+        .then(res => {
+          const data = res?.data ?? res ?? item;
+          setId(data.id || '');
+          setLabel(data.label || '');
+          setTitle(data.title || '');
+          setImage(data.image || '');
+          setActive(data.active !== false);
+        })
+        .catch(err => {
+          console.error('Failed to load banner details', err);
+          setId(item.id || '');
+          setLabel(item.label || '');
+          setTitle(item.title || '');
+          setImage(item.image || '');
+          setActive(item.active !== false);
+        })
+        .finally(() => setFetching(false))
+    } else {
+      setId('')
+      setLabel('')
+      setTitle('')
+      setImage('')
+      setActive(true)
     }
   }, [item])
   
@@ -26,7 +48,7 @@ export function EditMartBannerModal({ item, open, onClose, onSaved }) {
     e.preventDefault()
     setBusy(true)
     try {
-      if (item) await updateAdminMartBanner(item.id, { id, label, title, image, active })
+      if (item) await updateAdminMartBanner(item._id || item.id, { id, label, title, image, active })
       else await createAdminMartBanner({ id, label, title, image, active })
       onSaved()
     } catch(err) {

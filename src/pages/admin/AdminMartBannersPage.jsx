@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Plus, Search, RefreshCw, Edit2, Trash2 } from 'lucide-react'
-import { fetchAdminMartBanners, createAdminMartBanner, deleteAdminMartBanner } from '../../api/adminBuildmartApi.js'
+import { fetchAdminMartBanners, createAdminMartBanner, deleteAdminMartBanner, patchAdminMartBanner } from '../../api/adminBuildmartApi.js'
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
@@ -55,22 +55,40 @@ export function AdminMartBannersPage() {
             <tr>
               <th className="px-4 py-3 font-semibold text-slate-600">ID</th>
               <th className="px-4 py-3 font-semibold text-slate-600">Label</th>
+              <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
               <th className="px-4 py-3 font-semibold text-slate-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {items.map(item => (
-              <tr key={item.id} className="hover:bg-slate-50/50">
+            {items.map(item => {
+              const bannerId = item._id || item.id;
+              return (
+              <tr key={bannerId} className="hover:bg-slate-50/50">
                 <td className="px-4 py-3 font-medium text-slate-900">{item.id}</td>
                 <td className="px-4 py-3 text-slate-600">{item.label}</td>
                 <td className="px-4 py-3">
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await patchAdminMartBanner(bannerId, { active: !item.active });
+                        load();
+                      } catch(e) {
+                        alert('Failed to patch: ' + e.message);
+                      }
+                    }}
+                    className={`px-2 py-1 text-[11px] font-bold rounded-full uppercase tracking-wider ${item.active !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                  >
+                    {item.active !== false ? 'Active' : 'Inactive'}
+                  </button>
+                </td>
+                <td className="px-4 py-3">
                   <div className="flex gap-2">
                     <button onClick={() => setEditItem(item)} className="p-1 text-slate-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleDelete(item.id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(bannerId)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       </GlassPanel>

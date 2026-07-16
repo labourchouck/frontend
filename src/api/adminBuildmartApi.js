@@ -56,12 +56,20 @@ export async function fetchAdminMartProducts() {
   const data = await apiRequest('/buildmart/admin/products');
   return data;
 }
+export async function fetchAdminMartProductById(id) {
+  const data = await apiRequest('/buildmart/admin/products/' + id);
+  return data;
+}
 export async function createAdminMartProduct(payload) {
   const data = await apiRequest('/buildmart/admin/products', { method: 'POST', body: payload });
   return data;
 }
 export async function updateAdminMartProduct(id, payload) {
   const data = await apiRequest('/buildmart/admin/products/' + id, { method: 'PUT', body: payload });
+  return data;
+}
+export async function patchAdminMartProduct(id, payload) {
+  const data = await apiRequest('/buildmart/admin/products/' + id, { method: 'PATCH', body: payload });
   return data;
 }
 export async function deleteAdminMartProduct(id) {
@@ -83,6 +91,14 @@ export async function updateAdminMartBanner(id, payload) {
 }
 export async function deleteAdminMartBanner(id) {
   const data = await apiRequest('/buildmart/admin/banners/' + id, { method: 'DELETE' });
+  return data;
+}
+export async function fetchAdminMartBannerById(id) {
+  const data = await apiRequest('/buildmart/admin/banners/' + id);
+  return data;
+}
+export async function patchAdminMartBanner(id, payload) {
+  const data = await apiRequest('/buildmart/admin/banners/' + id, { method: 'PATCH', body: payload });
   return data;
 }
 

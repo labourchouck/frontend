@@ -1,49 +1,95 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Search, Tag, Edit, Trash2, X } from 'lucide-react'
+import * as Icons from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GlassPanel } from '../../ui/GlassPanel.jsx'
-
-// Mock Data
-const INITIAL_CATEGORIES = [
-  { id: '1', name: 'Cement', image: 'https://via.placeholder.com/150' },
-  { id: '2', name: 'Steel & TMT', image: 'https://via.placeholder.com/150' },
-  { id: '3', name: 'Bricks & Blocks', image: 'https://via.placeholder.com/150' },
-]
+import { uploadMedia, assetUrlFromUpload } from '../../../api/uploadApi.js'
+import { fetchAdminMartCategories, createAdminMartCategory, deleteAdminMartCategory, updateAdminMartCategory } from '../../../api/adminBuildmartApi.js'
 
 export function AdminMartCategoriesTab() {
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES)
+  const [categories, setCategories] = useState([])
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newCat, setNewCat] = useState({ name: '', image: '' })
+  const [newCat, setNewCat] = useState({ name: '' })
+  const [newCatFile, setNewCatFile] = useState(null)
+  const [newCatPreview, setNewCatPreview] = useState('')
+  const [busy, setBusy] = useState(false)
 
   const [editCat, setEditCat] = useState(null)
   const [deleteCat, setDeleteCat] = useState(null)
 
+  const load = async () => {
+    try {
+      const res = await fetchAdminMartCategories()
+      const data = res?.data ?? res ?? []
+      setCategories(Array.isArray(data) ? data : [])
+    } catch(err) {
+      console.error(err)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
   const filtered = categories.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()),
+    (c.name || c.label || '').toLowerCase().includes(search.toLowerCase()),
   )
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
-    setCategories([{ ...newCat, id: Date.now().toString() }, ...categories])
-    setIsModalOpen(false)
-    setNewCat({ name: '', image: '' })
+    setBusy(true)
+    try {
+      let iconUrl = ''
+      if (newCatFile) {
+        const res = await uploadMedia(newCatFile, 'general-media')
+        iconUrl = assetUrlFromUpload(res)
+      }
+      const slug = newCat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      await createAdminMartCategory({ id: slug, name: newCat.name, icon: iconUrl, color: '' })
+      setIsModalOpen(false)
+      setNewCat({ name: '' })
+      setNewCatFile(null)
+      setNewCatPreview('')
+      load()
+    } catch(err) {
+      alert(err.message || 'Error creating category')
+    } finally {
+      setBusy(false)
+    }
   }
 
-  const handleEditSave = (e) => {
+  const handleEditSave = async (e) => {
     e.preventDefault()
-    setCategories(categories.map((c) => (c.id === editCat.id ? editCat : c)))
-    setEditCat(null)
+    setBusy(true)
+    try {
+      let iconUrl = editCat.icon
+      if (newCatFile) {
+        const res = await uploadMedia(newCatFile, 'general-media')
+        iconUrl = assetUrlFromUpload(res)
+      }
+      await updateAdminMartCategory(editCat.id, { ...editCat, icon: iconUrl })
+      setEditCat(null)
+      setNewCatFile(null)
+      setNewCatPreview('')
+      load()
+    } catch(err) {
+      alert(err.message || 'Error updating category')
+    } finally {
+      setBusy(false)
+    }
   }
 
-  const handleDelete = () => {
-    setCategories(categories.filter((c) => c.id !== deleteCat.id))
-    setDeleteCat(null)
+  const handleDelete = async () => {
+    try {
+      await deleteAdminMartCategory(deleteCat.id)
+      setDeleteCat(null)
+      load()
+    } catch (err) {
+      alert(err.message || 'Error deleting category')
+    }
   }
 
   return (
     <div className="space-y-4">
-      {/* Header & Actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -64,28 +110,35 @@ export function AdminMartCategoriesTab() {
         </button>
       </div>
 
-      {/* List */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((cat) => (
           <GlassPanel key={cat.id} className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 overflow-hidden rounded-xl bg-slate-100">
-                {cat.image ? (
-                  <img src={cat.image} alt={cat.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-slate-400">
-                    <Tag className="h-5 w-5" />
-                  </div>
-                )}
+                {(() => {
+                  const IconStr = cat.icon
+                  if (IconStr && (IconStr.startsWith('http') || IconStr.startsWith('/') || IconStr.startsWith('data:'))) {
+                    return <img src={IconStr} alt={cat.name || cat.label} className="h-full w-full object-cover" />
+                  }
+                  if (IconStr && Icons[IconStr]) {
+                    const LucideIcon = Icons[IconStr]
+                    return <div className="flex h-full items-center justify-center text-slate-500"><LucideIcon className="h-5 w-5" /></div>
+                  }
+                  return (
+                    <div className="flex h-full items-center justify-center text-slate-400">
+                      <Tag className="h-5 w-5" />
+                    </div>
+                  )
+                })()}
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-800">{cat.name}</p>
+                <p className="text-sm font-bold text-slate-800">{cat.name || cat.label}</p>
                 <p className="text-xs text-slate-500">ID: {cat.id}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setEditCat({ ...cat })}
+                onClick={() => { setEditCat({ ...cat }); setNewCatPreview(cat.icon) }}
                 className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-brand"
               >
                 <Edit className="h-4 w-4" />
@@ -106,7 +159,6 @@ export function AdminMartCategoriesTab() {
         )}
       </div>
 
-      {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -157,11 +209,17 @@ export function AdminMartCategoriesTab() {
                       accept="image/*"
                       onChange={(e) => {
                         if (e.target.files?.[0]) {
-                          setNewCat({ ...newCat, image: URL.createObjectURL(e.target.files[0]) })
+                          setNewCatFile(e.target.files[0])
+                          setNewCatPreview(URL.createObjectURL(e.target.files[0]))
                         }
                       }}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand/10 file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-brand hover:file:bg-brand/20"
                     />
+                    {newCatPreview && (
+                      <div className="mt-2 h-16 w-16 overflow-hidden rounded-xl border border-slate-200">
+                        <img src={newCatPreview} alt="Preview" className="h-full w-full object-cover" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
@@ -174,9 +232,10 @@ export function AdminMartCategoriesTab() {
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-brand px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark"
+                    disabled={busy}
+                    className="rounded-xl bg-brand px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-50"
                   >
-                    Save Category
+                    {busy ? 'Saving...' : 'Save Category'}
                   </button>
                 </div>
               </form>
@@ -185,7 +244,6 @@ export function AdminMartCategoriesTab() {
         )}
       </AnimatePresence>
 
-      {/* Edit Modal */}
       <AnimatePresence>
         {editCat && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -206,7 +264,7 @@ export function AdminMartCategoriesTab() {
                 <h3 className="text-lg font-bold text-slate-800">Edit Category</h3>
                 <button
                   type="button"
-                  onClick={() => setEditCat(null)}
+                  onClick={() => { setEditCat(null); setNewCatFile(null); setNewCatPreview('') }}
                   className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                 >
                   <X className="h-5 w-5" />
@@ -221,7 +279,7 @@ export function AdminMartCategoriesTab() {
                     <input
                       required
                       type="text"
-                      value={editCat.name}
+                      value={editCat.name || editCat.label || ''}
                       onChange={(e) => setEditCat({ ...editCat, name: e.target.value })}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
@@ -235,26 +293,33 @@ export function AdminMartCategoriesTab() {
                       accept="image/*"
                       onChange={(e) => {
                         if (e.target.files?.[0]) {
-                          setEditCat({ ...editCat, image: URL.createObjectURL(e.target.files[0]) })
+                          setNewCatFile(e.target.files[0])
+                          setNewCatPreview(URL.createObjectURL(e.target.files[0]))
                         }
                       }}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand/10 file:px-4 file:py-1.5 file:text-sm file:font-semibold file:text-brand hover:file:bg-brand/20"
                     />
+                    {newCatPreview && (
+                      <div className="mt-2 h-16 w-16 overflow-hidden rounded-xl border border-slate-200">
+                        <img src={newCatPreview} alt="Preview" className="h-full w-full object-cover" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
                   <button
                     type="button"
-                    onClick={() => setEditCat(null)}
+                    onClick={() => { setEditCat(null); setNewCatFile(null); setNewCatPreview('') }}
                     className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-brand px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark"
+                    disabled={busy}
+                    className="rounded-xl bg-brand px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-50"
                   >
-                    Update Category
+                    {busy ? 'Updating...' : 'Update Category'}
                   </button>
                 </div>
               </form>
@@ -263,7 +328,6 @@ export function AdminMartCategoriesTab() {
         )}
       </AnimatePresence>
 
-      {/* Delete Modal */}
       <AnimatePresence>
         {deleteCat && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
