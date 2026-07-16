@@ -44,10 +44,13 @@ export function AppShell() {
   const hideShellHeader =
     pathname.startsWith('/app/booking/flow') ||
     pathname.startsWith('/app/tracking') ||
+    pathname.startsWith('/app/active-job') ||
     pathname === '/app/bookings' ||
+    pathname === '/app/my-bookings' ||
     pathname === '/app/search' ||
     pathname === '/app/support' ||
     pathname === '/app/profile' ||
+    pathname === '/app/wallet' ||
     isLabourAppHome ||
     isLabourJobs ||
     isLabourEarnings ||

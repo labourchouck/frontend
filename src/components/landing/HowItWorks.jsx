@@ -56,32 +56,40 @@ export function HowItWorks() {
 
         <div className="relative grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <AnimatePresence mode="wait" initial={false}>
-            {active.data.map((step, i) => (
-              <motion.article
-                key={`${tab}-${step.step}`}
-                layout
-                initial={reduce ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduce ? undefined : { opacity: 0, y: -12 }}
-                transition={{ duration: 0.35, delay: reduce ? 0 : i * 0.06 }}
-                className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm"
-              >
-                <div className="mb-5 flex items-center justify-between">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/12 text-brand ring-1 ring-brand/20">
-                    <LandingIcon name={step.icon} className="h-6 w-6" />
-                  </span>
-                  <span className="text-4xl font-black text-brand/15">0{step.step}</span>
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
-                {i < active.data.length - 1 ? (
-                  <div
-                    className="pointer-events-none absolute -right-3 top-1/2 hidden h-px w-6 -translate-y-1/2 bg-gradient-to-r from-brand/40 to-transparent lg:block"
-                    aria-hidden
-                  />
-                ) : null}
-              </motion.article>
-            ))}
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="contents"
+            >
+              {active.data.map((step, i) => (
+                <motion.article
+                  key={step.step}
+                  layout
+                  initial={reduce ? false : { opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: reduce ? 0 : i * 0.06 }}
+                  className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/12 text-brand ring-1 ring-brand/20">
+                      <LandingIcon name={step.icon} className="h-6 w-6" />
+                    </span>
+                    <span className="text-4xl font-black text-brand/15">0{step.step}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.description}</p>
+                  {i < active.data.length - 1 ? (
+                    <div
+                      className="pointer-events-none absolute -right-3 top-1/2 hidden h-px w-6 -translate-y-1/2 bg-gradient-to-r from-brand/40 to-transparent lg:block"
+                      aria-hidden
+                    />
+                  ) : null}
+                </motion.article>
+              ))}
+            </motion.div>
           </AnimatePresence>
         </div>
       </Container>

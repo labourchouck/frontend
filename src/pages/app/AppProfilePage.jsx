@@ -249,11 +249,12 @@ export function AppProfilePage() {
   quickLinks.push({ to: '/app', icon: Home, label: 'Home' })
   if (user?.role === USER_ROLES.LABOUR) {
     quickLinks.push({ to: '/app/jobs', icon: HardHat, label: 'Jobs & assignments' })
+    quickLinks.push({ to: '/app/my-bookings', icon: CalendarClock, label: 'My Bookings (Direct)' })
     quickLinks.push({ to: '/app/kyc', icon: Fingerprint, label: 'Aadhaar KYC' })
     quickLinks.push({ to: '/app/earnings', icon: Sparkles, label: 'Earnings & payouts' })
   } else {
     quickLinks.push({
-      to: '/app/bookings',
+      to: '/app/my-bookings',
       icon: CalendarClock,
       label: user?.role === USER_ROLES.CORPORATE ? 'Bookings & requests' : 'Bookings',
     })

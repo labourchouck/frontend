@@ -245,14 +245,14 @@ export function JobTracking() {
           </div>
           <div className="flex items-center gap-4 p-4">
             {labor.profilePic ? (
-              <img src={labor.profilePic} alt="" className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white" />
+              <img src={labor.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(labor.fullName || 'W')}`} alt="" className="h-14 w-14 rounded-2xl object-cover ring-2 ring-white" />
             ) : (
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
                 <User className="h-7 w-7" />
               </span>
             )}
             <div className="min-w-0 flex-1">
-              <p className="text-base font-extrabold text-slate-900">{labor.name || 'Labour'}</p>
+              <p className="text-base font-extrabold text-slate-900">{labor.fullName || 'Labour'}</p>
               {labor.phone && (
                 <a href={`tel:${labor.phone}`} className="mt-1 flex items-center gap-1 text-sm font-semibold text-brand">
                   <Phone className="h-3.5 w-3.5" aria-hidden />
@@ -283,6 +283,21 @@ export function JobTracking() {
           </div>
         )}
       </GlassPanel>
+
+      {/* OTP Display for Customer */}
+      {(booking.status === 'EN_ROUTE' && booking.startOtp) ? (
+        <GlassPanel className="border-brand/20 bg-brand/5 p-4 text-center">
+          <p className="text-xs font-bold uppercase tracking-wider text-brand">Start OTP</p>
+          <p className="mt-2 text-3xl font-black tracking-[0.2em] text-slate-900">{booking.startOtp}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-600">Share this with the worker to start the job.</p>
+        </GlassPanel>
+      ) : (booking.status === 'STARTED' && booking.completionOtp) ? (
+        <GlassPanel className="border-emerald-500/20 bg-emerald-50 p-4 text-center">
+          <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Completion OTP</p>
+          <p className="mt-2 text-3xl font-black tracking-[0.2em] text-slate-900">{booking.completionOtp}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-600">Share this with the worker when the job is done.</p>
+        </GlassPanel>
+      ) : null}
 
       {/* Review Modal */}
       <ReviewModal

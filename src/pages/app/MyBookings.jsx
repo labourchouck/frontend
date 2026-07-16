@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Calendar, CheckCircle2, Clock, Loader2, MapPin, Sparkles } from 'lucide-react'
+import { Calendar, CheckCircle2, Clock, Loader2, MapPin, Sparkles, User, CreditCard } from 'lucide-react'
+import { B2cBookingCard } from '../../components/app/B2cBookingCard.jsx'
 import { bookingsApi } from '../../api/bookingsApi.js'
 import { ApiError } from '../../api/http.js'
+import { useAuth } from '../../hooks/useAuth.js'
+import { USER_ROLES } from '../../constants/userRoles.js'
 import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 
@@ -17,6 +20,8 @@ const STATUS_STYLES = {
 }
 
 export function MyBookings() {
+  const { user } = useAuth()
+  const isLabour = user?.role === USER_ROLES.LABOUR
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const [bookings, setBookings] = useState([])
@@ -113,44 +118,7 @@ export function MyBookings() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
               >
-                <GlassPanel
-                  className="cursor-pointer overflow-hidden p-0 transition hover:shadow-md"
-                  onClick={() => {
-                    if (isActive) {
-                      navigate(`/app/tracking/${booking._id}`)
-                    }
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-3 px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-extrabold text-slate-900">
-                        {subcategory?.name || 'Service Booking'}
-                      </p>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                        <Calendar className="h-3 w-3 shrink-0" aria-hidden />
-                        {booking.createdAt
-                          ? new Date(booking.createdAt).toLocaleDateString('en-IN', {
-                              day: 'numeric', month: 'short', year: 'numeric'
-                            })
-                          : '—'}
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                      <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${STATUS_STYLES[status] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                        {status}
-                      </span>
-                      {booking.totalAmount && (
-                        <span className="text-sm font-bold text-slate-900">₹{booking.totalAmount}</span>
-                      )}
-                    </div>
-                  </div>
-                  {booking.laborId && typeof booking.laborId === 'object' && (
-                    <div className="flex items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-2 text-xs text-slate-600">
-                      <Clock className="h-3 w-3 shrink-0 text-brand" aria-hidden />
-                      Labour: {booking.laborId.name || 'Assigned'}
-                    </div>
-                  )}
-                </GlassPanel>
+                <B2cBookingCard booking={booking} isLabour={isLabour} />
               </motion.div>
             )
           })}

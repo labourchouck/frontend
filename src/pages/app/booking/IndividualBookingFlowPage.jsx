@@ -74,7 +74,7 @@ function BookingPrimaryButton({ children, className = '', ...rest }) {
 
 export function IndividualBookingFlowPage() {
   const navigate = useNavigate()
-  const { isGuest } = useAuth()
+  const { realUser } = useAuth()
   const location = useLocation()
   const reduce = useReducedMotion()
   const [searchParams] = useSearchParams()
@@ -86,7 +86,7 @@ export function IndividualBookingFlowPage() {
   const [draft, setDraft] = useState(() => readBookingDraft() || {})
   const [formError, setFormError] = useState('')
   const [typeSheetOpen, setTypeSheetOpen] = useState(false)
-  const [activeBookingId, setActiveBookingId] = useState(null)
+  const [activeBookingId, setActiveBookingId] = useState(() => readBookingDraft()?.lastRef || null)
   const [activeBooking, setActiveBooking] = useState(null)
   const [noMatch, setNoMatch] = useState(false)
   const [imageFiles, setImageFiles] = useState([])
@@ -147,12 +147,22 @@ export function IndividualBookingFlowPage() {
   }, [categoryIdParam, groupIdParam, syncDraft])
 
   useEffect(() => {
-    if (!bookingEvent) return
-    if (bookingEvent.type === 'BOOKING_ACCEPTED') {
-      goStep('active')
+    if (activeBookingId && !activeBooking && realUser) {
       bookingsApi.getBookingStatus(activeBookingId).then(res => {
         if (res.data?.booking) setActiveBooking(res.data.booking)
       }).catch(err => console.error(err))
+    }
+  }, [activeBookingId, activeBooking, realUser])
+
+  useEffect(() => {
+    if (!bookingEvent) return
+    if (bookingEvent.type === 'BOOKING_ACCEPTED') {
+      goStep('active')
+      if (realUser) {
+        bookingsApi.getBookingStatus(activeBookingId).then(res => {
+          if (res.data?.booking) setActiveBooking(res.data.booking)
+        }).catch(err => console.error(err))
+      }
     } else if (bookingEvent.type === 'BOOKING_FAILED') {
       setNoMatch(true)
     } else if (bookingEvent.type === 'BOOKING_STATUS_UPDATE') {
@@ -160,13 +170,15 @@ export function IndividualBookingFlowPage() {
       setActiveBooking(prev => prev ? { ...prev, status: newStatus } : null)
       if (newStatus === 'COMPLETED') {
         // Refresh booking details then show review prompt
-        bookingsApi.getBookingStatus(activeBookingId).then(res => {
-          if (res.data?.booking) setActiveBooking(res.data.booking)
-        }).catch(() => { })
+        if (realUser) {
+          bookingsApi.getBookingStatus(activeBookingId).then(res => {
+            if (res.data?.booking) setActiveBooking(res.data.booking)
+          }).catch(() => { })
+        }
         setReviewOpen(true)
       }
     }
-  }, [bookingEvent, activeBookingId, goStep])
+  }, [bookingEvent, activeBookingId, goStep, realUser])
 
   useEffect(() => {
     const cid = categoryIdParam
@@ -448,7 +460,7 @@ export function IndividualBookingFlowPage() {
 
   const confirmBooking = async () => {
     if (!validateDetails()) return
-    if (isGuest) {
+    if (!realUser) {
       navigate('/auth', { replace: true, state: { from: location.pathname + location.search } })
       return
     }
@@ -514,7 +526,7 @@ export function IndividualBookingFlowPage() {
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold text-slate-500">Location</span>
-                <span className="text-right line-clamp-2 mt-0.5 text-slate-900 font-medium">{draft.address}</span>
+                <span className="line-clamp-2 mt-0.5 text-slate-900 font-medium">{draft.address}</span>
               </div>
               <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 mt-2">
                 <span>Total Bill</span>
@@ -572,17 +584,17 @@ export function IndividualBookingFlowPage() {
           <GlassPanel className="overflow-hidden border-slate-200/90 p-0">
             <motion.div layout className="flex gap-4 p-4">
               <img
-                src={worker.profilePic || 'https://ui-avatars.com/api/?name=W'}
+                src={worker.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.fullName || 'W')}`}
                 alt=""
                 className="h-16 w-16 rounded-2xl object-cover ring-2 ring-white"
               />
               <div className="min-w-0 flex-1">
-                <p className="text-lg font-black text-slate-900">{worker.name}</p>
+                <p className="text-lg font-black text-slate-900">{worker.fullName || 'Unknown'}</p>
                 <p className="text-xs font-semibold text-brand">{worker.phone}</p>
                 <p className="mt-1 text-[11px] text-slate-500">{draft.categoryName}</p>
               </div>
             </motion.div>
-            <div className="grid grid-cols-3 gap-2 border-t border-slate-100 bg-slate-50/80 p-3">
+            <div className="grid grid-cols-1 gap-2 border-t border-slate-100 bg-slate-50/80 p-3">
               <a
                 href={`tel:${worker.phone}`}
                 className="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2.5 text-[10px] font-bold text-slate-800 ring-1 ring-slate-200/90"
@@ -590,20 +602,6 @@ export function IndividualBookingFlowPage() {
                 <Phone className="h-4 w-4 text-brand" aria-hidden />
                 Call
               </a>
-              <button
-                type="button"
-                className="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2.5 text-[10px] font-bold text-slate-800 ring-1 ring-slate-200/90"
-              >
-                <MessageCircle className="h-4 w-4 text-brand" aria-hidden />
-                Chat
-              </button>
-              <button
-                type="button"
-                className="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2.5 text-[10px] font-bold text-slate-800 ring-1 ring-slate-200/90"
-              >
-                <MapPinned className="h-4 w-4 text-brand" aria-hidden />
-                Track
-              </button>
             </div>
           </GlassPanel>
         ) : null}
@@ -648,7 +646,7 @@ export function IndividualBookingFlowPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold text-slate-500">Location</span>
-                  <span className="text-right line-clamp-2 mt-0.5 text-slate-900 font-medium">{booking.address?.locationText}</span>
+                  <span className="line-clamp-2 mt-0.5 text-slate-900 font-medium">{booking.address?.locationText}</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900 mt-2">
                   <span>Total Bill</span>
@@ -675,26 +673,12 @@ export function IndividualBookingFlowPage() {
 
         {step === 'payment' ? (
           <motion.div layout className="space-y-4">
-            <FieldLabel>Pay now or after work</FieldLabel>
+            <FieldLabel>Select Payment Method</FieldLabel>
             <motion.div layout className="grid grid-cols-2 gap-2">
               {[
-                { id: 'pay_now', label: 'Pay now' },
-                { id: 'after_work', label: 'Pay after work' },
-              ].map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => syncDraft({ paymentTiming: opt.id })}
-                  className="lc-booking-slot"
-                  data-active={draft.paymentTiming === opt.id ? 'true' : 'false'}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </motion.div>
-            <FieldLabel>Payment method</FieldLabel>
-            <motion.div layout className="grid grid-cols-2 gap-2">
-              {PAYMENT_METHODS.map((m) => (
+                { id: 'CASH', label: 'Cash' },
+                { id: 'ONLINE', label: 'Online' }
+              ].map((m) => (
                 <button
                   key={m.id}
                   type="button"
@@ -726,7 +710,14 @@ export function IndividualBookingFlowPage() {
             </div>
             <BookingPrimaryButton
               type="button"
-              onClick={() => {
+              onClick={async () => {
+                if (activeBookingId) {
+                  try {
+                    await bookingsApi.updatePaymentMethod(activeBookingId, draft.paymentMethod || 'CASH')
+                  } catch (e) {
+                    console.error('Failed to update payment method:', e)
+                  }
+                }
                 clearBookingDraft()
                 navigate(`/app/bookings`)
               }}

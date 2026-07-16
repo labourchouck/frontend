@@ -23,7 +23,7 @@ const byRole = {
     headerTagline: 'Hire labour for your home or small site',
     bottomNav: [
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
-      { id: 'book', to: '/app/bookings', label: 'Bookings', icon: CalendarClock },
+      { id: 'book', to: '/app/my-bookings', label: 'Bookings', icon: CalendarClock },
       { id: 'search', to: '/app/search', label: 'Search', icon: Search, center: true },
       { id: 'buildmart', to: '/app/buildmart', label: 'Mart', icon: Package, premium: true },
       { id: 'profile', to: '/app/profile', label: 'Profile', icon: UserRound },
@@ -32,7 +32,7 @@ const byRole = {
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
       { id: 'search', to: '/app/search', label: 'Search skills', icon: Search },
       { id: 'buildmart', to: '/app/buildmart', label: 'BuildMart materials', icon: Package },
-      { id: 'book', to: '/app/bookings', label: 'My bookings', icon: ClipboardList },
+      { id: 'book', to: '/app/my-bookings', label: 'My bookings', icon: ClipboardList },
       { id: 'support', to: '/app/support', label: 'Support & issues', icon: LifeBuoy },
       { id: 'profile', to: '/app/profile', label: 'Profile & settings', icon: UserRound },
     ],
@@ -49,6 +49,7 @@ const byRole = {
     drawerNav: [
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
       { id: 'jobs', to: '/app/jobs', label: 'Assignments', icon: HardHat },
+      { id: 'book', to: '/app/my-bookings', label: 'My bookings', icon: CalendarClock },
       { id: 'buildmart', to: '/app/buildmart', label: 'BuildMart materials', icon: Package },
       { id: 'attendance', to: '/app/attendance', label: 'Attendance', icon: Clock },
       { id: 'earnings', to: '/app/earnings', label: 'Earnings & payouts', icon: IndianRupee },

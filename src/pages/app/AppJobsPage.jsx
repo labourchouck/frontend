@@ -18,6 +18,8 @@ import {
   useCheckInMutation,
   useCheckOutMutation,
 } from '../../store/api/workforceApi.js'
+import { bookingsApi } from '../../api/bookingsApi.js'
+import { B2cBookingCard } from '../../components/app/B2cBookingCard.jsx'
 import {
   bucketsFromAssignments,
   loadJobDemoState,
@@ -36,6 +38,14 @@ export function AppJobsPage() {
   const reduce = useReducedMotion()
   const [tab, setTab] = useState('offers')
   const [localDemo, setLocalDemo] = useState(() => loadJobDemoState())
+  const [b2cBookings, setB2cBookings] = useState([])
+
+  useEffect(() => {
+    bookingsApi.getMyBookings().then(res => {
+      if (res.data?.bookings) setB2cBookings(res.data.bookings)
+    }).catch(console.error)
+  }, [])
+
   const { data: apiData, refetch } = useGetLabourAssignmentsQuery()
   const [respondAssignment] = useRespondAssignmentMutation()
   const [checkIn] = useCheckInMutation()
@@ -80,16 +90,22 @@ export function AppJobsPage() {
 
   const thisMonthCount = useMemo(() => {
     const ym = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
-    return demo.history.filter((h) => String(h.completedAt || '').startsWith(ym)).length
-  }, [demo.history])
+    const adminCount = demo.history.filter((h) => String(h.completedAt || '').startsWith(ym)).length
+    const b2cCount = b2cBookings.filter(b => (b.status === 'COMPLETED' || b.status === 'CANCELLED') && String(b.updatedAt || b.createdAt || '').startsWith(ym)).length
+    return adminCount + b2cCount
+  }, [demo.history, b2cBookings])
+
+  const b2cOffers = useMemo(() => b2cBookings.filter(b => b.status === 'CREATED' || b.status === 'BROADCASTING'), [b2cBookings])
+  const b2cActive = useMemo(() => b2cBookings.filter(b => b.status === 'ACCEPTED' || b.status === 'EN_ROUTE' || b.status === 'STARTED' || b.status === 'ASSIGNED'), [b2cBookings])
+  const b2cHistory = useMemo(() => b2cBookings.filter(b => b.status === 'COMPLETED' || b.status === 'CANCELLED'), [b2cBookings])
 
   const tabCounts = useMemo(
     () => ({
-      offers: demo.offers.length,
-      active: demo.active.length,
-      history: demo.history.length,
+      offers: demo.offers.length + b2cOffers.length,
+      active: demo.active.length + b2cActive.length,
+      history: demo.history.length + b2cHistory.length,
     }),
-    [demo.offers.length, demo.active.length, demo.history.length],
+    [demo.offers.length, demo.active.length, demo.history.length, b2cOffers.length, b2cActive.length, b2cHistory.length],
   )
 
   const handleDeclineOffer = (id) => {
@@ -174,10 +190,10 @@ export function AppJobsPage() {
   const emptyCopy = useMemo(() => {
     if (tab === 'offers') {
       return {
-        title: kycOk ? 'No open offers' : 'All caught up',
+        title: kycOk ? 'No open requests' : 'All caught up',
         subtitle: kycOk
-          ? 'New admin assignments will appear here. Reload samples to practice the flow.'
-          : 'Reload sample offers to preview cards — verify KYC to accept.',
+          ? 'New requests and admin assignments will appear here. Reload samples to practice the flow.'
+          : 'Reload sample requests to preview cards — verify KYC to accept.',
       }
     }
     if (tab === 'active') {
@@ -226,55 +242,79 @@ export function AppJobsPage() {
         className="space-y-3"
       >
         {tab === 'offers' &&
-          (demo.offers.length === 0 ? (
+          (demo.offers.length === 0 && b2cOffers.length === 0 ? (
             <div className="space-y-3 pt-2">
               <AppEmptyState icon={Sparkles} title={emptyCopy.title} subtitle={emptyCopy.subtitle} />
             </div>
           ) : (
-            demo.offers.map((offer, i) => (
-              <motion.div
-                key={offer.id}
-                initial={reduce ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <LabourJobOfferCard
-                  offer={offer}
-                  kycOk={kycOk}
-                  confirming={confirmingOfferId === offer.id}
-                  onDecline={handleDeclineOffer}
-                  onStartAccept={handleStartAccept}
-                  onConfirmAccept={handleConfirmAccept}
-                  onCancelConfirm={() => setConfirmingOfferId(null)}
-                  onOpenDetail={(j) => openDetail(j, 'offers')}
-                />
-              </motion.div>
-            ))
+            <>
+              {demo.offers.map((offer, i) => (
+                <motion.div
+                  key={offer.id}
+                  initial={reduce ? false : { opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                >
+                  <LabourJobOfferCard
+                    offer={offer}
+                    kycOk={kycOk}
+                    confirming={confirmingOfferId === offer.id}
+                    onDecline={handleDeclineOffer}
+                    onStartAccept={handleStartAccept}
+                    onConfirmAccept={handleConfirmAccept}
+                    onCancelConfirm={() => setConfirmingOfferId(null)}
+                    onOpenDetail={(j) => openDetail(j, 'offers')}
+                  />
+                </motion.div>
+              ))}
+              {b2cOffers.map((booking, i) => (
+                <motion.div
+                  key={booking._id}
+                  initial={reduce ? false : { opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: (demo.offers.length + i) * 0.04 }}
+                >
+                  <B2cBookingCard booking={booking} isLabour={true} />
+                </motion.div>
+              ))}
+            </>
           ))}
 
         {tab === 'active' &&
-          (demo.active.length === 0 ? (
+          (demo.active.length === 0 && b2cActive.length === 0 ? (
             <AppEmptyState icon={MapPin} title={emptyCopy.title} subtitle={emptyCopy.subtitle} className="pt-2" />
           ) : (
-            demo.active.map((job, i) => (
-              <motion.div
-                key={job.id}
-                initial={reduce ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <LabourJobActiveCard
-                  job={job}
-                  onMarkOnSite={handleMarkOnSite}
-                  onOpenDetail={(j) => openDetail(j, 'active')}
-                  onComplete={handleCompleteActive}
-                />
-              </motion.div>
-            ))
+            <>
+              {demo.active.map((job, i) => (
+                <motion.div
+                  key={job.id}
+                  initial={reduce ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                >
+                  <LabourJobActiveCard
+                    job={job}
+                    onMarkOnSite={handleMarkOnSite}
+                    onOpenDetail={(j) => openDetail(j, 'active')}
+                    onComplete={handleCompleteActive}
+                  />
+                </motion.div>
+              ))}
+              {b2cActive.map((booking, i) => (
+                <motion.div
+                  key={booking._id}
+                  initial={reduce ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: (demo.active.length + i) * 0.04 }}
+                >
+                  <B2cBookingCard booking={booking} isLabour={true} />
+                </motion.div>
+              ))}
+            </>
           ))}
 
         {tab === 'history' &&
-          (demo.history.length === 0 ? (
+          (demo.history.length === 0 && b2cHistory.length === 0 ? (
             <AppEmptyState icon={CheckCircle2} title={emptyCopy.title} subtitle={emptyCopy.subtitle} className="pt-2" />
           ) : (
             <ul className="space-y-2 pt-1">
@@ -286,6 +326,16 @@ export function AppJobsPage() {
                   transition={{ delay: i * 0.03 }}
                 >
                   <LabourJobHistoryCard job={job} onOpenDetail={(j) => openDetail(j, 'history')} />
+                </motion.div>
+              ))}
+              {b2cHistory.map((booking, i) => (
+                <motion.div
+                  key={booking._id}
+                  initial={reduce ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: (demo.history.length + i) * 0.03 }}
+                >
+                  <B2cBookingCard booking={booking} isLabour={true} />
                 </motion.div>
               ))}
             </ul>
