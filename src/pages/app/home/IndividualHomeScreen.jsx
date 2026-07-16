@@ -191,6 +191,10 @@ export function IndividualHomeScreen({ user }) {
 
   useEffect(() => {
     let cancelled = false
+    if (!user) {
+      setBookingsLoading(false)
+      return
+    }
     bookingsApi.getMyBookings()
       .then((res) => {
         if (!cancelled) {
@@ -206,7 +210,7 @@ export function IndividualHomeScreen({ user }) {
         }
       })
     return () => { cancelled = true }
-  }, [])
+  }, [user])
 
   const openDetail = useCallback((id) => {
     setDetailId(id)

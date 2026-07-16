@@ -11,7 +11,7 @@ export function EditMartCategoryModal({ item, open, onClose, onSaved }) {
   const [tone, setTone] = useState('')
   const [active, setActive] = useState(true)
   const [busy, setBusy] = useState(false)
-  
+
   useEffect(() => {
     if (item) {
       setId(item.id)
@@ -21,7 +21,7 @@ export function EditMartCategoryModal({ item, open, onClose, onSaved }) {
       setActive(item.active)
     }
   }, [item])
-  
+
   async function handleSubmit(e) {
     e.preventDefault()
     setBusy(true)
@@ -29,7 +29,7 @@ export function EditMartCategoryModal({ item, open, onClose, onSaved }) {
       if (item) await updateAdminMartCategory(item.id, { id, label, icon, tone, active })
       else await createAdminMartCategory({ id, label, icon, tone, active })
       onSaved()
-    } catch(err) {
+    } catch (err) {
       alert(err.message)
     } finally {
       setBusy(false)

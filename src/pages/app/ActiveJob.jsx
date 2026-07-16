@@ -56,6 +56,7 @@ export function ActiveJob() {
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(false)
   const [updateError, setUpdateError] = useState('')
+  const [otp, setOtp] = useState('')
 
   // Fetch booking
   useEffect(() => {
@@ -89,11 +90,16 @@ export function ActiveJob() {
     return () => { socket.off('BOOKING_STATUS_UPDATE', handleStatusUpdate) }
   }, [socket, bookingId])
 
-  const handleStatusUpdate = useCallback(async (nextStatus) => {
+  const handleStatusUpdate = useCallback(async (nextStatus, requireOtp = false) => {
+    if (requireOtp && !otp) {
+      setUpdateError('OTP is required.')
+      return
+    }
     setUpdating(true)
     setUpdateError('')
     try {
-      const res = await bookingsApi.updateBookingStatus(bookingId, nextStatus)
+      const res = await bookingsApi.updateBookingStatus(bookingId, requireOtp ? { status: nextStatus, otp } : nextStatus)
+      setOtp('')
       setBooking((prev) => prev ? { ...prev, status: nextStatus } : prev)
       if (nextStatus === 'COMPLETED') {
         setTimeout(() => navigate('/app/my-bookings', { replace: true }), 1500)
@@ -103,7 +109,7 @@ export function ActiveJob() {
     } finally {
       setUpdating(false)
     }
-  }, [bookingId, navigate])
+  }, [bookingId, navigate, otp])
 
   // Track location if EN_ROUTE
   useEffect(() => {
@@ -282,21 +288,63 @@ export function ActiveJob() {
             </GlassPanel>
           ) : (
             <>
-              <button
-                type="button"
-                disabled={updating}
-                onClick={() => handleStatusUpdate(config.next)}
-                className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
-              >
-                {updating ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    <config.icon className="h-5 w-5" />
-                    {config.label}
-                  </>
-                )}
-              </button>
+              {status === 'EN_ROUTE' ? (
+                <GlassPanel className="space-y-3 border-brand/20 bg-brand/5 p-4 text-left">
+                  <p className="text-sm font-bold text-slate-800">Ask customer for Start OTP</p>
+                  <input 
+                    type="text" 
+                    placeholder="Enter 4-digit OTP" 
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
+                    maxLength={4}
+                  />
+                  <button
+                    type="button"
+                    disabled={updating || otp.length < 4}
+                    onClick={() => handleStatusUpdate(config.next, true)}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
+                  >
+                    {updating ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Start Job'}
+                  </button>
+                </GlassPanel>
+              ) : status === 'STARTED' ? (
+                <GlassPanel className="space-y-3 border-emerald-500/20 bg-emerald-50 p-4 text-left">
+                  <p className="text-sm font-bold text-slate-800">Ask customer for Completion OTP</p>
+                  <input 
+                    type="text" 
+                    placeholder="Enter 4-digit OTP" 
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    maxLength={4}
+                  />
+                  <button
+                    type="button"
+                    disabled={updating || otp.length < 4}
+                    onClick={() => handleStatusUpdate(config.next, true)}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
+                  >
+                    {updating ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Complete Job'}
+                  </button>
+                </GlassPanel>
+              ) : (
+                <button
+                  type="button"
+                  disabled={updating}
+                  onClick={() => handleStatusUpdate(config.next, false)}
+                  className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
+                >
+                  {updating ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <config.icon className="h-5 w-5" />
+                      {config.label}
+                    </>
+                  )}
+                </button>
+              )}
 
               {status === 'ACCEPTED' && (
                 <button

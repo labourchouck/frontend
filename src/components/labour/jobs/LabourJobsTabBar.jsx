@@ -1,5 +1,5 @@
 const TAB_META = {
-  offers: { label: 'Offers', hint: 'New assignments' },
+  offers: { label: 'Requests', hint: 'New assignments' },
   active: { label: 'Active', hint: 'On site now' },
   history: { label: 'History', hint: 'Completed' },
 }

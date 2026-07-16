@@ -15,16 +15,14 @@ export function BuildMartCategoryScroll({ activeId, onSelect }) {
         <button
           type="button"
           onClick={() => onSelect('')}
-          className={`flex shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl px-1 py-1 transition active:scale-95 ${
-            !activeId ? 'opacity-100' : 'opacity-80'
-          }`}
+          className={`flex shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl px-1 py-1 transition active:scale-95 ${!activeId ? 'opacity-100' : 'opacity-80'
+            }`}
         >
           <span
-            className={`flex h-14 w-14 items-center justify-center rounded-2xl text-xs font-black ring-2 transition ${
-              !activeId
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl text-xs font-black ring-2 transition ${!activeId
                 ? 'buildmart-gradient text-white ring-orange-300/50 buildmart-glow scale-105'
                 : 'bg-white text-slate-700 ring-slate-200/90 shadow-sm'
-            }`}
+              }`}
           >
             All
           </span>
@@ -48,18 +46,16 @@ export function BuildMartCategoryScroll({ activeId, onSelect }) {
               whileTap={reduce ? undefined : { scale: 0.94 }}
             >
               <span
-                className={`flex h-14 w-14 items-center justify-center rounded-2xl ring-2 transition-all duration-300 ${
-                  active
+                className={`flex h-14 w-14 items-center justify-center rounded-2xl ring-2 transition-all duration-300 ${active
                     ? 'buildmart-gradient text-white ring-orange-300/60 buildmart-glow scale-105'
                     : `${cat.tone} shadow-sm ring-transparent`
-                }`}
+                  }`}
               >
                 <Icon className="h-6 w-6" aria-hidden />
               </span>
               <span
-                className={`max-w-[4.5rem] truncate text-[10px] font-bold ${
-                  active ? 'text-bm-terracotta' : 'text-slate-600'
-                }`}
+                className={`max-w-[4.5rem] truncate text-[10px] font-bold ${active ? 'text-bm-terracotta' : 'text-slate-600'
+                  }`}
               >
                 {cat.label}
               </span>

@@ -15,7 +15,7 @@ export function AdminMartCategoriesTab() {
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newCat, setNewCat] = useState({ name: '', image: '' })
-  
+
   const [editCat, setEditCat] = useState(null)
   const [deleteCat, setDeleteCat] = useState(null)
 
@@ -84,13 +84,13 @@ export function AdminMartCategoriesTab() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button 
+              <button
                 onClick={() => setEditCat({ ...cat })}
                 className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-brand"
               >
                 <Edit className="h-4 w-4" />
               </button>
-              <button 
+              <button
                 onClick={() => setDeleteCat(cat)}
                 className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-red-500"
               >
@@ -287,7 +287,7 @@ export function AdminMartCategoriesTab() {
               <p className="text-sm text-slate-500">
                 Are you sure you want to delete <span className="font-semibold">{deleteCat.name}</span>? This action cannot be undone.
               </p>
-              
+
               <div className="mt-6 flex items-center justify-center gap-3">
                 <button
                   type="button"

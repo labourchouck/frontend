@@ -30,6 +30,7 @@ export const appShellChildRoutes = (
     <Route path="discover/labours" element={<Navigate to="/app" replace />} />
     <Route
       path="booking/flow"
+      
       element={
         <RoleRoute allow={[USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]} allowGuest>
           <IndividualBookingFlowPage />

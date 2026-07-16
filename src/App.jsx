@@ -36,6 +36,7 @@ import { AdminZonesPage } from './pages/admin/AdminZonesPage.jsx'
 import { AdminTimeSlotsPage } from './pages/admin/AdminTimeSlotsPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
+import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'
 
@@ -52,7 +53,9 @@ function App() {
             path="/app"
             element={
               <ProtectedRoute roles={APP_B2C_ROLES} allowGuest>
-                <AppShell />
+                <ErrorBoundary>
+                  <AppShell />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >
@@ -62,7 +65,9 @@ function App() {
             path="/app/work-categories"
             element={
               <ProtectedRoute roles={[USER_ROLES.LABOUR]}>
-                <LabourCategoriesPage />
+                <ErrorBoundary>
+                  <LabourCategoriesPage />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -71,7 +76,9 @@ function App() {
             path="/corporate"
             element={
               <ProtectedRoute roles={CORPORATE_ROLES}>
-                <CorporateShell />
+                <ErrorBoundary>
+                  <CorporateShell />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >
@@ -82,7 +89,9 @@ function App() {
             path="/vendor"
             element={
               <ProtectedRoute roles={VENDOR_ROLES}>
-                <VendorAppShell />
+                <ErrorBoundary>
+                  <VendorAppShell />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >
@@ -95,7 +104,9 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute roles={[USER_ROLES.ADMIN]}>
-                <AdminLayout />
+                <ErrorBoundary>
+                  <AdminLayout />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >

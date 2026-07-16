@@ -23,10 +23,17 @@ export const bookingsApi = {
     return apiRequest('/bookings/me', { method: 'GET' })
   },
 
-  updateBookingStatus: (id, status) => {
+  updateBookingStatus: (id, payload) => {
     return apiRequest(`/bookings/${id}/status`, {
       method: 'PATCH',
-      body: { status },
+      body: typeof payload === 'string' ? { status: payload } : payload,
+    })
+  },
+
+  updatePaymentMethod: (id, paymentMethod) => {
+    return apiRequest(`/bookings/${id}/payment-method`, {
+      method: 'PATCH',
+      body: { paymentMethod },
     })
   },
 }

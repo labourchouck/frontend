@@ -12,10 +12,10 @@ export function AdminMartCategoriesPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  
+
   const [editItem, setEditItem] = useState(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
-  
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
@@ -27,15 +27,15 @@ export function AdminMartCategoriesPage() {
       setLoading(false)
     }
   }, [])
-  
+
   useEffect(() => { load() }, [load])
-  
+
   async function handleDelete(id) {
     if (!window.confirm('Delete category?')) return
     try {
       await deleteAdminMartCategory(id)
       load()
-    } catch(e) {
+    } catch (e) {
       alert(e.message)
     }
   }
@@ -74,9 +74,9 @@ export function AdminMartCategoriesPage() {
           </tbody>
         </table>
       </GlassPanel>
-      
+
       {(editItem || isAddOpen) && (
-        <EditMartCategoryModal 
+        <EditMartCategoryModal
           item={editItem}
           open={true}
           onClose={() => { setEditItem(null); setIsAddOpen(false); }}
