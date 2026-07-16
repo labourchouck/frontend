@@ -145,7 +145,7 @@ export function LabourHomeScreen({ user }) {
       }
     })
   }, [user])
-  
+
   useEffect(() => {
     loadBookings()
   }, [loadBookings])
@@ -163,10 +163,10 @@ export function LabourHomeScreen({ user }) {
   const handleToggleAvailability = async () => {
     const nextStatus = isAvailable ? 'offline' : 'available'
     setIsAvailable(!isAvailable) // Optimistic update
-    
+
     // Also sync with attendance online presence
     setOnline(!isAvailable)
-    
+
     try {
       // We will need to import locationApi below
       const { updateLabourStatus } = await import('../../../api/locationApi.js')
@@ -252,7 +252,7 @@ export function LabourHomeScreen({ user }) {
       }
     }
   }, [todayBooking])
-  
+
   const todayJob = todayAssignment.job
 
   const schedule = useMemo(() => {
@@ -342,7 +342,7 @@ export function LabourHomeScreen({ user }) {
   const handleWorkAreaSaved = useCallback(() => {
     const next = readAppUserLocation()
     setAppLocation(next)
-    
+
     // Sync location to backend so the broadcasting engine knows where they are
     if (next && next.lat && next.lng) {
       import('../../../api/locationApi.js').then(({ updateLabourLocation }) => {
@@ -529,11 +529,10 @@ export function LabourHomeScreen({ user }) {
             <button
               type="button"
               onClick={() => setWorkAreaModalOpen(true)}
-              className={`mt-4 flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm backdrop-blur-sm transition hover:bg-white/15 ${
-                hasWorkLocation
-                  ? 'border-white/20 bg-white/10'
-                  : 'border-amber-300/50 bg-amber-500/20 ring-1 ring-amber-300/40'
-              }`}
+              className={`mt-4 flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm backdrop-blur-sm transition hover:bg-white/15 ${hasWorkLocation
+                ? 'border-white/20 bg-white/10'
+                : 'border-amber-300/50 bg-amber-500/20 ring-1 ring-amber-300/40'
+                }`}
             >
               <MapPin className="h-4 w-4 shrink-0 text-brand-bright" aria-hidden />
               <span className="min-w-0 flex-1 truncate font-medium text-white/90">{locationLabel}</span>
@@ -552,9 +551,8 @@ export function LabourHomeScreen({ user }) {
           aria-labelledby="attendance-heading"
         >
           <GlassPanel
-            className={`relative overflow-hidden border-2 p-4 ${
-              onSite ? 'border-emerald-300/80 bg-emerald-50/80' : 'border-slate-200/90 bg-white'
-            }`}
+            className={`relative overflow-hidden border-2 p-4 ${onSite ? 'border-emerald-300/80 bg-emerald-50/80' : 'border-slate-200/90 bg-white'
+              }`}
           >
             {onSite ? (
               <motion.span
@@ -566,9 +564,8 @@ export function LabourHomeScreen({ user }) {
             ) : null}
             <motion.div className="flex items-start gap-3">
               <span
-                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-inner ${
-                  onSite ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
-                }`}
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-inner ${onSite ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}
               >
                 {onSite ? <CheckCircle2 className="h-6 w-6" aria-hidden /> : <Timer className="h-6 w-6" aria-hidden />}
               </span>
@@ -644,18 +641,16 @@ export function LabourHomeScreen({ user }) {
             <button
               type="button"
               onClick={handleToggleAvailability}
-              className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${
-                isAvailable ? 'bg-brand' : 'bg-slate-300'
-              }`}
+              className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${isAvailable ? 'bg-brand' : 'bg-slate-300'
+                }`}
               role="switch"
               aria-checked={isAvailable}
             >
               <span className="sr-only">Toggle Job Requests</span>
               <span
                 aria-hidden="true"
-                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  isAvailable ? 'translate-x-3' : '-translate-x-3'
-                }`}
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAvailable ? 'translate-x-3' : '-translate-x-3'
+                  }`}
               />
             </button>
           </GlassPanel>
@@ -852,9 +847,8 @@ export function LabourHomeScreen({ user }) {
               {schedule.map((row, i) => (
                 <li key={`${row.id}-${i}`} className="relative pb-4 last:pb-0">
                   <span
-                    className={`absolute -left-[1.3rem] top-1 flex h-3 w-3 rounded-full ring-4 ring-white ${
-                      row.tone === 'brand' ? 'bg-brand' : row.tone === 'amber' ? 'bg-amber-500' : 'bg-slate-300'
-                    }`}
+                    className={`absolute -left-[1.3rem] top-1 flex h-3 w-3 rounded-full ring-4 ring-white ${row.tone === 'brand' ? 'bg-brand' : row.tone === 'amber' ? 'bg-amber-500' : 'bg-slate-300'
+                      }`}
                     aria-hidden
                   />
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.when}</p>
@@ -953,8 +947,8 @@ export function LabourHomeScreen({ user }) {
           </GlassPanel>
         </section>
 
-  
-       
+
+
 
         {/* 11. Support & emergency */}
         <section aria-label="Support and emergency">
@@ -1017,9 +1011,8 @@ export function LabourHomeScreen({ user }) {
                     key={b.id}
                     type="button"
                     onClick={() => setSafetyIdx(i)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      i === safetyIdx ? 'w-5 bg-white' : 'w-1.5 bg-white/40'
-                    }`}
+                    className={`h-1.5 rounded-full transition-all ${i === safetyIdx ? 'w-5 bg-white' : 'w-1.5 bg-white/40'
+                      }`}
                     aria-label={`Show tip: ${b.title}`}
                   />
                 ))}
