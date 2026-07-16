@@ -429,3 +429,64 @@ We will create or update RTK Query endpoints (or Axios calls) in `bookingsApi.js
 \ n # # #   U p d a t e   M y   L a b o u r   C a t e g o r i e s   ( S e r v i c e   P r i c i n g ) \ n -   * * E n d p o i n t : * *   \ P A T C H   / a p i / v 1 / u s e r s / m e / l a b o u r - c a t e g o r i e s \ \ n -   * * D e s c r i p t i o n : * *   U p d a t e s   t h e   s e l e c t e d   l a b o u r   s u b c a t e g o r i e s   a n d   s p e c i f i c   m i n i m u m   a n d   m a x i m u m   p r i c e   e x p e c t a t i o n s   f o r   e a c h   r o l e . \ n -   * * A u t h   R e q u i r e d : * *   Y e s   ( L a b o u r   R o l e   O n l y ) \ n -   * * B o d y : * * \ n     \ \ \ j s o n \ n     { \ n         \  
  s e r v i c e s \ :   [ \ n             {   \ s u b c a t e g o r y I d \ :   \ 6 0 f . . . \ ,   \ m i n P r i c e \ :   7 0 0 ,   \ m a x P r i c e \ :   9 0 0   } \ n         ] \ n     } \ n     \ \ \ \ n -   * * R e s p o n s e : * *   R e t u r n s   u p d a t e d   u s e r   o b j e c t   w i t h   \ l a b o u r P r o f i l e . s e r v i c e P r i c i n g \   p o p u l a t e d .  
  
+
+## BuildMart APIs
+
+### Admin Lead Management
+- **Get Leads:** `GET /api/v1/admin/buildmart/leads` (Supports `?page=1&limit=20&status=new&search=term`)
+- **Update Lead Status:** `PATCH /api/v1/admin/buildmart/leads/:id`
+  - **Body:** `{ "status": "contacted" }` (Options: new, contacted, quoted, won, lost)
+
+### Admin Catalog Management (CRUD)
+- **Categories:** `/api/v1/buildmart/admin/categories` (GET, POST, PUT, DELETE)
+
+### Admin: Manage Products (CRUD)
+Allows the admin to add, update, list, and delete BuildMart products.
+- **Get All Products:** `GET /api/v1/buildmart/admin/products`
+- **Create Product:** `POST /api/v1/buildmart/admin/products`
+  - **Body:**
+    ```json
+    {
+      "id": "p1",
+      "name": "Cement",
+      "brand": "UltraTech",
+      "categoryId": "c1",
+      "shortDescription": "High quality cement",
+      "images": ["https://..."],
+      "availability": "in_stock",
+      "variants": [
+        {
+          "id": "v1",
+          "label": "50kg Bag",
+          "retailPrice": 400,
+          "contractorPrice": 380
+        }
+      ]
+    }
+    ```
+- **Update Product:** `PUT /api/v1/buildmart/admin/products/:id`
+  - **Body:** Same as create product (all optional)
+- **Delete Product:** `DELETE /api/v1/buildmart/admin/products/:id`
+
+- **Banners:** `/api/v1/buildmart/admin/banners` (GET, POST, PUT, DELETE)
+
+### App Catalog (Read-Only)
+- **Categories:** `GET /api/v1/buildmart/app/categories`
+- **Products:** `GET /api/v1/buildmart/app/products`
+- **Banners:** `GET /api/v1/buildmart/app/banners`
+
+### Submit Quote Request (App)
+- **Endpoint:** `POST /api/v1/buildmart/quotes`
+- **Auth:** `User` / `Labour` / `Contractor`
+- **Body:**
+  ```json
+  {
+    "productId": "p1",
+    "productName": "Cement",
+    "quantity": 50,
+    "siteLocation": "Sector 14",
+    "name": "Raju",
+    "phone": "9999999999"
+  }
+  ```
+
