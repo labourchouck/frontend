@@ -168,32 +168,34 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
   )
 
   return (
-    <div className="flex flex-col px-4 pb-36">
-      <label className="lc-search-field mt-4" htmlFor="lc-search-input">
-        <Search className="h-5 w-5 shrink-0 text-brand" aria-hidden />
-        <input
-          ref={searchRef}
-          id="lc-search-input"
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Plumber, electrician, mason…"
-          autoComplete="off"
-          enterKeyHint="search"
-        />
-        {query ? (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200/80 text-slate-600"
-            aria-label="Clear search"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        ) : null}
-      </label>
+    <div className="flex h-full flex-col">
+      <div className="px-4 pt-4 pb-2 shrink-0">
+        <label className="lc-search-field" htmlFor="lc-search-input">
+          <Search className="h-5 w-5 shrink-0 text-brand" aria-hidden />
+          <input
+            ref={searchRef}
+            id="lc-search-input"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Plumber, electrician, mason…"
+            autoComplete="off"
+            enterKeyHint="search"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200/80 text-slate-600"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          ) : null}
+        </label>
+      </div>
 
-      <div className="mt-5">
+      <div className="mt-3 flex-1 overflow-y-auto px-4 pb-36">
         {groupsLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-7 w-7 animate-spin text-brand" aria-hidden />

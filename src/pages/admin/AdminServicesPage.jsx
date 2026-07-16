@@ -20,7 +20,6 @@ function AddServiceModal({ open, subcategories, onClose, onSaved, busy, setBusy 
   const [subcategoryId, setSubcategoryId] = useState('')
   const [description, setDescription] = useState('')
   const [basePrice, setBasePrice] = useState(0)
-  const [estimatedDurationMins, setEstimatedDurationMins] = useState(60)
   const [iconUrl, setIconUrl] = useState('')
   const [isActive, setIsActive] = useState(true)
   const [uploadBusy, setUploadBusy] = useState(false)
@@ -32,7 +31,6 @@ function AddServiceModal({ open, subcategories, onClose, onSaved, busy, setBusy 
       setSubcategoryId(subcategories[0]?._id ?? '')
       setDescription('')
       setBasePrice(0)
-      setEstimatedDurationMins(60)
       setIconUrl('')
       setIsActive(true)
       setError('')
@@ -75,7 +73,6 @@ function AddServiceModal({ open, subcategories, onClose, onSaved, busy, setBusy 
         subcategoryId,
         description: description.trim(),
         basePrice: Number(basePrice),
-        estimatedDurationMins: Number(estimatedDurationMins),
         iconUrl: iconUrl.trim() || undefined,
         isActive
       }
@@ -156,17 +153,6 @@ function AddServiceModal({ open, subcategories, onClose, onSaved, busy, setBusy 
               />
             </div>
 
-            <div>
-              <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">Est. Duration (Mins)</label>
-              <input
-                type="number"
-                min="1"
-                value={estimatedDurationMins}
-                onChange={(e) => setEstimatedDurationMins(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/35"
-              />
-            </div>
-
             <div className="flex items-center pt-5">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -242,7 +228,6 @@ function EditServiceModal({ open, service, subcategories, onClose, onSaved, busy
   const [subcategoryId, setSubcategoryId] = useState('')
   const [description, setDescription] = useState('')
   const [basePrice, setBasePrice] = useState(0)
-  const [estimatedDurationMins, setEstimatedDurationMins] = useState(60)
   const [iconUrl, setIconUrl] = useState('')
   const [isActive, setIsActive] = useState(true)
   const [uploadBusy, setUploadBusy] = useState(false)
@@ -254,7 +239,6 @@ function EditServiceModal({ open, service, subcategories, onClose, onSaved, busy
       setSubcategoryId(service.subcategoryId || (subcategories[0]?._id ?? ''))
       setDescription(service.description || '')
       setBasePrice(service.basePrice ?? 0)
-      setEstimatedDurationMins(service.estimatedDurationMins ?? 60)
       setIconUrl(service.iconUrl || '')
       setIsActive(service.isActive ?? true)
       setError('')
@@ -297,7 +281,6 @@ function EditServiceModal({ open, service, subcategories, onClose, onSaved, busy
         subcategoryId,
         description: description.trim(),
         basePrice: Number(basePrice),
-        estimatedDurationMins: Number(estimatedDurationMins),
         iconUrl: iconUrl.trim() || undefined,
         isActive
       }
@@ -374,17 +357,6 @@ function EditServiceModal({ open, service, subcategories, onClose, onSaved, busy
                 min="0"
                 value={basePrice}
                 onChange={(e) => setBasePrice(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/35"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-[11px] font-bold uppercase text-slate-500">Est. Duration (Mins)</label>
-              <input
-                type="number"
-                min="1"
-                value={estimatedDurationMins}
-                onChange={(e) => setEstimatedDurationMins(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/35"
               />
             </div>
@@ -529,10 +501,6 @@ function ViewServiceModal({ open, service, onClose }) {
                   <div>
                     <p className="text-[10px] font-bold uppercase text-slate-400">Base Price</p>
                     <p className="text-sm font-medium text-emerald-600 font-mono">₹{displayData.basePrice}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Est. Duration</p>
-                    <p className="text-sm font-medium text-slate-700">{displayData.estimatedDurationMins} mins</p>
                   </div>
                 </div>
                 <div>
@@ -852,7 +820,6 @@ export function AdminServicesPage() {
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-sm text-slate-700">
                       ₹{s.basePrice}
-                      <p className="text-[10px] text-slate-400 font-sans">{s.estimatedDurationMins}m</p>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${

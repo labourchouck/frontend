@@ -289,21 +289,19 @@ export function AppShell() {
                     end={Boolean(end)}
                     onClick={() => setDrawerOpen(false)}
                     className={({ isActive }) =>
-                      `group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition duration-200 ${
-                        isActive
-                          ? 'bg-linear-to-r from-brand/10 to-white text-slate-900 shadow-[inset_0_0_0_1px_rgba(28,175,98,0.12)] before:absolute before:left-0 before:top-1/2 before:z-10 before:h-9 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand before:shadow-[2px_0_10px_-2px_rgba(28,175,98,0.45)]'
-                          : 'text-slate-700 hover:bg-slate-50'
+                      `group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition duration-200 ${isActive
+                        ? 'bg-linear-to-r from-brand/10 to-white text-slate-900 shadow-[inset_0_0_0_1px_rgba(28,175,98,0.12)] before:absolute before:left-0 before:top-1/2 before:z-10 before:h-9 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand before:shadow-[2px_0_10px_-2px_rgba(28,175,98,0.45)]'
+                        : 'text-slate-700 hover:bg-slate-50'
                       }`
                     }
                   >
                     {({ isActive }) => (
                       <>
                         <span
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 transition ${
-                            isActive
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 transition ${isActive
                               ? 'bg-white text-brand ring-brand/25'
                               : 'bg-white text-slate-500 ring-slate-200/80 group-hover:text-brand group-hover:ring-brand/15'
-                          }`}
+                            }`}
                         >
                           <Icon className="h-[18px] w-[18px]" aria-hidden />
                         </span>
@@ -359,105 +357,102 @@ export function AppShell() {
         {!hideShellHeader ? (
           <header
             ref={headerRef}
-            className={`sticky top-0 z-30 ${
-              isIndividualAppHome ? 'bg-brand px-4 pb-1 pt-3' : 'px-3 pt-3'
-            }`}
+            className={`sticky top-0 z-30 ${isIndividualAppHome ? 'bg-brand px-4 pb-1 pt-3' : 'px-3 pt-3'
+              }`}
           >
-          {isIndividualAppHome ? (
-            <div className="flex items-center gap-2 text-white">
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(true)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition active:scale-95 hover:bg-white/25"
-                aria-label="Open menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setLocationModalOpen(true)}
-                className="flex min-w-0 flex-1 items-start gap-2 rounded-xl py-0.5 text-left outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
-                aria-haspopup="dialog"
-                aria-expanded={locationModalOpen}
-                aria-label="Open location settings"
-              >
-                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold text-white/80">Your location</p>
-                  <div className="flex items-center gap-0.5">
-                    <span className="truncate text-sm font-extrabold tracking-tight sm:text-[0.95rem]">
-                      {individualLocationTitle}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/80" aria-hidden />
+            {isIndividualAppHome ? (
+              <div className="flex items-center gap-2 text-white">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(true)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition active:scale-95 hover:bg-white/25"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocationModalOpen(true)}
+                  className="flex min-w-0 flex-1 items-start gap-2 rounded-xl py-0.5 text-left outline-none transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40"
+                  aria-haspopup="dialog"
+                  aria-expanded={locationModalOpen}
+                  aria-label="Open location settings"
+                >
+                  <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-white/80">Your location</p>
+                    <div className="flex items-center gap-0.5">
+                      <span className="truncate text-sm font-extrabold tracking-tight sm:text-[0.95rem]">
+                        {individualLocationTitle}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/80" aria-hidden />
+                    </div>
+                    <p className="sr-only">{individualLocationSubtitle}</p>
                   </div>
-                  <p className="sr-only">{individualLocationSubtitle}</p>
-                </div>
-              </button>
-              <Link
-                to="/app/support"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm transition hover:bg-white/95"
-                aria-label="Support and notifications"
-              >
-                <Bell className="h-5 w-5" aria-hidden />
-              </Link>
-              <Link
-                to="/app/profile"
-                className="flex shrink-0 items-center rounded-full ring-2 ring-white/50 transition hover:ring-white"
-                aria-label="Open profile"
-              >
-                {profileImageUrl ? (
-                  <span className="relative block h-10 w-10 overflow-hidden rounded-full bg-white/20">
-                    <img
-                      src={profileImageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  </span>
-                ) : (
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[11px] font-black text-brand">
-                    {drawerInitials}
-                  </span>
-                )}
-              </Link>
-            </div>
-          ) : (
-            <GlassPanel className="flex items-center gap-3 px-3 py-2.5 ">
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(true)}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/70 bg-white/90 text-slate-700 shadow-sm transition hover:border-brand/30 hover:text-slate-900 active:scale-95"
-                aria-label="Open menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div className="min-w-0 flex-1">
-                <h1 className="truncate text-lg font-extrabold tracking-tight text-slate-900">{title}</h1>
-                <p className="truncate text-xs font-medium leading-snug text-slate-500">{headerTagline}</p>
+                </button>
+                <Link
+                  to="/app/support"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm transition hover:bg-white/95"
+                  aria-label="Support and notifications"
+                >
+                  <Bell className="h-5 w-5" aria-hidden />
+                </Link>
+                <Link
+                  to="/app/profile"
+                  className="flex shrink-0 items-center rounded-full ring-2 ring-white/50 transition hover:ring-white"
+                  aria-label="Open profile"
+                >
+                  {profileImageUrl ? (
+                    <span className="relative block h-10 w-10 overflow-hidden rounded-full bg-white/20">
+                      <img
+                        src={profileImageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </span>
+                  ) : (
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[11px] font-black text-brand">
+                      {drawerInitials}
+                    </span>
+                  )}
+                </Link>
               </div>
-              <motion.div
-                className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-inner ring-1 sm:flex ${
-                  onBuildMart
-                    ? 'buildmart-gradient text-white ring-orange-300/30'
-                    : 'bg-linear-to-br from-brand/15 to-brand-muted/60 text-brand ring-brand/15'
-                }`}
-                aria-hidden
-              >
-                <Sparkles className="h-5 w-5" />
-              </motion.div>
-            </GlassPanel>
-          )}
+            ) : (
+              <GlassPanel className="flex items-center gap-3 px-3 py-2.5 ">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(true)}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/70 bg-white/90 text-slate-700 shadow-sm transition hover:border-brand/30 hover:text-slate-900 active:scale-95"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <h1 className="truncate text-lg font-extrabold tracking-tight text-slate-900">{title}</h1>
+                  <p className="truncate text-xs font-medium leading-snug text-slate-500">{headerTagline}</p>
+                </div>
+                <motion.div
+                  className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-inner ring-1 sm:flex ${onBuildMart
+                      ? 'buildmart-gradient text-white ring-orange-300/30'
+                      : 'bg-linear-to-br from-brand/15 to-brand-muted/60 text-brand ring-brand/15'
+                    }`}
+                  aria-hidden
+                >
+                  <Sparkles className="h-5 w-5" />
+                </motion.div>
+              </GlassPanel>
+            )}
           </header>
         ) : null}
 
         <main
-          className={`relative z-10 flex-1 px-4 pb-32 ${
-            hideShellHeader
+          className={`relative z-10 flex-1 px-4 pb-32 ${hideShellHeader
               ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]'
               : isIndividualAppHome
                 ? 'pt-0'
                 : 'pt-4'
-          }`}
+            }`}
         >
           <AppPageTransition />
         </main>
