@@ -9,7 +9,7 @@ export function AppPageTransition() {
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
-        key={location.key}
+        key={location.pathname}
         className="min-h-0"
         initial={reduce ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}

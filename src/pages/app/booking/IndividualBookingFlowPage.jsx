@@ -55,12 +55,13 @@ import {
 
 const TIME_SLOTS = ['9:00 AM – 12:00 PM', '12:00 PM – 3:00 PM', '3:00 PM – 6:00 PM', '6:00 PM – 9:00 PM']
 
-function FieldLabel({ children, optional }) {
+function FieldLabel({ children, optional, htmlFor }) {
+  const Tag = htmlFor ? 'label' : 'div'
   return (
-    <label className="lc-booking-flow-label">
+    <Tag className="lc-booking-flow-label" htmlFor={htmlFor}>
       {children}
       {optional ? <span className="lc-booking-flow-muted font-normal"> (optional)</span> : null}
-    </label>
+    </Tag>
   )
 }
 
@@ -100,6 +101,9 @@ export function IndividualBookingFlowPage() {
   const [timeSlotsLoading, setTimeSlotsLoading] = useState(true)
 
   const inputRef = useRef(null)
+  const autocompleteRef = useRef(null)
+  const [mapsLoaded, setMapsLoaded] = useState(false)
+  const [forceInput, setForceInput] = useState(false)
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
   const markerInstance = useRef(null)
@@ -137,6 +141,29 @@ export function IndividualBookingFlowPage() {
     const stored = readBookingDraft()
     if (stored) queueMicrotask(() => setDraft(stored))
   }, [])
+
+  useEffect(() => {
+    if (!autocompleteRef.current) return
+    const handleSelect = async (e) => {
+      if (!e.place) return
+      await e.place.fetchFields({ fields: ['location', 'formattedAddress', 'displayName'] })
+      if (e.place.location) {
+        syncDraft({
+          lat: e.place.location.lat(),
+          lng: e.place.location.lng(),
+          address: e.place.formattedAddress || e.place.displayName || ''
+        })
+        setForceInput(true)
+      }
+    }
+    const current = autocompleteRef.current
+    current.addEventListener('gmp-placeselect', handleSelect)
+    return () => current.removeEventListener('gmp-placeselect', handleSelect)
+  }, [mapsLoaded, syncDraft])
+
+  useEffect(() => {
+    if (draft.address) setForceInput(true)
+  }, [draft.address])
 
   useEffect(() => {
     if (!categoryIdParam && !groupIdParam) return
@@ -308,22 +335,7 @@ export function IndividualBookingFlowPage() {
     }
 
     function initMaps() {
-      if (inputRef.current) {
-        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-          fields: ['formatted_address', 'geometry', 'name'],
-          types: ['geocode', 'establishment'],
-        })
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace()
-          if (place.geometry && place.geometry.location) {
-            syncDraft({
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-              address: place.formatted_address || place.name || ''
-            })
-          }
-        })
-      }
+      setMapsLoaded(true)
 
       if (mapRef.current && !mapInstance.current) {
         const currentPos = { 
@@ -404,7 +416,21 @@ export function IndividualBookingFlowPage() {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        syncDraft({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        if (window.google?.maps?.Geocoder) {
+          const geocoder = new window.google.maps.Geocoder()
+          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              syncDraft({ lat, lng, address: results[0].formatted_address })
+              setForceInput(true)
+            } else {
+              syncDraft({ lat, lng })
+            }
+          })
+        } else {
+          syncDraft({ lat, lng })
+        }
       },
       () => { },
       { enableHighAccuracy: false, timeout: 10_000 },
@@ -413,7 +439,14 @@ export function IndividualBookingFlowPage() {
 
   const applySavedAddress = () => {
     const saved = readAppUserLocation()
-    if (saved?.address) syncDraft({ address: saved.address, lat: saved.lat, lng: saved.lng })
+    if (saved && (saved.address || (saved.lat && saved.lng))) {
+      const displayAddress = saved.address || `GPS ${saved.lat.toFixed(5)}, ${saved.lng.toFixed(5)}`
+      syncDraft({ address: displayAddress, lat: saved.lat, lng: saved.lng })
+      setForceInput(true)
+      setFormError('') // clear any existing error
+    } else {
+      setFormError('No saved address found. Please save one in your profile first.')
+    }
   }
 
   const validateDetails = () => {
@@ -509,7 +542,7 @@ export function IndividualBookingFlowPage() {
   if (step === 'scheduled_success') {
     return (
       <div className="space-y-4 pb-8">
-        <AppStackScreenHeader title="Booking confirmed" onBack={() => navigate('/app/bookings')} />
+        <AppStackScreenHeader title="Booking confirmed" onBack={() => navigate('/app/my-bookings')} />
         <GlassPanel className="p-6 text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-500" aria-hidden />
           <p className="mt-4 text-lg font-black text-slate-900">Your job is scheduled!</p>
@@ -526,11 +559,11 @@ export function IndividualBookingFlowPage() {
               <span className="text-slate-900 font-bold">{draft.timeSlot}</span>
             </div>
           </div>
-          <motion.div layout className="mt-6 flex flex-col gap-2">
-            <BookingPrimaryButton type="button" onClick={() => { clearBookingDraft(); navigate('/app/bookings', { replace: true }) }}>
+          <motion.div className="mt-6 flex flex-col gap-2">
+            <BookingPrimaryButton type="button" onClick={() => { window.scrollTo(0, 0); clearBookingDraft(); navigate('/app/my-bookings', { replace: true }) }}>
               View my bookings
             </BookingPrimaryButton>
-            <AppButton type="button" variant="secondary" onClick={() => { clearBookingDraft(); navigate('/app/home', { replace: true }) }}>
+            <AppButton type="button" variant="secondary" onClick={() => { window.scrollTo(0, 0); clearBookingDraft(); navigate('/app', { replace: true }) }}>
               Back to home
             </AppButton>
           </motion.div>
@@ -581,16 +614,16 @@ export function IndividualBookingFlowPage() {
   if (noMatch) {
     return (
       <div className="space-y-4 pb-8">
-        <AppStackScreenHeader title="No match" onBack={() => navigate('/app/home')} />
+        <AppStackScreenHeader title="No match" onBack={() => { window.scrollTo(0, 0); navigate('/app') }} />
         <GlassPanel className="p-6 text-center">
           <AlertCircle className="mx-auto h-10 w-10 text-amber-500" aria-hidden />
           <p className="mt-3 text-sm font-bold text-slate-900">Labourers are currently not available</p>
           <p className="mt-2 text-xs text-slate-600">Please try searching again in a few minutes.</p>
-          <motion.div layout className="mt-5 flex flex-col gap-2">
+          <motion.div className="mt-5 flex flex-col gap-2">
             <BookingPrimaryButton type="button" onClick={() => { setNoMatch(false); confirmBooking() }}>
               Retry search
             </BookingPrimaryButton>
-            <AppButton type="button" variant="secondary" onClick={() => navigate('/app/home')}>
+            <AppButton type="button" variant="secondary" onClick={() => { window.scrollTo(0, 0); navigate('/app') }}>
               Cancel
             </AppButton>
           </motion.div>
@@ -609,13 +642,13 @@ export function IndividualBookingFlowPage() {
       <div className="space-y-4 pb-8">
         <AppStackScreenHeader
           title={step === 'payment' ? 'Payment' : 'Worker on the way'}
-          onBack={() => (step === 'payment' ? goStep('active') : navigate('/app/bookings', { replace: true }))}
+          onBack={() => (step === 'payment' ? goStep('active') : navigate('/app/my-bookings', { replace: true }))}
         />
         <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
 
         {worker ? (
           <GlassPanel className="overflow-hidden border-slate-200/90 p-0">
-            <motion.div layout className="flex gap-4 p-4">
+            <motion.div className="flex gap-4 p-4">
               <img
                 src={worker.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(worker.fullName || 'W')}`}
                 alt=""
@@ -705,9 +738,9 @@ export function IndividualBookingFlowPage() {
         )}
 
         {step === 'payment' ? (
-          <motion.div layout className="space-y-4">
+          <motion.div className="space-y-4">
             <FieldLabel>Select Payment Method</FieldLabel>
-            <motion.div layout className="grid grid-cols-2 gap-2">
+            <motion.div className="grid grid-cols-2 gap-2">
               {[
                 { id: 'CASH', label: 'Cash' },
                 { id: 'ONLINE', label: 'Online' }
@@ -752,7 +785,7 @@ export function IndividualBookingFlowPage() {
                   }
                 }
                 clearBookingDraft()
-                navigate(`/app/bookings`)
+                navigate(`/app/my-bookings`)
               }}
             >
               <CheckCircle2 className="h-4 w-4" aria-hidden />
@@ -782,7 +815,7 @@ export function IndividualBookingFlowPage() {
           onSubmitted={() => {
             setReviewOpen(false)
             clearBookingDraft()
-            navigate('/app/bookings', { replace: true })
+            navigate('/app/my-bookings', { replace: true })
           }}
         />
       </div>
@@ -798,7 +831,10 @@ export function IndividualBookingFlowPage() {
         title={flowTitle}
         onBack={() => {
           if (step === 'type') leaveFlow()
-          else if (step === 'details') goStep('type')
+          else if (step === 'details') {
+            if (draft.entryPoint === 'category') navigate(-1)
+            else goStep('type')
+          }
           else goStep('details')
         }}
       />
@@ -813,7 +849,7 @@ export function IndividualBookingFlowPage() {
         ) : null}
 
         {step === 'type' ? (
-          <motion.div layout initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+          <motion.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             <button
               type="button"
               onClick={() => setTypeSheetOpen(true)}
@@ -842,17 +878,44 @@ export function IndividualBookingFlowPage() {
         ) : null}
 
         {step === 'details' ? (
-          <motion.div layout className="space-y-4">
+          <motion.div className="space-y-4">
             <div>
-              <FieldLabel>Work location</FieldLabel>
-              <input
-                ref={inputRef}
-                type="text"
-                value={draft.address || ''}
-                onChange={(e) => syncDraft({ address: e.target.value })}
-                placeholder="House, street, area, city"
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
+              <FieldLabel htmlFor="work-location">Work location</FieldLabel>
+              {!mapsLoaded ? (
+                <input
+                  id="work-location"
+                  name="workLocation"
+                  ref={inputRef}
+                  type="text"
+                  value={draft.address || ''}
+                  onChange={(e) => syncDraft({ address: e.target.value })}
+                  placeholder="House, street, area, city"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+              ) : (
+                <div className="relative w-full">
+                  <div className="w-full rounded-xl border border-slate-200 overflow-hidden focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20 [&>gmp-place-autocomplete]:w-full [&>gmp-place-autocomplete]:block">
+                    <gmp-place-autocomplete 
+                      id="work-location" 
+                      name="workLocation" 
+                      ref={autocompleteRef}
+                    ></gmp-place-autocomplete>
+                  </div>
+                  
+                  {forceInput && (
+                    <input
+                      id="work-location-display"
+                      name="workLocationDisplay"
+                      type="text"
+                      value={draft.address || ''}
+                      readOnly
+                      onClick={() => setForceInput(false)}
+                      placeholder="House, street, area, city"
+                      className="absolute top-0 left-0 h-full w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none cursor-text"
+                    />
+                  )}
+                </div>
+              )}
               <div 
                 ref={mapRef} 
                 className="mt-3 h-48 w-full rounded-xl bg-slate-100 ring-1 ring-black/5 overflow-hidden" 
@@ -876,9 +939,11 @@ export function IndividualBookingFlowPage() {
               </div>
             </div>
 
-            <motion.div layout>
-              <FieldLabel optional>Work note</FieldLabel>
+            <motion.div>
+              <FieldLabel optional htmlFor="work-note">Work note</FieldLabel>
               <textarea
+                id="work-note"
+                name="workNote"
                 value={draft.notes || ''}
                 onChange={(e) => syncDraft({ notes: e.target.value })}
                 rows={2}
@@ -887,12 +952,14 @@ export function IndividualBookingFlowPage() {
               />
             </motion.div>
 
-            <motion.div layout>
+            <motion.div>
               <FieldLabel optional>Photos</FieldLabel>
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-4 text-xs font-bold text-black">
+              <label htmlFor="job-photos" className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-4 text-xs font-bold text-black">
                 <ImagePlus className="h-4 w-4 text-brand" aria-hidden />
                 Upload images
                 <input
+                  id="job-photos"
+                  name="jobPhotos"
                   type="file"
                   accept="image/*"
                   multiple
@@ -905,7 +972,7 @@ export function IndividualBookingFlowPage() {
               ) : null}
             </motion.div>
 
-            <motion.div layout>
+            <motion.div>
               <FieldLabel>Working duration</FieldLabel>
               <div className="flex flex-wrap gap-2">
                 {[
@@ -931,6 +998,9 @@ export function IndividualBookingFlowPage() {
               </div>
               {draft.durationKind === 'multi_day' ? (
                 <input
+                  id="duration-days"
+                  name="durationDays"
+                  aria-label="Number of days"
                   type="number"
                   min={2}
                   max={30}
@@ -951,9 +1021,11 @@ export function IndividualBookingFlowPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                <motion.div layout>
-                  <FieldLabel>Date</FieldLabel>
+                <motion.div>
+                  <FieldLabel htmlFor="service-date">Date</FieldLabel>
                   <input
+                    id="service-date"
+                    name="serviceDate"
                     type="date"
                     min={todayISODate()}
                     max={maxISODate(5)}
@@ -1007,7 +1079,7 @@ export function IndividualBookingFlowPage() {
               <span className="text-sm font-semibold text-slate-500">Loading billing details...</span>
             </div>
           ) : (
-          <motion.div layout className="space-y-4">
+          <motion.div className="space-y-4">
             <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
               <div className="flex justify-between gap-2">
                 <span className="lc-booking-flow-muted">Service</span>
@@ -1090,3 +1162,4 @@ export function IndividualBookingFlowPage() {
     </div>
   )
 }
+
