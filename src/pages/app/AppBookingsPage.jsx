@@ -1,6 +1,6 @@
-import { IndividualHomeownerBookings } from './homeowner/IndividualHomeownerBookings.jsx'
+import { MyBookings } from './MyBookings.jsx'
 
 /** B2C individual booking history only — corporate/vendor use dedicated panels. */
 export function AppBookingsPage() {
-  return <IndividualHomeownerBookings />
+  return <MyBookings />
 }

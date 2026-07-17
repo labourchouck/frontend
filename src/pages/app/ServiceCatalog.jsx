@@ -136,9 +136,6 @@ export function ServiceCatalog() {
                                 >
                                   <div>
                                     <p className="text-sm font-semibold text-slate-800">{sub.name}</p>
-                                    {sub.estimatedDurationMins ? (
-                                      <p className="text-xs text-slate-500">~{sub.estimatedDurationMins} mins</p>
-                                    ) : null}
                                   </div>
                                   <span className="shrink-0 rounded-lg bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
                                     ₹{sub.basePrice}

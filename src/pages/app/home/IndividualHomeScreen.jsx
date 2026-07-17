@@ -7,10 +7,12 @@ import { IndividualHomeHeroCarousel } from '../../../components/app/individual/I
 import { IndividualHomeRecentlyBooked } from '../../../components/app/individual/IndividualHomeRecentlyBooked.jsx'
 import { IndividualHomeWorkerCarousel } from '../../../components/app/individual/IndividualHomeWorkerCarousel.jsx'
 import { IndividualHomeServiceSections } from '../../../components/app/individual/IndividualHomeServiceSections.jsx'
+import { IndividualHomeProductCarousel } from '../../../components/app/individual/IndividualHomeProductCarousel.jsx'
 import { BookingModeSheet } from '../../../components/app/booking/BookingModeSheet.jsx'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { writeBookingDraft, readBookingDraft } from '../../../lib/individualBookingDraft.js'
 import { fetchDiscoverLabour, fetchDiscoverLabours } from '../../../api/discoverLaboursApi.js'
+import { fetchAppMartProducts } from '../../../api/buildmartApi.js'
 import { bookingsApi } from '../../../api/bookingsApi.js'
 import { ApiError } from '../../../api/http.js'
 import { LabourPublicDetailSheet } from '../labour/LabourPublicDetailSheet.jsx'
@@ -55,6 +57,9 @@ export function IndividualHomeScreen({ user }) {
   const [quickBookCategory, setQuickBookCategory] = useState(null)
   const [bookingsLoading, setBookingsLoading] = useState(true)
   const [bookings, setBookings] = useState([])
+
+  const [products, setProducts] = useState([])
+  const [productsLoading, setProductsLoading] = useState(true)
 
   const enrichedLabours = useMemo(() => {
     return labours.map((l) => ({ ...l, _ui: enrichDiscoverLabourUi(l) }))
@@ -212,6 +217,25 @@ export function IndividualHomeScreen({ user }) {
     return () => { cancelled = true }
   }, [user])
 
+  useEffect(() => {
+    let cancelled = false
+    fetchAppMartProducts()
+      .then((res) => {
+        if (!cancelled) {
+          setProducts((res?.data ?? res ?? []).slice(0, 3))
+          setProductsLoading(false)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('Failed to load products', err)
+          setProducts([])
+          setProductsLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [])
+
   const openDetail = useCallback((id) => {
     setDetailId(id)
     setDetailLabour(null)
@@ -267,6 +291,11 @@ export function IndividualHomeScreen({ user }) {
           emptyAction="Find a skill"
           onSelectWorker={openDetail}
           onEmptyAction={goSearch}
+        />
+
+        <IndividualHomeProductCarousel
+          products={products}
+          loading={productsLoading}
         />
 
         <IndividualHomeServiceSections

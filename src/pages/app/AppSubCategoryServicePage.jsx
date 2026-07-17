@@ -139,11 +139,7 @@ export function AppSubCategoryServicePage() {
                             <p className="text-sm font-medium text-slate-700 leading-relaxed mt-0.5">{service.description}</p>
                           </div>
                         )}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-[10px] font-bold uppercase text-slate-400">Est. Duration</p>
-                            <p className="text-sm font-medium text-slate-700">{service.estimatedDurationMins || 'N/A'} mins</p>
-                          </div>
+                        <div className="grid grid-cols-1 gap-4">
                           <div>
                             <p className="text-[10px] font-bold uppercase text-slate-400">Status</p>
                             <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${service.isActive !== false ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-slate-200'
