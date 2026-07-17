@@ -997,17 +997,37 @@ export function IndividualBookingFlowPage() {
                 ))}
               </div>
               {draft.durationKind === 'multi_day' ? (
-                <input
-                  id="duration-days"
-                  name="durationDays"
-                  aria-label="Number of days"
-                  type="number"
-                  min={2}
-                  max={30}
-                  value={draft.durationDays || 2}
-                  onChange={(e) => syncDraft({ durationDays: Number(e.target.value) || 2 })}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-black"
-                />
+                <div className="mt-2 space-y-1.5">
+                  <label htmlFor="duration-days" className="text-[11px] font-bold uppercase text-slate-500">
+                    Number of days
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="duration-days"
+                      name="durationDays"
+                      aria-label="Number of days"
+                      type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      min={2}
+                      max={30}
+                      value={draft.durationDays === undefined ? 2 : draft.durationDays}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        syncDraft({ durationDays: val === '' ? '' : Number(val) })
+                      }}
+                      onBlur={(e) => {
+                        const val = Number(e.target.value)
+                        if (!val || val < 2) syncDraft({ durationDays: 2 })
+                        else if (val > 30) syncDraft({ durationDays: 30 })
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 pr-12 text-sm font-bold text-black outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                    />
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                      days
+                    </span>
+                  </div>
+                </div>
               ) : null}
             </motion.div>
 
