@@ -17,12 +17,16 @@ import {
   Timer,
   User,
   X,
+  Camera,
+  Loader2,
 } from 'lucide-react'
 import { AppBadge } from '../app-ui/data-display/AppBadge.jsx'
 import { AppSecondaryButton } from '../app/AppSecondaryButton.jsx'
 import { GlassPanel } from '../ui/GlassPanel.jsx'
 import { buildAssignmentDetailSnapshot } from '../../lib/labourAssignmentDetail.js'
 import { readAttendanceEntries } from '../../lib/labourAttendanceStorage.js'
+import { uploadMedia, assetUrlFromUpload } from '../../api/uploadApi.js'
+import { UPLOAD_FOLDERS } from '../../constants/uploadFolders.js'
 
 const STATUS_DOT = {
   brand: 'bg-brand',
@@ -46,17 +50,31 @@ export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assign
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [jobImage, setJobImage] = useState(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const handleStatusUpdate = async (nextStatus, requireOtp) => {
     if (requireOtp && !otp) {
       setErrorMsg('OTP is required.')
       return
     }
+    if (requireOtp && !jobImage) {
+      setErrorMsg(nextStatus === 'STARTED' ? 'Before Work image is required.' : 'After Work image is required.')
+      return
+    }
     setLoading(true)
     setErrorMsg('')
     try {
-      await bookingsApi.updateBookingStatus(rawJob._id, { status: nextStatus, otp })
+      let payload = nextStatus
+      if (requireOtp) {
+        payload = { status: nextStatus, otp }
+        if (nextStatus === 'STARTED') payload.beforeImage = jobImage
+        if (nextStatus === 'COMPLETED') payload.afterImage = jobImage
+      }
+
+      await bookingsApi.updateBookingStatus(rawJob._id, payload)
       setOtp('')
+      setJobImage(null)
       if (onRefresh) onRefresh()
       if (nextStatus === 'COMPLETED') {
         onClose()
@@ -65,6 +83,21 @@ export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assign
       setErrorMsg(err.message || 'Failed to update status.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImage(true)
+    setErrorMsg('')
+    try {
+      const uploaded = await uploadMedia(file, UPLOAD_FOLDERS.GENERAL_MEDIA)
+      setJobImage(assetUrlFromUpload(uploaded))
+    } catch (err) {
+      setErrorMsg('Failed to upload image')
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -243,20 +276,57 @@ export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assign
                   )}
 
                   {rawJob.status === 'EN_ROUTE' && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-600">Ask the customer for the Start OTP to begin.</p>
-                      <input 
-                        type="text" 
-                        placeholder="Enter Start OTP" 
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
-                        maxLength={4}
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm font-bold text-slate-800 mb-2">1. Upload Before Work Image</p>
+                        {jobImage ? (
+                          <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                            <img src={jobImage} alt="Before work" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setJobImage(null)}
+                              className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-brand hover:bg-brand/5 hover:text-brand">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              className="hidden"
+                              onChange={handleImageUpload}
+                              disabled={uploadingImage}
+                            />
+                            {uploadingImage ? (
+                              <Loader2 className="h-6 w-6 animate-spin text-brand" />
+                            ) : (
+                              <>
+                                <Camera className="h-6 w-6" />
+                                <span className="text-sm font-semibold">Tap to capture</span>
+                              </>
+                            )}
+                          </label>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Start OTP</p>
+                        <input 
+                          type="text" 
+                          placeholder="Enter Start OTP" 
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
+                          maxLength={4}
+                        />
+                      </div>
                       <AppPrimaryButton 
                         type="button" 
                         onClick={() => handleStatusUpdate('STARTED', true)}
-                        disabled={loading || otp.length < 4}
+                        disabled={loading || otp.length < 4 || !jobImage || uploadingImage}
                         className="w-full"
                       >
                         {loading ? 'Updating...' : 'Start Job'}
@@ -265,20 +335,57 @@ export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assign
                   )}
 
                   {rawJob.status === 'STARTED' && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-600">Ask the customer for the Completion OTP to finish.</p>
-                      <input 
-                        type="text" 
-                        placeholder="Enter Completion OTP" 
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
-                        maxLength={4}
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm font-bold text-slate-800 mb-2">1. Upload After Work Image</p>
+                        {jobImage ? (
+                          <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                            <img src={jobImage} alt="After work" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setJobImage(null)}
+                              className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-500/5 hover:text-emerald-500">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              className="hidden"
+                              onChange={handleImageUpload}
+                              disabled={uploadingImage}
+                            />
+                            {uploadingImage ? (
+                              <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+                            ) : (
+                              <>
+                                <Camera className="h-6 w-6" />
+                                <span className="text-sm font-semibold">Tap to capture</span>
+                              </>
+                            )}
+                          </label>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Completion OTP</p>
+                        <input 
+                          type="text" 
+                          placeholder="Enter Completion OTP" 
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                          maxLength={4}
+                        />
+                      </div>
                       <AppPrimaryButton 
                         type="button" 
                         onClick={() => handleStatusUpdate('COMPLETED', true)}
-                        disabled={loading || otp.length < 4}
+                        disabled={loading || otp.length < 4 || !jobImage || uploadingImage}
                         className="w-full bg-emerald-600 hover:bg-emerald-700"
                       >
                         {loading ? 'Updating...' : 'Complete Job'}

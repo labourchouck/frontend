@@ -12,12 +12,16 @@ import {
   Play,
   X,
   Clock,
+  Camera,
+  Upload,
 } from 'lucide-react'
 import { bookingsApi } from '../../api/bookingsApi.js'
 import { ApiError } from '../../api/http.js'
 import { useSocket } from '../../context/SocketContext.jsx'
 import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+import { uploadMedia, assetUrlFromUpload } from '../../api/uploadApi.js'
+import { UPLOAD_FOLDERS } from '../../constants/uploadFolders.js'
 
 const STATUS_CONFIG = {
   ACCEPTED: {
@@ -57,6 +61,8 @@ export function ActiveJob() {
   const [updating, setUpdating] = useState(false)
   const [updateError, setUpdateError] = useState('')
   const [otp, setOtp] = useState('')
+  const [jobImage, setJobImage] = useState(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   // Fetch booking
   useEffect(() => {
@@ -95,11 +101,24 @@ export function ActiveJob() {
       setUpdateError('OTP is required.')
       return
     }
+    if (requireOtp && !jobImage) {
+      setUpdateError(nextStatus === 'STARTED' ? 'Before Work image is required.' : 'After Work image is required.')
+      return
+    }
+    
     setUpdating(true)
     setUpdateError('')
     try {
-      const res = await bookingsApi.updateBookingStatus(bookingId, requireOtp ? { status: nextStatus, otp } : nextStatus)
+      let payload = nextStatus
+      if (requireOtp) {
+        payload = { status: nextStatus, otp }
+        if (nextStatus === 'STARTED') payload.beforeImage = jobImage
+        if (nextStatus === 'COMPLETED') payload.afterImage = jobImage
+      }
+
+      const res = await bookingsApi.updateBookingStatus(bookingId, payload)
       setOtp('')
+      setJobImage(null)
       setBooking((prev) => prev ? { ...prev, status: nextStatus } : prev)
       if (nextStatus === 'COMPLETED') {
         setTimeout(() => navigate('/app/my-bookings', { replace: true }), 1500)
@@ -109,7 +128,22 @@ export function ActiveJob() {
     } finally {
       setUpdating(false)
     }
-  }, [bookingId, navigate, otp])
+  }, [bookingId, navigate, otp, jobImage])
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImage(true)
+    setUpdateError('')
+    try {
+      const uploaded = await uploadMedia(file, UPLOAD_FOLDERS.GENERAL_MEDIA)
+      setJobImage(assetUrlFromUpload(uploaded))
+    } catch (err) {
+      setUpdateError('Failed to upload image')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   // Track location if EN_ROUTE
   useEffect(() => {
@@ -289,19 +323,57 @@ export function ActiveJob() {
           ) : (
             <>
               {status === 'EN_ROUTE' ? (
-                <GlassPanel className="space-y-3 border-brand/20 bg-brand/5 p-4 text-left">
-                  <p className="text-sm font-bold text-slate-800">Ask customer for Start OTP</p>
-                  <input 
-                    type="text" 
-                    placeholder="Enter 4-digit OTP" 
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
-                    maxLength={4}
-                  />
+                <GlassPanel className="space-y-4 border-brand/20 bg-brand/5 p-4 text-left">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 mb-2">1. Upload Before Work Image</p>
+                    {jobImage ? (
+                      <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                        <img src={jobImage} alt="Before work" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setJobImage(null)}
+                          className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-brand hover:bg-brand/5 hover:text-brand">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                        />
+                        {uploadingImage ? (
+                          <Loader2 className="h-6 w-6 animate-spin text-brand" />
+                        ) : (
+                          <>
+                            <Camera className="h-6 w-6" />
+                            <span className="text-sm font-semibold">Tap to capture</span>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Start OTP</p>
+                    <input 
+                      type="text" 
+                      placeholder="Enter 4-digit OTP" 
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
+                      maxLength={4}
+                    />
+                  </div>
+
                   <button
                     type="button"
-                    disabled={updating || otp.length < 4}
+                    disabled={updating || otp.length < 4 || !jobImage || uploadingImage}
                     onClick={() => handleStatusUpdate(config.next, true)}
                     className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
                   >
@@ -309,19 +381,57 @@ export function ActiveJob() {
                   </button>
                 </GlassPanel>
               ) : status === 'STARTED' ? (
-                <GlassPanel className="space-y-3 border-emerald-500/20 bg-emerald-50 p-4 text-left">
-                  <p className="text-sm font-bold text-slate-800">Ask customer for Completion OTP</p>
-                  <input 
-                    type="text" 
-                    placeholder="Enter 4-digit OTP" 
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    maxLength={4}
-                  />
+                <GlassPanel className="space-y-4 border-emerald-500/20 bg-emerald-50 p-4 text-left">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 mb-2">1. Upload After Work Image</p>
+                    {jobImage ? (
+                      <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                        <img src={jobImage} alt="After work" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setJobImage(null)}
+                          className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-500/5 hover:text-emerald-500">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                        />
+                        {uploadingImage ? (
+                          <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+                        ) : (
+                          <>
+                            <Camera className="h-6 w-6" />
+                            <span className="text-sm font-semibold">Tap to capture</span>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Completion OTP</p>
+                    <input 
+                      type="text" 
+                      placeholder="Enter 4-digit OTP" 
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                      maxLength={4}
+                    />
+                  </div>
+
                   <button
                     type="button"
-                    disabled={updating || otp.length < 4}
+                    disabled={updating || otp.length < 4 || !jobImage || uploadingImage}
                     onClick={() => handleStatusUpdate(config.next, true)}
                     className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 ${config.color}`}
                   >
