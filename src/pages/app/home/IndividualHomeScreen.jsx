@@ -74,7 +74,11 @@ export function IndividualHomeScreen({ user }) {
 
   const sortedBookings = useMemo(() => {
     const items = Array.isArray(bookings) ? bookings : []
-    return [...items].sort((a, b) => String(b?.createdAt || '').localeCompare(String(a?.createdAt || '')))
+    return [...items].sort((a, b) => {
+      const bTime = String(b?.updatedAt || b?.createdAt || '')
+      const aTime = String(a?.updatedAt || a?.createdAt || '')
+      return bTime.localeCompare(aTime)
+    })
   }, [bookings])
 
   const ongoingBookings = useMemo(() => {
@@ -269,7 +273,7 @@ export function IndividualHomeScreen({ user }) {
           groups={tradeGroups}
           loading={groupsLoading}
           selectedGroupId={selectedGroupId}
-          onSelectGroup={setSelectedGroupId}
+          onSelectGroup={(id) => navigate(id ? `/app/search?groupId=${id}` : '/app/search')}
           onBrand
         />
       </div>

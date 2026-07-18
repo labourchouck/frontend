@@ -1,6 +1,7 @@
 import { Star } from 'lucide-react'
 import { AppListSkeleton } from '../../app-ui/feedback/AppListSkeleton.jsx'
 import { hashSeed } from '../../../lib/discoverLabourDummyUi.js'
+import skillImg from '../../../assets/skill.png'
 
 export function IndividualHomeWorkerCarousel({
   title = 'Nearby labour',
@@ -26,26 +27,20 @@ export function IndividualHomeWorkerCarousel({
       {loading ? <AppListSkeleton rows={1} className="h-44" /> : null}
 
       {!loading && !error && workers.length === 0 ? (
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 px-4 py-12 text-center shadow-sm">
-          <img
-            src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80"
-            alt="No workers background"
-            className="absolute inset-0 h-full w-full object-cover opacity-40 grayscale mix-blend-multiply"
-          />
-          {/* Subtle gradient to ensure text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-100/90 via-slate-100/40 to-transparent" />
-          <div className="relative z-10 flex flex-col items-center">
-            <p className="text-base font-bold text-slate-900 drop-shadow-sm">No workers in this area yet</p>
-            {emptyAction ? (
+        <div className="relative w-full overflow-hidden rounded-2xl bg-slate-50 shadow-sm">
+          <img src={skillImg} alt="Explore Skills" className="w-full h-auto object-contain" />
+          {emptyAction ? (
+            <div className="absolute inset-0 flex items-center justify-center">
               <button
                 type="button"
                 onClick={onEmptyAction}
-                className="mt-4 rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+                className="rounded-xl-
+                . bg-[#22a159] px-4 py-2 text-base font-bold text-white shadow-md hover:bg-[#1e8d4e] transition-colors"
               >
                 {emptyAction}
               </button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

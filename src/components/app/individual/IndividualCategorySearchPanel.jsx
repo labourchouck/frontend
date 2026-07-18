@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronRight, Loader2, Search, X } from 'lucide-react'
 import {
   flattenTradeSubcategories,
@@ -65,10 +65,11 @@ function SkillCard({ category, active, showGroupName, onClick }) {
  */
 export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const searchRef = useRef(null)
 
   const [query, setQuery] = useState('')
-  const [groupId, setGroupId] = useState(null)
+  const [groupId, setGroupId] = useState(searchParams.get('groupId') || null)
   const [categoryId, setCategoryId] = useState(null)
 
   const allCategories = useMemo(() => flattenTradeSubcategories(tradeGroups), [tradeGroups])
@@ -99,10 +100,15 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
   useEffect(() => {
     const draft = readBookingDraft()
     queueMicrotask(() => {
-      if (draft?.groupId) setGroupId(String(draft.groupId))
-      if (draft?.categoryId) setCategoryId(String(draft.categoryId))
+      const urlGroupId = searchParams.get('groupId')
+      if (urlGroupId) {
+        setGroupId(urlGroupId)
+      } else if (draft?.groupId) {
+        setGroupId(String(draft.groupId))
+      }
+      if (draft?.categoryId && !urlGroupId) setCategoryId(String(draft.categoryId))
     })
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     const t = window.setTimeout(() => searchRef.current?.focus(), 200)
