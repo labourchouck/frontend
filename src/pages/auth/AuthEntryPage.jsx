@@ -301,7 +301,7 @@ export function AuthEntryPage() {
             <ArrowLeft className="h-5 w-5" aria-hidden />
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">LabourChowck</p>
+            <img src="/logo-transparent.svg" alt="LabourChowk" className="h-4 w-auto mb-1" />
             <h1 className="text-xl font-black tracking-tight text-slate-900">
               {step === 'otp' ? 'Verify OTP' : mode === 'login' ? 'Welcome back' : 'Create account'}
             </h1>

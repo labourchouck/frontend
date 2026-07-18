@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 150" width="100%" height="100%">
+  <g transform="translate(20, 10)">
+    <!-- Map Pin Shape (Green) -->
+    <path d="M65,0 C29.1,0 0,29.1 0,65 C0,113.8 65,130 65,130 C65,130 130,113.8 130,65 C130,29.1 100.9,0 65,0 Z" fill="#1caf62" />
+    
+    <!-- Worker Base (White circle) -->
+    <circle cx="65" cy="55" r="48" fill="#ffffff" />
+
+    <!-- Worker Body (Green) -->
+    <path d="M25,95 C25,75 35,65 50,65 L80,65 C95,65 105,75 105,95 L105,115 L25,115 Z" fill="#1caf62" />
+    
+    <!-- Overalls (White) -->
+    <path d="M40,75 L50,115 L80,115 L90,75 L80,75 L75,115 L55,115 L50,75 Z" fill="#ffffff" />
+    <rect x="45" y="85" width="40" height="30" fill="#ffffff" />
+
+    <!-- Worker Face (Green) -->
+    <circle cx="65" cy="45" r="16" fill="#1caf62" />
+
+    <!-- Yellow Hard Hat -->
+    <path d="M45,40 C45,25 55,20 65,20 C75,20 85,25 85,40 L90,40 L90,45 L40,45 L40,40 Z" fill="#FACC15" />
+    <path d="M65,15 C60,15 58,18 58,20 L72,20 C72,18 70,15 65,15 Z" fill="#FACC15" />
+  </g>
+
+  <!-- Text -->
+  <text x="170" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="60" fill="#1caf62" letter-spacing="1">LABOUR</text>
+  <text x="170" y="130" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="60" fill="#1caf62" letter-spacing="1">CHOWK</text>
+</svg>

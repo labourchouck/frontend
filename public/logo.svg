@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 150" width="100%" height="100%">
+  <!-- Background transparent so it can be used anywhere, but wait, the text is white so it needs a green background if used on white, or we make the text green for light mode. The user's image is a solid green rectangle. We'll add the green rectangle -->
+  <rect width="500" height="150" fill="#1caf62" rx="12" />
+
+  <g transform="translate(20, 10)">
+    <!-- Map Pin Shape (White) -->
+    <path d="M65,0 C29.1,0 0,29.1 0,65 C0,113.8 65,130 65,130 C65,130 130,113.8 130,65 C130,29.1 100.9,0 65,0 Z" fill="#ffffff" />
+    
+    <!-- Worker Base (Green circle) -->
+    <circle cx="65" cy="55" r="48" fill="#1caf62" />
+
+    <!-- Worker Body (White) -->
+    <path d="M25,95 C25,75 35,65 50,65 L80,65 C95,65 105,75 105,95 L105,115 L25,115 Z" fill="#ffffff" />
+    
+    <!-- Overalls (Green) -->
+    <path d="M40,75 L50,115 L80,115 L90,75 L80,75 L75,115 L55,115 L50,75 Z" fill="#1caf62" />
+    <rect x="45" y="85" width="40" height="30" fill="#1caf62" />
+
+    <!-- Worker Face (White) -->
+    <circle cx="65" cy="45" r="16" fill="#ffffff" />
+
+    <!-- Yellow Hard Hat -->
+    <path d="M45,40 C45,25 55,20 65,20 C75,20 85,25 85,40 L90,40 L90,45 L40,45 L40,40 Z" fill="#FACC15" />
+    <path d="M65,15 C60,15 58,18 58,20 L72,20 C72,18 70,15 65,15 Z" fill="#FACC15" />
+  </g>
+
+  <!-- Text -->
+  <text x="170" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="60" fill="#ffffff" letter-spacing="1">LABOUR</text>
+  <text x="170" y="130" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="60" fill="#ffffff" letter-spacing="1">CHOWK</text>
+</svg>

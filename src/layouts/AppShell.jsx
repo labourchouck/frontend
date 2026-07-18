@@ -257,7 +257,7 @@ export function AppShell() {
                       {drawerInitials}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">LabourChowck</p>
+                      <img src="/logo-transparent.svg" alt="LabourChowk" className="h-4 w-auto mb-1" />
                       <p className="truncate text-sm font-extrabold text-slate-900">Menu</p>
                       <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
                         {ROLE_LABELS[user?.role] || 'Account'}

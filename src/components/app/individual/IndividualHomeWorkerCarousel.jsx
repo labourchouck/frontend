@@ -26,17 +26,26 @@ export function IndividualHomeWorkerCarousel({
       {loading ? <AppListSkeleton rows={1} className="h-44" /> : null}
 
       {!loading && !error && workers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
-          <p className="text-sm font-semibold text-slate-800">No workers in this area yet</p>
-          {emptyAction ? (
-            <button
-              type="button"
-              onClick={onEmptyAction}
-              className="mt-4 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white"
-            >
-              {emptyAction}
-            </button>
-          ) : null}
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 px-4 py-12 text-center shadow-sm">
+          <img
+            src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80"
+            alt="No workers background"
+            className="absolute inset-0 h-full w-full object-cover opacity-40 grayscale mix-blend-multiply"
+          />
+          {/* Subtle gradient to ensure text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-100/90 via-slate-100/40 to-transparent" />
+          <div className="relative z-10 flex flex-col items-center">
+            <p className="text-base font-bold text-slate-900 drop-shadow-sm">No workers in this area yet</p>
+            {emptyAction ? (
+              <button
+                type="button"
+                onClick={onEmptyAction}
+                className="mt-4 rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+              >
+                {emptyAction}
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : null}
 

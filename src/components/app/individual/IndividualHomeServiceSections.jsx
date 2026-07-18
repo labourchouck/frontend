@@ -94,7 +94,7 @@ function CarouselLayout({ categories, onQuickBook }) {
 
 function ListLayout({ categories, onQuickBook }) {
   const navigate = useNavigate();
-  const allServices = categories.flatMap(cat => 
+  const allServices = categories.flatMap(cat =>
     (cat.services || []).map(s => ({ ...s, parentCat: cat }))
   );
   const items = allServices.slice(0, 4);
@@ -138,8 +138,8 @@ function ListLayout({ categories, onQuickBook }) {
         )}
       </ul>
       <div className="flex justify-end pr-1 pt-1">
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => navigate('/app/search')}
           className="text-xs font-bold text-brand transition hover:underline"
         >

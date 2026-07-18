@@ -102,11 +102,8 @@ export function AdminLayout() {
           className={`relative z-10 flex min-w-0 items-center gap-2.5 rounded-xl px-1.5 py-1.5 font-extrabold tracking-tight text-slate-900 transition hover:bg-white/80 hover:shadow-sm ${collapsed ? 'md:justify-center' : ''}`}
           title="Dashboard"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-brand-bright to-brand text-[11px] font-black text-white shadow-[0_8px_20px_-6px_rgba(28,175,98,0.45)] ring-2 ring-white">
-            LC
-          </span>
+          <img src="/logo-transparent.svg" alt="LabourChowk" className="h-8 w-auto" />
           <span className={`min-w-0 truncate ${collapsed ? 'md:sr-only' : ''}`}>
-            <span className="block text-[13px] leading-tight tracking-tight">LabourChowck</span>
             <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
               Control panel
             </span>
