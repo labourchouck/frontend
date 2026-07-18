@@ -1,6 +1,7 @@
 import { Star } from 'lucide-react'
 import { AppListSkeleton } from '../../app-ui/feedback/AppListSkeleton.jsx'
 import { hashSeed } from '../../../lib/discoverLabourDummyUi.js'
+import skillImg from '../../../assets/skill.png'
 
 export function IndividualHomeWorkerCarousel({
   title = 'Nearby labour',
@@ -26,16 +27,19 @@ export function IndividualHomeWorkerCarousel({
       {loading ? <AppListSkeleton rows={1} className="h-44" /> : null}
 
       {!loading && !error && workers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center">
-          <p className="text-sm font-semibold text-slate-800">No workers in this area yet</p>
+        <div className="relative w-full overflow-hidden rounded-2xl bg-slate-50 shadow-sm">
+          <img src={skillImg} alt="Explore Skills" className="w-full h-auto object-contain" />
           {emptyAction ? (
-            <button
-              type="button"
-              onClick={onEmptyAction}
-              className="mt-4 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white"
-            >
-              {emptyAction}
-            </button>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={onEmptyAction}
+                className="rounded-xl-
+                . bg-[#22a159] px-4 py-2 text-base font-bold text-white shadow-md hover:bg-[#1e8d4e] transition-colors"
+              >
+                {emptyAction}
+              </button>
+            </div>
           ) : null}
         </div>
       ) : null}
