@@ -35,7 +35,7 @@ export function IndividualHomeWorkerCarousel({
                 type="button"
                 onClick={onEmptyAction}
                 className="rounded-xl-
-                . bg-[#22a159] px-4 py-2 text-base font-bold text-white shadow-md hover:bg-[#1e8d4e] transition-colors"
+                . bg-[#22a159] rounded-xl px-4 py-2 text-base font-bold text-white shadow-md hover:bg-[#1e8d4e] transition-colors"
               >
                 {emptyAction}
               </button>
