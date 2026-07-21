@@ -51,11 +51,7 @@ export function LabourEarningsHero({
           <p className="mt-1 text-xs text-white/70">
             Max net payout · gross balance {formatInrFromPaise(availableGrossPaise)}
           </p>
-          {fees ? (
-            <p className="mt-1 text-[10px] text-white/50">
-              Service fee {fees.platformPercent}% + GST {fees.gstOnPlatformPercent}% on fee at withdrawal
-            </p>
-          ) : null}
+
 
           <div className="mt-4 grid grid-cols-3 gap-2">
             <div className="rounded-2xl border border-amber-400/30 bg-amber-500/15 px-2 py-2.5 sm:px-3">

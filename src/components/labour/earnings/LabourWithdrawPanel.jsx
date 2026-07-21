@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowDownLeft, ArrowRight, CheckCircle2, Shield } from 'lucide-react'
+import { ArrowDownLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { AppPrimaryButton } from '../../app/AppPrimaryButton.jsx'
 import { GlassPanel } from '../../ui/GlassPanel.jsx'
 import {
@@ -127,29 +127,7 @@ export function LabourWithdrawPanel({ summary, wallet, onSuccess, onError }) {
 
   return (
     <div className="space-y-4">
-      <GlassPanel className="border-slate-200/90 p-4">
-        <div className="flex items-start gap-2">
-          <Shield className="h-4 w-4 shrink-0 text-brand" aria-hidden />
-          <p className="text-xs leading-relaxed text-slate-600">
-            <strong className="text-slate-800">How payout works:</strong> your gross balance is reduced by the
-            withdrawal amount. Labour Chowk deducts a <strong>{summary.fees.platformPercent}%</strong> platform
-            service fee plus <strong>{summary.fees.gstOnPlatformPercent}% GST</strong> on that fee. You receive the
-            net amount in UPI / bank / cash.
-          </p>
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-          <div className="rounded-xl bg-slate-50 px-2 py-2 ring-1 ring-slate-100">
-            <p className="text-[9px] font-bold uppercase text-slate-400">Gross balance</p>
-            <p className="font-mono text-sm font-black">{formatInrFromPaise(summary.availableGrossPaise)}</p>
-          </div>
-          <div className="rounded-xl bg-emerald-50 px-2 py-2 ring-1 ring-emerald-100">
-            <p className="text-[9px] font-bold uppercase text-emerald-700">Max net payout</p>
-            <p className="font-mono text-sm font-black text-emerald-800">
-              {formatInrFromPaise(summary.availableNetPaise)}
-            </p>
-          </div>
-        </div>
-      </GlassPanel>
+
 
       {step === 'amount' ? (
         <GlassPanel className="border-slate-200/90 p-4">

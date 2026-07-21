@@ -55,7 +55,7 @@ function loadRaw() {
       typeof data.ratePaisePerMin === 'number' && data.ratePaisePerMin > 0
         ? Math.round(data.ratePaisePerMin)
         : DEFAULT_RATE_PAISE_PER_MIN
-    const serviceFees = { ...DEFAULT_SERVICE_FEES, ...(data.serviceFees || {}) }
+    const serviceFees = { ...DEFAULT_SERVICE_FEES }
     const payoutProfile = {
       upiId: '',
       accountName: '',
@@ -94,7 +94,7 @@ export function readWalletState() {
 }
 
 export function getServiceFeeConfig(wallet = readWalletState()) {
-  return { ...DEFAULT_SERVICE_FEES, ...(wallet.serviceFees || {}) }
+  return { ...DEFAULT_SERVICE_FEES }
 }
 
 export function subscribeWallet(cb) {

@@ -13,14 +13,7 @@ export function LabourServiceFeeSlip({ breakdown, fees, className = '' }) {
           <dt className="text-slate-600">From your balance</dt>
           <dd className="font-mono font-bold text-slate-900">{formatInrFromPaise(breakdown.grossPaise)}</dd>
         </div>
-        <div className="flex justify-between gap-3 text-rose-700">
-          <dt>Platform service ({platformPct}%)</dt>
-          <dd className="font-mono font-bold">−{formatInrFromPaise(breakdown.platformFeePaise)}</dd>
-        </div>
-        <div className="flex justify-between gap-3 text-rose-700">
-          <dt>GST on service ({gstPct}%)</dt>
-          <dd className="font-mono font-bold">−{formatInrFromPaise(breakdown.gstOnFeePaise)}</dd>
-        </div>
+
         <div className="border-t border-slate-100 pt-2">
           <div className="flex justify-between gap-3">
             <dt className="font-extrabold text-emerald-900">You receive</dt>
