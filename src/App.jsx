@@ -34,6 +34,9 @@ import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage.jsx'
 import { AdminProfilePage } from './pages/admin/AdminProfilePage.jsx'
 import { AdminZonesPage } from './pages/admin/AdminZonesPage.jsx'
 import { AdminTimeSlotsPage } from './pages/admin/AdminTimeSlotsPage.jsx'
+import { AdminPlatformFeePage } from './pages/admin/AdminPlatformFeePage.jsx'
+import { AdminCommissionFeePage } from './pages/admin/AdminCommissionFeePage.jsx'
+import { AdminLabourWalletPage } from './pages/admin/AdminLabourWalletPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
@@ -130,6 +133,9 @@ function App() {
             <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="zones" element={<AdminZonesPage />} />
             <Route path="time-slots" element={<AdminTimeSlotsPage />} />
+            <Route path="platform-fee" element={<AdminPlatformFeePage />} />
+            <Route path="commission-fee" element={<AdminCommissionFeePage />} />
+            <Route path="labour-wallet" element={<AdminLabourWalletPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

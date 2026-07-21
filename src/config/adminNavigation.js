@@ -91,7 +91,9 @@ export const ADMIN_NAV_SECTIONS = [
     items: [
       { to: '/admin/billing', label: 'Payments & billing', icon: Wallet },
       { to: '/admin/pricing', label: 'Pricing & rates', icon: BadgeIndianRupee },
-      { to: '/admin/withdraw-requests', label: 'Withdraw Requests', icon: HandCoins },
+      { to: '/admin/platform-fee', label: 'Platform Fee', icon: HandCoins },
+      { to: '/admin/commission-fee', label: 'Commission Fee', icon: HandCoins },
+      { to: '/admin/labour-wallet', label: 'Labour Wallet', icon: Wallet },
     ],
   },
   {
@@ -119,7 +121,9 @@ const ROUTE_TITLES = [
   { prefix: '/admin/banners', title: 'Banners' },
   { prefix: '/admin/reports', title: 'Reports & analytics' },
   { prefix: '/admin/pricing', title: 'Pricing & rates' },
-  { prefix: '/admin/withdraw-requests', title: 'Withdraw Requests' },
+  { prefix: '/admin/platform-fee', title: 'Platform Fee' },
+  { prefix: '/admin/commission-fee', title: 'Commission Fee' },
+  { prefix: '/admin/labour-wallet', title: 'Labour Wallet' },
   { prefix: '/admin/billing', title: 'Payments & billing' },
   { prefix: '/admin/attendance', title: 'Attendance' },
   { prefix: '/admin/allocations', title: 'Workforce allocation' },
