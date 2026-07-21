@@ -21,6 +21,7 @@ import {
   Tag,
   Wrench,
   Map,
+  HandCoins,
 } from 'lucide-react'
 
 /**
@@ -90,6 +91,7 @@ export const ADMIN_NAV_SECTIONS = [
     items: [
       { to: '/admin/billing', label: 'Payments & billing', icon: Wallet },
       { to: '/admin/pricing', label: 'Pricing & rates', icon: BadgeIndianRupee },
+      { to: '/admin/withdraw-requests', label: 'Withdraw Requests', icon: HandCoins },
     ],
   },
   {
@@ -117,6 +119,7 @@ const ROUTE_TITLES = [
   { prefix: '/admin/banners', title: 'Banners' },
   { prefix: '/admin/reports', title: 'Reports & analytics' },
   { prefix: '/admin/pricing', title: 'Pricing & rates' },
+  { prefix: '/admin/withdraw-requests', title: 'Withdraw Requests' },
   { prefix: '/admin/billing', title: 'Payments & billing' },
   { prefix: '/admin/attendance', title: 'Attendance' },
   { prefix: '/admin/allocations', title: 'Workforce allocation' },

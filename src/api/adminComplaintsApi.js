@@ -5,6 +5,7 @@ export const adminComplaintsApi = {
   getAllComplaints: (params = {}) => {
     const q = new URLSearchParams()
     if (params.status && params.status !== 'ALL') q.set('status', params.status)
+    if (params.role && params.role !== 'ALL') q.set('role', params.role)
     if (params.page) q.set('page', params.page)
     if (params.limit) q.set('limit', params.limit)
     const qs = q.toString()

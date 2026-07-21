@@ -14,6 +14,14 @@ import { adminComplaintsApi } from '../../api/adminComplaintsApi.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 
 const STATUS_FILTERS = ['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']
+const ROLE_FILTERS = ['ALL', 'individual', 'labour', 'corporate', 'contractor']
+const ROLE_LABELS = {
+  ALL: 'All Roles',
+  individual: 'Individuals',
+  labour: 'Labour',
+  corporate: 'Corporate',
+  contractor: 'Vendors'
+}
 
 const STATUS_META = {
   OPEN: { label: 'Open', cls: 'bg-amber-100 text-amber-700', icon: Clock },
@@ -81,13 +89,13 @@ function ComplaintCard({ complaint, onUpdate }) {
             {complainant && (
               <span>
                 <span className="font-semibold text-slate-600">By:</span>{' '}
-                {complainant.fullName || complainant.phone || '—'}
+                {complainant.fullName ? `${complainant.fullName} (${complainant.phone})` : complainant.phone || '—'}
               </span>
             )}
             {complainee && (
               <span>
                 <span className="font-semibold text-slate-600">Against:</span>{' '}
-                {complainee.fullName || complainee.phone || '—'}
+                {complainee.fullName ? `${complainee.fullName} (${complainee.phone})` : complainee.phone || '—'}
               </span>
             )}
             {complaint.createdAt && (
@@ -194,13 +202,14 @@ export function AdminComplaintsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [roleFilter, setRoleFilter] = useState('ALL')
   const [total, setTotal] = useState(0)
 
-  const load = useCallback(async (status = statusFilter) => {
+  const load = useCallback(async (status = statusFilter, role = roleFilter) => {
     setLoading(true)
     setError('')
     try {
-      const res = await adminComplaintsApi.getAllComplaints({ status, limit: 50 })
+      const res = await adminComplaintsApi.getAllComplaints({ status, role, limit: 50 })
       const data = res.data ?? {}
       setComplaints(data.complaints ?? data.items ?? [])
       setTotal(data.total ?? (data.complaints ?? data.items ?? []).length)
@@ -212,8 +221,8 @@ export function AdminComplaintsPage() {
   }, [statusFilter])
 
   useEffect(() => {
-    load(statusFilter)
-  }, [statusFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+    load(statusFilter, roleFilter)
+  }, [statusFilter, roleFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const countByStatus = {
     OPEN: complaints.filter((c) => c.status === 'OPEN' || !c.status).length,
@@ -234,7 +243,7 @@ export function AdminComplaintsPage() {
         </div>
         <button
           type="button"
-          onClick={() => load(statusFilter)}
+          onClick={() => load(statusFilter, roleFilter)}
           disabled={loading}
           className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-brand/30 hover:text-brand disabled:opacity-50"
         >
@@ -267,23 +276,44 @@ export function AdminComplaintsPage() {
         })}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1">
-        <Filter className="my-auto ml-2 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
-        {STATUS_FILTERS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setStatusFilter(s)}
-            className={`flex-1 rounded-xl py-1.5 text-xs font-bold transition ${
-              statusFilter === s
-                ? 'bg-white text-brand shadow-sm ring-1 ring-slate-200'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {s === 'ALL' ? 'All' : (STATUS_META[s]?.label ?? s)}
-          </button>
-        ))}
+      {/* Filters */}
+      <div className="flex flex-col gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 p-1 lg:flex-row lg:items-center">
+        <div className="flex flex-1 gap-1">
+          <Filter className="my-auto ml-2 mr-1 h-3.5 w-3.5 shrink-0 text-slate-400 hidden sm:block" aria-hidden />
+          {STATUS_FILTERS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(s)}
+              className={`flex-1 rounded-xl py-1.5 text-xs font-bold transition ${
+                statusFilter === s
+                  ? 'bg-white text-brand shadow-sm ring-1 ring-slate-200'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {s === 'ALL' ? 'Status: All' : (STATUS_META[s]?.label ?? s)}
+            </button>
+          ))}
+        </div>
+        
+        <div className="hidden h-6 w-px bg-slate-200 lg:block" aria-hidden />
+        
+        <div className="flex flex-1 gap-1">
+          {ROLE_FILTERS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRoleFilter(r)}
+              className={`flex-1 rounded-xl py-1.5 text-xs font-bold transition ${
+                roleFilter === r
+                  ? 'bg-white text-brand shadow-sm ring-1 ring-slate-200'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {ROLE_LABELS[r]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error */}
@@ -311,7 +341,7 @@ export function AdminComplaintsPage() {
       ) : (
         <div className="space-y-3">
           {complaints.map((c) => (
-            <ComplaintCard key={c._id} complaint={c} onUpdate={() => load(statusFilter)} />
+            <ComplaintCard key={c._id} complaint={c} onUpdate={() => load(statusFilter, roleFilter)} />
           ))}
         </div>
       )}
