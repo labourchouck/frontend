@@ -28,21 +28,21 @@ const STATUS_CONFIG = {
     label: 'Start Journey',
     next: 'EN_ROUTE',
     icon: Navigation,
-    color: 'bg-blue-600 shadow-blue-600/25',
+    color: 'bg-[#1CAE62] shadow-[#1CAE62]/25',
     description: 'Let the customer know you\'re on your way',
   },
   EN_ROUTE: {
     label: 'Start Work',
     next: 'STARTED',
     icon: Play,
-    color: 'bg-amber-600 shadow-amber-600/25',
+    color: 'bg-[#1CAE62] shadow-[#1CAE62]/25',
     description: 'You\'ve arrived — begin the work',
   },
   STARTED: {
     label: 'Finish Job',
     next: 'COMPLETED',
     icon: CheckCircle2,
-    color: 'bg-emerald-600 shadow-emerald-600/25',
+    color: 'bg-[#1CAE62] shadow-[#1CAE62]/25',
     description: 'Mark the job as completed',
   },
 }
@@ -105,7 +105,7 @@ export function ActiveJob() {
       setUpdateError(nextStatus === 'STARTED' ? 'Before Work image is required.' : 'After Work image is required.')
       return
     }
-    
+
     setUpdating(true)
     setUpdateError('')
     try {
@@ -219,7 +219,7 @@ export function ActiveJob() {
   const customer = booking.userId && typeof booking.userId === 'object' ? booking.userId : null
 
   // Check if it's too early to start a scheduled job (more than 30 mins away)
-  const isTooEarly = booking.type === 'SCHEDULED' && booking.status === 'ACCEPTED' && 
+  const isTooEarly = booking.type === 'SCHEDULED' && booking.status === 'ACCEPTED' &&
     (new Date(booking.scheduledAt).getTime() - Date.now() > 30 * 60 * 1000)
 
   return (
@@ -245,9 +245,8 @@ export function ActiveJob() {
             return (
               <div key={step} className="flex items-center">
                 <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
-                    done ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'
-                  }`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${done ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'
+                    }`}
                 >
                   {done ? <Check className="h-4 w-4" /> : i + 1}
                 </span>
@@ -361,9 +360,9 @@ export function ActiveJob() {
 
                   <div>
                     <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Start OTP</p>
-                    <input 
-                      type="text" 
-                      placeholder="Enter 4-digit OTP" 
+                    <input
+                      type="text"
+                      placeholder="Enter 4-digit OTP"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
@@ -419,9 +418,9 @@ export function ActiveJob() {
 
                   <div>
                     <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Completion OTP</p>
-                    <input 
-                      type="text" 
-                      placeholder="Enter 4-digit OTP" 
+                    <input
+                      type="text"
+                      placeholder="Enter 4-digit OTP"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"

@@ -285,9 +285,7 @@ export function LabourHomeScreen({ user }) {
 
   const hasWorkLocation = useMemo(() => hasAppUserLocation(appLocation), [appLocation])
   const locationLabel = formatAppUserLocationLabel(appLocation) || 'Set your work area'
-  const siteLabel = lastIn?.projectLabel && lastIn.projectLabel !== 'Unassigned'
-    ? lastIn.projectLabel
-    : todayJob?.siteName || todayJob?.title || 'No site assigned'
+  const siteLabel = hasWorkLocation ? locationLabel : (todayJob?.siteName || todayJob?.title || (lastIn?.projectLabel && lastIn.projectLabel !== 'Unassigned' ? lastIn.projectLabel : 'No site assigned'))
 
   const showToast = useCallback((msg) => {
     setToast(msg)
@@ -296,10 +294,10 @@ export function LabourHomeScreen({ user }) {
 
   const punchLabels = useMemo(
     () => ({
-      projectLabel: todayJob?.title || todayJob?.siteName || lastIn?.projectLabel || 'Unassigned',
+      projectLabel: todayJob?.title || todayJob?.siteName || locationLabel || lastIn?.projectLabel || 'Unassigned',
       workLabel: todayJob?.role || lastIn?.workLabel || primaryTrade,
     }),
-    [todayJob, lastIn, primaryTrade],
+    [todayJob, lastIn, primaryTrade, locationLabel],
   )
 
   const performCheckIn = useCallback(() => {

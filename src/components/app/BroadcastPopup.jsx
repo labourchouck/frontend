@@ -154,7 +154,7 @@ export function BroadcastPopup() {
                 <div className="mt-4 rounded-2xl bg-brand/5 p-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-semibold text-brand/80">Customer</p>
-                    <p className="text-sm font-bold text-slate-900">{incoming.customer.name}</p>
+                    <p className="text-sm font-bold text-slate-900">{incoming.customer.fullName || incoming.customer.name}</p>
                   </div>
                   {incoming.customer.phone && (
                     <div className="text-right">

@@ -55,7 +55,7 @@ export function B2cBookingCard({ booking, isLabour }) {
               <div className="text-right">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Amount</p>
                 <span className="text-lg font-black text-brand">
-                  ₹{isLabour ? (booking.totalAmount - (booking.commissionAmount || 0)).toFixed(0) : booking.totalAmount}
+                  ₹{isLabour ? (booking.laborShare || (booking.totalAmount - (booking.commissionAmount || 0))).toFixed(0) : booking.totalAmount}
                 </span>
               </div>
             )}
