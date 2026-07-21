@@ -8,6 +8,9 @@ import { fetchAdminMartCategories, createAdminMartCategory, deleteAdminMartCateg
 
 export function AdminMartCategoriesTab() {
   const [categories, setCategories] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pages, setPages] = useState(1)
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newCat, setNewCat] = useState({ name: '' })
@@ -20,15 +23,17 @@ export function AdminMartCategoriesTab() {
 
   const load = async () => {
     try {
-      const res = await fetchAdminMartCategories()
-      const data = res?.data ?? res ?? []
-      setCategories(Array.isArray(data) ? data : [])
+      const res = await fetchAdminMartCategories({ page, limit: 12 })
+      const data = res?.data ?? res ?? {}
+      setCategories(Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []))
+      setTotal(data.total ?? 0)
+      setPages(data.pages ?? 1)
     } catch(err) {
       console.error(err)
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [page])
 
   const filtered = categories.filter((c) =>
     (c.name || c.label || '').toLowerCase().includes(search.toLowerCase()),
@@ -158,6 +163,33 @@ export function AdminMartCategoriesTab() {
           </div>
         )}
       </div>
+
+      {pages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+          <p className="text-sm text-slate-500">
+            Showing <span className="font-semibold">{categories.length}</span> of <span className="font-semibold">{total}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-sm font-semibold text-slate-600">
+              Page {page} of {pages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              disabled={page === pages}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence>
         {isModalOpen && (

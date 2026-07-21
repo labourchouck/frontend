@@ -7,6 +7,9 @@ import { uploadMedia, assetUrlFromUpload } from '../../../api/uploadApi.js'
 export function AdminMartProductsTab() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pages, setPages] = useState(1)
   const [search, setSearch] = useState('')
   
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -33,19 +36,22 @@ export function AdminMartProductsTab() {
   const load = async () => {
     try {
       const [prodRes, catRes] = await Promise.all([
-        fetchAdminMartProducts(),
-        fetchAdminMartCategories()
+        fetchAdminMartProducts({ page, limit: 12 }),
+        fetchAdminMartCategories({ page: 1, limit: 500 }) // Load all categories for the dropdown
       ])
-      const pData = prodRes?.data ?? prodRes ?? []
-      const cData = catRes?.data ?? catRes ?? []
-      setProducts(Array.isArray(pData) ? pData : [])
+      const pData = prodRes?.data ?? prodRes ?? {}
+      const cData = catRes?.data?.items ?? catRes?.data ?? catRes ?? []
+      
+      setProducts(Array.isArray(pData.items) ? pData.items : (Array.isArray(pData) ? pData : []))
+      setTotal(pData.total ?? 0)
+      setPages(pData.pages ?? 1)
       setCategories(Array.isArray(cData) ? cData : [])
     } catch (err) {
       console.error(err)
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [page])
 
   const getCategoryName = (id) => {
     const c = categories.find(c => c.id === id)
@@ -621,6 +627,33 @@ export function AdminMartProductsTab() {
           </table>
         </div>
       </div>
+
+      {pages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+          <p className="text-sm text-slate-500">
+            Showing <span className="font-semibold">{products.length}</span> of <span className="font-semibold">{total}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-sm font-semibold text-slate-600">
+              Page {page} of {pages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              disabled={page === pages}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Create Modal */}
       <AnimatePresence>

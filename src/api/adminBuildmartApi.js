@@ -35,8 +35,11 @@ export function buildWhatsAppLeadUrl(lead) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
 }
 
-export async function fetchAdminMartCategories() {
-  const data = await apiRequest('/buildmart/admin/categories');
+export async function fetchAdminMartCategories({ page = 1, limit = 50 } = {}) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('limit', String(limit))
+  const data = await apiRequest(`/buildmart/admin/categories?${params}`);
   return data;
 }
 export async function createAdminMartCategory(payload) {
@@ -52,8 +55,11 @@ export async function deleteAdminMartCategory(id) {
   return data;
 }
 
-export async function fetchAdminMartProducts() {
-  const data = await apiRequest('/buildmart/admin/products');
+export async function fetchAdminMartProducts({ page = 1, limit = 50 } = {}) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('limit', String(limit))
+  const data = await apiRequest(`/buildmart/admin/products?${params}`);
   return data;
 }
 export async function fetchAdminMartProductById(id) {
@@ -77,8 +83,11 @@ export async function deleteAdminMartProduct(id) {
   return data;
 }
 
-export async function fetchAdminMartBanners() {
-  const data = await apiRequest('/buildmart/admin/banners');
+export async function fetchAdminMartBanners({ page = 1, limit = 50 } = {}) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('limit', String(limit))
+  const data = await apiRequest(`/buildmart/admin/banners?${params}`);
   return data;
 }
 export async function createAdminMartBanner(payload) {

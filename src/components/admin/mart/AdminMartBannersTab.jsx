@@ -15,6 +15,9 @@ import { uploadMedia, assetUrlFromUpload } from '../../../api/uploadApi.js'
 export function AdminMartBannersTab() {
   const [banners, setBanners] = useState([])
   const [categories, setCategories] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pages, setPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   
@@ -29,11 +32,16 @@ export function AdminMartBannersTab() {
     setLoading(true)
     try {
       const [data, cats] = await Promise.all([
-        fetchAdminMartBanners(),
-        fetchAdminMartCategories()
+        fetchAdminMartBanners({ page, limit: 12 }),
+        fetchAdminMartCategories({ page: 1, limit: 500 }) // Load all for dropdown
       ])
-      setBanners(data?.data ?? data ?? [])
-      setCategories(cats?.data ?? cats ?? [])
+      const bData = data?.data ?? data ?? {}
+      const cData = cats?.data?.items ?? cats?.data ?? cats ?? []
+
+      setBanners(Array.isArray(bData.items) ? bData.items : (Array.isArray(bData) ? bData : []))
+      setTotal(bData.total ?? 0)
+      setPages(bData.pages ?? 1)
+      setCategories(Array.isArray(cData) ? cData : [])
     } catch (err) {
       console.error('Failed to load banners:', err)
     } finally {
@@ -41,7 +49,7 @@ export function AdminMartBannersTab() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [page])
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -219,6 +227,33 @@ export function AdminMartBannersTab() {
           </div>
         )}
       </div>
+      )}
+
+      {pages > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+          <p className="text-sm text-slate-500">
+            Showing <span className="font-semibold">{banners.length}</span> of <span className="font-semibold">{total}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-sm font-semibold text-slate-600">
+              Page {page} of {pages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              disabled={page === pages}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Modal for Create/Edit */}
