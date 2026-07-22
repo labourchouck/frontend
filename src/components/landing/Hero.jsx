@@ -63,11 +63,11 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.18 }}
           >
-            <ButtonLink href="/splash" variant="primary" className="group">
+            <ButtonLink href="/app" variant="primary" className="group">
               Hire Labour
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
             </ButtonLink>
-            <ButtonLink href="/splash" variant="secondary">
+            <ButtonLink href="/auth" variant="secondary">
               Register as Labour
             </ButtonLink>
           </motion.div>

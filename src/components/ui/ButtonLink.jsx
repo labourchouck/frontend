@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export function ButtonLink({
   href,
   children,
@@ -16,9 +18,19 @@ export function ButtonLink({
     ghost: 'text-slate-900 bg-white hover:bg-slate-50 shadow-sm ring-1 ring-slate-200/80',
   }
 
+  const combinedClassName = `${base} ${styles[variant]} ${className}`
+
+  if (href.startsWith('http') || href.startsWith('#')) {
+    return (
+      <a href={href} className={combinedClassName} {...rest}>
+        {children}
+      </a>
+    )
+  }
+
   return (
-    <a href={href} className={`${base} ${styles[variant]} ${className}`} {...rest}>
+    <Link to={href} className={combinedClassName} {...rest}>
       {children}
-    </a>
+    </Link>
   )
 }

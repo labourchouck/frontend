@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, MapPin, Users } from 'lucide-react'
@@ -6,9 +6,8 @@ import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { AppBadge } from '../../../components/app-ui/data-display/AppBadge.jsx'
 import { PipelineTimeline } from '../../../components/shared/PipelineTimeline.jsx'
 import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
-import { VENDOR_DEMO_MODE } from '../../../lib/vendorDemo.js'
 import { getVendorDummyAllocation, VENDOR_DUMMY_CREW } from '../../../lib/vendorDummyData.js'
-import { useAcceptVendorJobMutation, useGetVendorJobsQuery } from '../../../store/api/workforceApi.js'
+import { vendorApi } from '../../../api/vendorApi.js'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -18,16 +17,58 @@ function formatDate(d) {
 export function VendorJobDetailPage() {
   const { id } = useParams()
   const reduce = useReducedMotion()
-  const [demoAccepted, setDemoAccepted] = useState(false)
-  const { data, isLoading } = useGetVendorJobsQuery(undefined, { skip: VENDOR_DEMO_MODE })
-  const [acceptJob, { isLoading: accepting }] = useAcceptVendorJobMutation()
+  
+  const [allocation, setAllocation] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [accepting, setAccepting] = useState(false)
+  const [rejecting, setRejecting] = useState(false)
 
-  const allocation = VENDOR_DEMO_MODE ? getVendorDummyAllocation(id) : (data?.allocations ?? []).find((a) => String(a._id) === String(id))
-  const accepted = VENDOR_DEMO_MODE ? demoAccepted || Boolean(allocation?.vendorAcceptedAt) : Boolean(allocation?.vendorAcceptedAt)
+  const fetchJob = async () => {
+    try {
+      const res = await vendorApi.getJobById(id)
+      setAllocation(res?.data?.allocation)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchJob()
+  }, [id])
+
+  const accepted = Boolean(allocation?.vendorAcceptedAt)
+  const rejected = Boolean(allocation?.vendorRejectedAt)
   const req = allocation?.requestId
-  const deployedCrew = VENDOR_DEMO_MODE ? VENDOR_DUMMY_CREW.filter((c) => c.availability === 'on_site').slice(0, 4) : []
+  const deployedCrew = [] // To be fetched if API supports getting assigned crew, leaving empty for now as it's not in docs
 
-  if (isLoading && !VENDOR_DEMO_MODE) {
+  const handleAccept = async () => {
+    setAccepting(true)
+    try {
+      await vendorApi.acceptJob(id)
+      await fetchJob()
+    } catch (err) {
+      alert('Failed to accept job')
+    } finally {
+      setAccepting(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!window.confirm('Are you sure you want to decline this job?')) return
+    setRejecting(true)
+    try {
+      await vendorApi.rejectJob(id)
+      await fetchJob()
+    } catch (err) {
+      alert('Failed to reject job')
+    } finally {
+      setRejecting(false)
+    }
+  }
+
+  if (loading) {
     return (
       <div className="px-4">
         <VendorCard className="text-sm text-slate-500">Loading…</VendorCard>
@@ -114,22 +155,34 @@ export function VendorJobDetailPage() {
 
         {accepted ? (
           <Link to="/vendor/crew">
-            <AppPrimaryButton type="button" className="w-full">
+            <AppPrimaryButton type="button" className="w-full bg-emerald-600 hover:bg-emerald-700">
               Manage workforce
             </AppPrimaryButton>
           </Link>
+        ) : rejected ? (
+          <VendorCard className="bg-rose-50 border-rose-200">
+            <p className="text-sm font-bold text-rose-800">You have declined this job.</p>
+          </VendorCard>
         ) : (
-          <AppPrimaryButton
-            type="button"
-            className="w-full"
-            loading={accepting}
-            onClick={() => {
-              if (VENDOR_DEMO_MODE) setDemoAccepted(true)
-              else acceptJob(id)
-            }}
-          >
-            Accept allocation
-          </AppPrimaryButton>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              disabled={rejecting || accepting}
+              onClick={handleReject}
+              className="flex-1 rounded-xl border border-rose-200 bg-white py-3.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50"
+            >
+              {rejecting ? 'Declining...' : 'Decline'}
+            </button>
+            <AppPrimaryButton
+              type="button"
+              className="flex-[2]"
+              loading={accepting}
+              disabled={rejecting}
+              onClick={handleAccept}
+            >
+              Accept allocation
+            </AppPrimaryButton>
+          </div>
         )}
       </VendorPageLayout>
     </motion.div>

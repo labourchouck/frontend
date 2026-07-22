@@ -6,14 +6,40 @@ import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { AppBadge } from '../../../components/app-ui/data-display/AppBadge.jsx'
 import { AppSectionHeader } from '../../../components/app-ui/layout/AppSectionHeader.jsx'
 import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
-import { VENDOR_DEMO_MODE } from '../../../lib/vendorDemo.js'
 import { VENDOR_DUMMY_CREW } from '../../../lib/vendorDummyData.js'
-import { useGetVendorCrewQuery } from '../../../store/api/workforceApi.js'
+import { useEffect, useState } from 'react'
+import { vendorApi } from '../../../api/vendorApi.js'
 
 export function VendorCrewPage() {
   const reduce = useReducedMotion()
-  const { data, isLoading, isError } = useGetVendorCrewQuery(undefined, { skip: VENDOR_DEMO_MODE })
-  const crew = VENDOR_DEMO_MODE ? VENDOR_DUMMY_CREW : (data?.crew ?? [])
+  const [crew, setCrew] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  const fetchCrew = async () => {
+    try {
+      const res = await vendorApi.getCrew()
+      setCrew(res?.data?.crew || [])
+    } catch (err) {
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCrew()
+  }, [])
+
+  const handleRemove = async (id) => {
+    if (!window.confirm('Are you sure you want to remove this worker from your crew?')) return
+    try {
+      await vendorApi.removeWorker(id)
+      setCrew(prev => prev.filter(c => c._id !== id))
+    } catch (err) {
+      alert('Failed to remove worker')
+    }
+  }
 
   const hero = (
     <section className="px-4 pb-1">
@@ -56,8 +82,8 @@ export function VendorCrewPage() {
           </p>
         </VendorCard>
 
-        {isLoading && !VENDOR_DEMO_MODE ? <VendorCard className="text-sm text-slate-500">Loading…</VendorCard> : null}
-        {isError && !VENDOR_DEMO_MODE ? (
+        {loading ? <VendorCard className="text-sm text-slate-500">Loading…</VendorCard> : null}
+        {error ? (
           <VendorCard className="text-sm text-rose-800">Could not load crew.</VendorCard>
         ) : null}
 
@@ -80,13 +106,21 @@ export function VendorCrewPage() {
                         <p className="mt-1 line-clamp-2 text-[10px] font-semibold text-slate-500">{w.activeSite}</p>
                       ) : null}
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      <AppBadge variant={w.kycStatus === 'approved' ? 'emerald' : 'amber'} uppercase={false} className="text-[10px]">
-                        KYC {w.kycStatus}
-                      </AppBadge>
-                      <AppBadge variant={w.availability === 'on_site' ? 'brand' : 'neutral'} uppercase={false} className="text-[10px]">
-                        {w.availability === 'on_site' ? 'On site' : w.availability === 'leave' ? 'On leave' : 'Available'}
-                      </AppBadge>
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                      <div className="flex gap-1.5">
+                        <AppBadge variant={w.kycStatus === 'approved' ? 'emerald' : 'amber'} uppercase={false} className="text-[10px]">
+                          KYC {w.kycStatus || 'pending'}
+                        </AppBadge>
+                        <AppBadge variant={w.availability === 'on_site' ? 'brand' : 'neutral'} uppercase={false} className="text-[10px]">
+                          {w.availability === 'on_site' ? 'On site' : w.availability === 'leave' ? 'On leave' : 'Available'}
+                        </AppBadge>
+                      </div>
+                      <button 
+                        onClick={() => handleRemove(w._id)}
+                        className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-md"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </VendorCard>
                 </li>

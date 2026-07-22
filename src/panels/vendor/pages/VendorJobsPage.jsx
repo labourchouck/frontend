@@ -9,9 +9,10 @@ import { AppBadge } from '../../../components/app-ui/data-display/AppBadge.jsx'
 import { PipelineTimeline } from '../../../components/shared/PipelineTimeline.jsx'
 import { VendorJobsHero } from '../../../components/vendor/VendorJobsHero.jsx'
 import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
-import { isVendorPanelUnlocked, VENDOR_DEMO_MODE } from '../../../lib/vendorDemo.js'
+import { isVendorPanelUnlocked } from '../../../lib/vendorDemo.js'
 import { filterVendorJobs, VENDOR_DUMMY_ALLOCATIONS } from '../../../lib/vendorDummyData.js'
-import { useAcceptVendorJobMutation, useGetVendorJobsQuery } from '../../../store/api/workforceApi.js'
+import { useEffect } from 'react'
+import { vendorApi } from '../../../api/vendorApi.js'
 
 const TABS = [
   { id: 'all', label: 'All' },
@@ -30,31 +31,39 @@ export function VendorJobsPage() {
   const reduce = useReducedMotion()
   const verified = isVendorPanelUnlocked(user)
   const [tab, setTab] = useState('all')
-  const [demoAccepted, setDemoAccepted] = useState(() => new Set())
-  const { data, isLoading, isError } = useGetVendorJobsQuery(undefined, { skip: VENDOR_DEMO_MODE })
-  const [acceptJob, { isLoading: accepting }] = useAcceptVendorJobMutation()
+  const [rawAllocations, setRawAllocations] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
+  const [accepting, setAccepting] = useState(false)
 
-  const rawAllocations = useMemo(() => {
-    if (!VENDOR_DEMO_MODE) return data?.allocations ?? []
-    return VENDOR_DUMMY_ALLOCATIONS.map((a) => ({
-      ...a,
-      vendorAcceptedAt: demoAccepted.has(a._id) ? a.vendorAcceptedAt || new Date().toISOString() : a.vendorAcceptedAt,
-    }))
-  }, [data?.allocations, demoAccepted])
+  const fetchJobs = async () => {
+    try {
+      const res = await vendorApi.getJobs()
+      setRawAllocations(res?.data?.allocations || [])
+    } catch (err) {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchJobs()
+  }, [])
 
   const allocations = useMemo(() => filterVendorJobs(rawAllocations, tab), [rawAllocations, tab])
-  const pendingCount = rawAllocations.filter((a) => !a.vendorAcceptedAt).length
+  const pendingCount = rawAllocations.filter((a) => !a.vendorAcceptedAt && !a.vendorRejectedAt).length
   const activeCount = filterVendorJobs(rawAllocations, 'active').length
 
   const handleAccept = async (id) => {
-    if (VENDOR_DEMO_MODE) {
-      setDemoAccepted((prev) => new Set(prev).add(id))
-      return
-    }
+    setAccepting(true)
     try {
-      await acceptJob(id).unwrap()
+      await vendorApi.acceptJob(id)
+      await fetchJobs()
     } catch {
-      /* */
+      alert('Failed to accept job')
+    } finally {
+      setAccepting(false)
     }
   }
 
@@ -78,11 +87,11 @@ export function VendorJobsPage() {
           ))}
         </div>
 
-        {isLoading && !VENDOR_DEMO_MODE ? (
-          <VendorCard className="text-sm text-slate-500">Loading…</VendorCard>
+        {isLoading ? (
+          <div className="py-20 text-center text-sm text-slate-500">Loading jobs…</div>
         ) : null}
-        {isError && !VENDOR_DEMO_MODE ? (
-          <VendorCard className="border-rose-200 bg-rose-50/50 text-sm text-rose-800">Could not load jobs.</VendorCard>
+        {isError ? (
+          <div className="py-20 text-center text-sm text-rose-800">Could not load jobs.</div>
         ) : null}
 
         {allocations.length === 0 ? (

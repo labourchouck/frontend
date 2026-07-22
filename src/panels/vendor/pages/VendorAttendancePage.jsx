@@ -6,11 +6,8 @@ import { AppEmptyState } from '../../../components/app/AppEmptyState.jsx'
 import { AppButton } from '../../../components/app-ui/buttons/AppButton.jsx'
 import { AppBadge } from '../../../components/app-ui/data-display/AppBadge.jsx'
 import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
-import { VENDOR_DEMO_MODE } from '../../../lib/vendorDemo.js'
 import {
   groupAttendanceBySite,
-  VENDOR_DUMMY_ATTENDANCE,
-  VENDOR_DUMMY_STATS,
 } from '../../../lib/vendorDummyData.js'
 import { useGetAttendanceQuery } from '../../../store/api/workforceApi.js'
 
@@ -22,10 +19,10 @@ function formatDate(d) {
 export function VendorAttendancePage() {
   const reduce = useReducedMotion()
   const [exported, setExported] = useState(false)
-  const { data, isLoading, isError } = useGetAttendanceQuery(undefined, { skip: VENDOR_DEMO_MODE })
-  const records = VENDOR_DEMO_MODE ? VENDOR_DUMMY_ATTENDANCE : (data?.records ?? [])
+  const { data, isLoading, isError } = useGetAttendanceQuery()
+  const records = data?.records ?? []
   const grouped = useMemo(() => groupAttendanceBySite(records), [records])
-  const stats = VENDOR_DEMO_MODE ? VENDOR_DUMMY_STATS : {}
+  const stats = data?.stats ?? {}
 
   const hero = (
     <section className="px-4 pb-1">
@@ -66,8 +63,8 @@ export function VendorAttendancePage() {
           </p>
         ) : null}
 
-        {isLoading && !VENDOR_DEMO_MODE ? <VendorCard className="text-sm text-slate-500">Loading…</VendorCard> : null}
-        {isError && !VENDOR_DEMO_MODE ? <VendorCard className="text-sm text-rose-800">Could not load attendance.</VendorCard> : null}
+        {isLoading ? <VendorCard className="text-sm text-slate-500">Loading…</VendorCard> : null}
+        {isError ? <VendorCard className="text-sm text-rose-800">Could not load attendance.</VendorCard> : null}
 
         {records.length === 0 ? (
           <AppEmptyState icon={Clock} title="No logs" subtitle="Crew check-ins appear here." />

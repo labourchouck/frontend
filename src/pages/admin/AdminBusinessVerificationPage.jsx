@@ -303,7 +303,7 @@ export function AdminBusinessVerificationPage() {
         </p>
       ) : null}
 
-      <GlassPanel className="overflow-hidden p-0">
+      <GlassPanel className="hidden overflow-hidden p-0 md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
@@ -335,7 +335,7 @@ export function AdminBusinessVerificationPage() {
                         ? p?.status !== CORPORATE_STATUS.APPROVED
                         : p?.verificationStatus !== 'approved')
                     return (
-                      <tr key={u._id} className="border-b border-slate-100 hover:bg-slate-50/60">
+                      <tr key={u._id} className="border-b border-slate-100 transition hover:bg-slate-50/60">
                         <td className="px-4 py-3">
                           <p className="font-semibold text-slate-900">{businessNameFor(u, tab)}</p>
                           <p className="text-xs text-slate-500">{u.fullName}</p>
@@ -389,16 +389,95 @@ export function AdminBusinessVerificationPage() {
           </table>
         </div>
         {!activeQuery.isLoading && items.length === 0 ? (
-          <div className="px-4 py-16 text-center text-sm text-slate-500">
-            <p className="font-semibold text-slate-700">No accounts match this filter.</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+            {isCorporate ? (
+              <Building2 className="h-10 w-10 text-slate-300" aria-hidden />
+            ) : (
+              <Store className="h-10 w-10 text-slate-300" aria-hidden />
+            )}
+            <p className="font-semibold text-slate-700">No accounts match this filter</p>
             {filter === 'submitted' ? (
-              <p className="mx-auto mt-2 max-w-md text-xs">
+              <p className="mx-auto mt-2 max-w-sm text-xs text-slate-500">
                 Needs review includes pending accounts with uploaded documents or a formal submission.
               </p>
             ) : null}
           </div>
         ) : null}
       </GlassPanel>
+
+      <div className="space-y-3 md:hidden">
+        {activeQuery.isLoading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <GlassPanel key={i} className="p-4">
+                <div className="h-5 w-40 animate-pulse rounded bg-slate-200/80" />
+                <div className="mt-3 h-4 w-full animate-pulse rounded bg-slate-200/60" />
+              </GlassPanel>
+            ))
+          : items.map((u) => {
+              const p = profileFor(u, tab)
+              const hasDocs = (p?.documents?.length ?? 0) > 0
+              const canReview =
+                hasDocs &&
+                (tab === 'corporate'
+                  ? p?.status !== CORPORATE_STATUS.APPROVED
+                  : p?.verificationStatus !== 'approved')
+              return (
+                <GlassPanel key={u._id} className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900">{businessNameFor(u, tab)}</p>
+                      <p className="mt-0.5 text-xs text-slate-600">{u.fullName || '—'}</p>
+                    </div>
+                    <StatusPill
+                      status={tab === 'corporate' ? p?.status : p?.verificationStatus}
+                      submittedAt={p?.documentsSubmittedAt}
+                      hasDocuments={hasDocs}
+                      variant={tab}
+                    />
+                  </div>
+
+                  <div className="mt-3">
+                    <p className="font-mono text-xs">+91 {u.phone || '—'}</p>
+                    {tab === 'corporate' && u.corporateProfile?.gstNumber ? (
+                      <p className="font-mono text-xs text-slate-600">GST {u.corporateProfile.gstNumber}</p>
+                    ) : null}
+                    {tab === 'vendor' && u.contractorProfile?.vendorType ? (
+                      <p className="text-xs text-slate-600">
+                        {VENDOR_TYPE_LABELS[u.contractorProfile.vendorType] || u.contractorProfile.vendorType}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-xs text-slate-600">
+                      {p?.documents?.length ?? 0} file{(p?.documents?.length ?? 0) === 1 ? '' : 's'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setReviewId(u._id)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                        canReview
+                          ? 'border border-brand/30 bg-brand/10 text-brand hover:bg-brand/15'
+                          : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {canReview ? 'Review docs' : 'View docs'}
+                    </button>
+                  </div>
+                </GlassPanel>
+              )
+            })}
+        {!activeQuery.isLoading && items.length === 0 ? (
+          <GlassPanel className="p-8 text-center">
+            {isCorporate ? (
+              <Building2 className="mx-auto h-10 w-10 text-slate-300" aria-hidden />
+            ) : (
+              <Store className="mx-auto h-10 w-10 text-slate-300" aria-hidden />
+            )}
+            <p className="mt-2 font-semibold text-slate-700">No accounts match</p>
+          </GlassPanel>
+        ) : null}
+      </div>
 
       {pages > 1 ? (
         <div className="flex items-center justify-between gap-3">

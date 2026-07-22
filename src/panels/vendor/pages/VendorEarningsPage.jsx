@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { IndianRupee } from 'lucide-react'
 import { AppEmptyState } from '../../../components/app/AppEmptyState.jsx'
@@ -7,31 +7,54 @@ import { AppButton } from '../../../components/app-ui/buttons/AppButton.jsx'
 import { AppSectionHeader } from '../../../components/app-ui/layout/AppSectionHeader.jsx'
 import { VendorEarningsHero } from '../../../components/vendor/VendorEarningsHero.jsx'
 import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
-import { VENDOR_DEMO_MODE } from '../../../lib/vendorDemo.js'
+import { isVendorPanelUnlocked } from '../../../lib/vendorDemo.js'
 import { formatVendorInr } from '../../../lib/vendorUiHelpers.js'
-import {
-  VENDOR_DUMMY_INVOICES,
-  VENDOR_DUMMY_STATS,
-  VENDOR_DUMMY_WITHDRAWALS,
-} from '../../../lib/vendorDummyData.js'
-import { useGetVendorSettlementsQuery } from '../../../store/api/workforceApi.js'
+import { vendorApi } from '../../../api/vendorApi.js'
 
 export function VendorEarningsPage() {
   const reduce = useReducedMotion()
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawSent, setWithdrawSent] = useState(false)
-  const { data, isLoading, isError } = useGetVendorSettlementsQuery(undefined, { skip: VENDOR_DEMO_MODE })
-  const invoices = VENDOR_DEMO_MODE ? VENDOR_DUMMY_INVOICES : (data?.invoices ?? [])
-  const stats = VENDOR_DEMO_MODE ? VENDOR_DUMMY_STATS : {}
-  const withdrawals = VENDOR_DEMO_MODE ? VENDOR_DUMMY_WITHDRAWALS : []
+  const [stats, setStats] = useState({})
+  const [invoices, setInvoices] = useState([])
+  const [withdrawals, setWithdrawals] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const handleWithdraw = (e) => {
+  const fetchData = async () => {
+    try {
+      const [statsRes, setRes, wRes] = await Promise.all([
+        vendorApi.getDashboardStats(),
+        vendorApi.getSettlements(),
+        vendorApi.getWithdrawals()
+      ])
+      setStats(statsRes?.data?.stats || {})
+      setInvoices(setRes?.data?.settlements || [])
+      setWithdrawals(wRes?.data?.withdrawals || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handleWithdraw = async (e) => {
     e.preventDefault()
     if (!withdrawAmount.trim()) return
-    setWithdrawSent(true)
-    setWithdrawOpen(false)
-    setWithdrawAmount('')
+    
+    try {
+      await vendorApi.requestWithdrawal({ amount: Number(withdrawAmount) })
+      setWithdrawSent(true)
+      setWithdrawOpen(false)
+      setWithdrawAmount('')
+      await fetchData() // Refresh data
+    } catch (err) {
+      alert(err?.data?.message || err?.message || 'Withdrawal request failed')
+    }
   }
 
   return (
@@ -99,11 +122,8 @@ export function VendorEarningsPage() {
 
         <section>
           <AppSectionHeader title="Settlements" />
-          {isLoading && !VENDOR_DEMO_MODE ? <VendorCard className="text-sm text-slate-500">Loading…</VendorCard> : null}
-          {isError && !VENDOR_DEMO_MODE ? (
-            <VendorCard className="text-sm text-rose-800">Could not load settlements.</VendorCard>
-          ) : null}
-          {!isLoading && invoices.length === 0 ? (
+          {loading ? <VendorCard className="text-sm text-slate-500">Loading…</VendorCard> : null}
+          {!loading && invoices.length === 0 ? (
             <AppEmptyState icon={IndianRupee} title="No settlements" subtitle="Invoices appear after billing runs." />
           ) : null}
           <ul className="mt-2 space-y-2">

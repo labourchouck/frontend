@@ -130,7 +130,8 @@ export function CorporateProfilePage() {
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
   const refreshUser = (res) => {
-    if (res?.user) dispatch(setUser(res.user))
+    const u = res?.data?.user || res?.user
+    if (u) dispatch(setUser(u))
   }
 
   const saveDetails = async () => {

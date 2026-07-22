@@ -44,12 +44,7 @@ import { VendorVerificationHero } from '../../../components/vendor/VendorVerific
 import { LabourKycWorkflowTimeline } from '../../../components/labour/kyc/LabourKycWorkflowTimeline.jsx'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
-import {
-  useAddVendorDocumentMutation,
-  usePatchVendorMeMutation,
-  useRemoveVendorDocumentMutation,
-  useSubmitVendorVerificationMutation,
-} from '../../../store/api/workforceApi.js'
+import { vendorApi } from '../../../api/vendorApi.js'
 
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-brand/35'
@@ -93,10 +88,7 @@ export function VendorProfilePage() {
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
 
-  const [patchVendorMe] = usePatchVendorMeMutation()
-  const [addDocument] = useAddVendorDocumentMutation()
-  const [removeDocument] = useRemoveVendorDocumentMutation()
-  const [submitVerification] = useSubmitVendorVerificationMutation()
+  // API setup replaced with direct vendorApi calls inside handlers
 
   useEffect(() => {
     setForm(profileToForm(profile, user))
@@ -134,7 +126,8 @@ export function VendorProfilePage() {
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
   const refreshUser = (res) => {
-    if (res?.user) dispatch(setUser(res.user))
+    const u = res?.data?.user || res?.user
+    if (u) dispatch(setUser(u))
   }
 
   const patchBody = () => ({
@@ -150,7 +143,7 @@ export function VendorProfilePage() {
     setBanner(null)
     setBusy(true)
     try {
-      const res = await patchVendorMe(patchBody()).unwrap()
+      const res = await vendorApi.updateProfile(patchBody())
       refreshUser(res)
       setBanner({ variant: 'success', message: 'Business details saved' })
     } catch (err) {
@@ -161,7 +154,7 @@ export function VendorProfilePage() {
   }
 
   const saveDetailsQuiet = async () => {
-    const res = await patchVendorMe(patchBody()).unwrap()
+    const res = await vendorApi.updateProfile(patchBody())
     refreshUser(res)
   }
 
@@ -175,11 +168,11 @@ export function VendorProfilePage() {
       const uploaded = await uploadDocument(file, UPLOAD_FOLDERS.KYC_DOCUMENTS)
       const url = assetUrlFromUpload(uploaded)
       const option = VENDOR_DOCUMENT_OPTIONS.find((o) => o.value === docType)
-      const res = await addDocument({
+      const res = await vendorApi.uploadDocument({
         documentType: docType,
         label: option?.label || 'Document',
         url,
-      }).unwrap()
+      })
       refreshUser(res)
       setBanner({ variant: 'success', message: `${option?.label || 'Document'} uploaded` })
     } catch (err) {
@@ -196,7 +189,7 @@ export function VendorProfilePage() {
   const handleRemove = async (docId) => {
     if (!canEdit) return
     try {
-      const res = await removeDocument(docId).unwrap()
+      const res = await vendorApi.deleteDocument(docId)
       refreshUser(res)
     } catch (err) {
       setBanner({ variant: 'error', message: err?.data?.message || 'Could not remove document' })
@@ -214,8 +207,8 @@ export function VendorProfilePage() {
     }
     setBusy(true)
     try {
-      await patchVendorMe(patchBody()).unwrap()
-      const res = await submitVerification().unwrap()
+      await vendorApi.updateProfile(patchBody())
+      const res = await vendorApi.submitVerification()
       refreshUser(res)
       setBanner({
         variant: 'success',

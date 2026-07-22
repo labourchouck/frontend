@@ -17,12 +17,10 @@ import { ApprovalGate } from '../../components/shared/ApprovalGate.jsx'
 import { AppSectionHeader } from '../../components/app-ui/layout/AppSectionHeader.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { VendorPageLayout } from '../../components/vendor/VendorPageLayout.jsx'
-import { isVendorPanelUnlocked, VENDOR_DEMO_MODE } from '../../lib/vendorDemo.js'
-import {
-  filterVendorJobs,
-  VENDOR_DUMMY_ALLOCATIONS,
-  VENDOR_DUMMY_STATS,
-} from '../../lib/vendorDummyData.js'
+import { isVendorPanelUnlocked } from '../../lib/vendorDemo.js'
+import { useEffect, useState } from 'react'
+import { vendorApi } from '../../api/vendorApi.js'
+import { filterVendorJobs } from '../../lib/vendorDummyData.js'
 import { formatVendorInr, openVendorDrawer, vendorInitials, vendorTimeGreeting } from '../../lib/vendorUiHelpers.js'
 
 const QUICK_ACTIONS = [
@@ -38,9 +36,28 @@ export function VendorHomeScreen({ user }) {
   const reduce = useReducedMotion()
   const navigate = useNavigate()
   const unlocked = isVendorPanelUnlocked(user)
-  const verified = user?.contractorProfile?.verificationStatus === 'approved' || VENDOR_DEMO_MODE
-  const stats = VENDOR_DEMO_MODE ? VENDOR_DUMMY_STATS : {}
-  const pendingJobs = filterVendorJobs(VENDOR_DUMMY_ALLOCATIONS, 'pending').slice(0, 2)
+  const verified = user?.contractorProfile?.verificationStatus === 'approved'
+  const [stats, setStats] = useState({})
+  const [pendingJobs, setPendingJobs] = useState([])
+
+  useEffect(() => {
+    if (!verified || !unlocked) return
+
+    const loadDashboard = async () => {
+      try {
+        const statsRes = await vendorApi.getDashboardStats()
+        setStats(statsRes?.data?.stats || {})
+        
+        const jobsRes = await vendorApi.getJobs()
+        const allJobs = jobsRes?.data?.allocations || []
+        const pending = allJobs.filter(a => !a.vendorAcceptedAt && !a.vendorRejectedAt)
+        setPendingJobs(pending.slice(0, 2))
+      } catch (err) {
+        console.error('Failed to load vendor dashboard', err)
+      }
+    }
+    loadDashboard()
+  }, [verified, unlocked])
 
   const firstName = user?.fullName?.split(/\s/)?.[0]
   const businessName = user?.contractorProfile?.businessName || user?.fullName || 'Vendor'

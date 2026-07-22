@@ -4,20 +4,46 @@ import { ArrowLeft, BarChart3 } from 'lucide-react'
 import { ApprovalGate } from '../../../components/shared/ApprovalGate.jsx'
 import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
 import { useAuth } from '../../../hooks/useAuth.js'
-import { isVendorPanelUnlocked, VENDOR_DEMO_MODE } from '../../../lib/vendorDemo.js'
+import { isVendorPanelUnlocked } from '../../../lib/vendorDemo.js'
 import { formatVendorInr } from '../../../lib/vendorUiHelpers.js'
-import { VENDOR_DUMMY_STATS } from '../../../lib/vendorDummyData.js'
+import { useEffect, useState } from 'react'
+import { vendorApi } from '../../../api/vendorApi.js'
 
 export function VendorAnalyticsPage() {
   const { user } = useAuth()
   const reduce = useReducedMotion()
   const unlocked = isVendorPanelUnlocked(user)
-  const stats = VENDOR_DEMO_MODE ? VENDOR_DUMMY_STATS : {}
+  
+  const [stats, setStats] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!unlocked) return
+    const fetchStats = async () => {
+      try {
+        const res = await vendorApi.getDashboardStats()
+        setStats(res?.data?.stats || {})
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStats()
+  }, [unlocked])
 
   if (!unlocked) {
     return (
       <div className="px-4">
         <ApprovalGate title="Analytics locked" message="Complete verification first." profileTo="/vendor/profile" />
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="px-4">
+        <VendorCard className="text-sm text-slate-500">Loading…</VendorCard>
       </div>
     )
   }
