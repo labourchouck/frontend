@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Wallet, Clock, CheckCircle2, XCircle, Download, Search, Filter, Eye, X, UserCircle, Landmark, QrCode } from 'lucide-react'
 import { adminBookingsApi } from '../../api/adminBookingsApi.js'
-import { apiRequest } from '../../api/http.js'
+import { adminWalletsApi } from '../../api/adminWalletsApi.js'
 
 export function AdminLabourWalletPage() {
   const [bookings, setBookings] = useState([])
@@ -16,52 +16,22 @@ export function AdminLabourWalletPage() {
 
   // Modal State
   const [selectedRequest, setSelectedRequest] = useState(null)
+  const [rejecting, setRejecting] = useState(false)
+  const [rejectNote, setRejectNote] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true)
       try {
         // Fetch bookings to calculate dues and balances
         const bookingsRes = await adminBookingsApi.getAllBookings({ limit: 5000 })
         const allB = bookingsRes?.data?.bookings || bookingsRes?.bookings || bookingsRes || []
         setBookings(Array.isArray(allB) ? allB : [])
 
-        // Attempt to fetch real withdrawals (stubbed if backend isn't ready)
-        try {
-          const wRes = await apiRequest('/admin/withdrawals', { method: 'GET' })
-          setWithdrawals(wRes.data || wRes || [])
-        } catch (err) {
-          console.warn('Backend /admin/withdrawals not found, falling back to dummy data for UI preview.')
-          setWithdrawals([
-            {
-              _id: 'w101',
-              labor: { name: 'Ramesh Kumar', phone: '+91 9876543210' },
-              amount: 4500,
-              status: 'PENDING',
-              createdAt: new Date().toISOString(),
-              bankDetails: {
-                accountHolderName: 'Ramesh Kumar',
-                bankName: 'State Bank of India',
-                accountNumber: '32114567890',
-                ifscCode: 'SBIN0001234',
-                qrCode: '' // Add a dummy image URL here if needed
-              }
-            },
-            {
-              _id: 'w102',
-              labor: { name: 'Suresh Singh', phone: '+91 8765432109' },
-              amount: 2100,
-              status: 'COMPLETED',
-              createdAt: new Date(Date.now() - 86400000).toISOString(),
-            },
-            {
-              _id: 'w103',
-              labor: { name: 'Amit Sharma', phone: '+91 7654321098' },
-              amount: 1500,
-              status: 'REJECTED',
-              createdAt: new Date(Date.now() - 172800000).toISOString(),
-            }
-          ])
-        }
+        // Fetch real withdrawals via API
+        const wRes = await adminWalletsApi.getAllWithdrawals()
+        const fetchedWithdrawals = wRes?.data?.requests || wRes?.data || []
+        setWithdrawals(Array.isArray(fetchedWithdrawals) ? fetchedWithdrawals : [])
       } catch (err) {
         console.error('Failed to fetch data:', err)
       } finally {
@@ -72,17 +42,19 @@ export function AdminLabourWalletPage() {
   }, [])
 
   // Action Handlers
-  const handleUpdateStatus = async (id, status) => {
+  const handleUpdateStatus = async (id, status, remarks = '') => {
     // Optimistic UI update
-    setWithdrawals(prev => prev.map(w => w._id === id ? { ...w, status } : w))
+    setWithdrawals(prev => prev.map(w => w._id === id ? { ...w, status, adminRemarks: remarks } : w))
     setSelectedRequest(null)
+    setRejecting(false)
+    setRejectNote('')
     try {
-      await apiRequest(`/admin/withdrawals/${id}/status`, {
-        method: 'PATCH',
-        body: { status }
-      })
+      await adminWalletsApi.updateWithdrawalStatus(id, status, remarks)
     } catch (err) {
-      console.warn('Backend patch failed (frontend-only mode)', err)
+      console.warn('Backend patch failed', err)
+      // Revert optimistic update if API fails
+      setWithdrawals(prev => prev.map(w => w._id === id ? { ...w, status: 'PENDING' } : w))
+      alert('Failed to update status')
     }
   }
 
@@ -102,9 +74,9 @@ export function AdminLabourWalletPage() {
 
     // Subtract paid withdrawals from total unpaid and individual balances
     withdrawals.forEach(w => {
-      if (w.status === 'COMPLETED') {
+      if (w.status === 'APPROVED') {
         unpaid -= w.amount
-        const name = w.labor?.name || 'Unknown Labourer'
+        const name = w.labourId?.fullName || 'Unknown Labourer'
         if (balanceMap.has(name)) {
           balanceMap.set(name, Math.max(0, balanceMap.get(name) - w.amount))
         }
@@ -125,19 +97,19 @@ export function AdminLabourWalletPage() {
   }, [withdrawals])
 
   const totalPaidOut = useMemo(() => {
-    return withdrawals.filter(w => w.status === 'COMPLETED').reduce((sum, w) => sum + (w.amount || 0), 0)
+    return withdrawals.filter(w => w.status === 'APPROVED').reduce((sum, w) => sum + (w.amount || 0), 0)
   }, [withdrawals])
 
   // Filtered History
   const historyWithdrawals = useMemo(() => {
     return withdrawals.filter(w => {
-      if (w.status === 'PENDING') return false // Only history (Completed/Rejected)
+      if (w.status === 'PENDING') return false // Only history (Approved/Rejected)
       if (historyFilter !== 'ALL' && w.status !== historyFilter) return false
       
       if (searchTerm) {
         const lowerSearch = searchTerm.toLowerCase()
         const idMatch = w._id?.toLowerCase().includes(lowerSearch)
-        const nameMatch = w.labor?.name?.toLowerCase().includes(lowerSearch)
+        const nameMatch = w.labourId?.fullName?.toLowerCase().includes(lowerSearch)
         if (!idMatch && !nameMatch) return false
       }
       return true
@@ -162,7 +134,7 @@ export function AdminLabourWalletPage() {
     const rows = historyWithdrawals.map(w => [
       w._id,
       new Date(w.createdAt).toLocaleDateString(),
-      w.labor?.name || 'N/A',
+      w.labourId?.fullName || 'N/A',
       w.amount || 0,
       w.status
     ])
@@ -247,8 +219,8 @@ export function AdminLabourWalletPage() {
                   {pendingWithdrawals.map(req => (
                     <tr key={req._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
-                        <p className="font-bold text-slate-900">{req.labor?.name}</p>
-                        <p className="text-xs text-slate-500">{req.labor?.phone}</p>
+                        <p className="font-bold text-slate-900">{req.labourId?.fullName || 'N/A'}</p>
+                        <p className="text-xs text-slate-500">{req.labourId?.phone || ''}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-blue-600">₹{(req.amount || 0).toLocaleString('en-IN')}</p>
@@ -313,7 +285,7 @@ export function AdminLabourWalletPage() {
               className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 outline-none focus:border-slate-400"
             >
               <option value="ALL">All Status</option>
-              <option value="COMPLETED">Completed</option>
+              <option value="APPROVED">Approved</option>
               <option value="REJECTED">Rejected</option>
             </select>
             <div className="relative">
@@ -355,14 +327,14 @@ export function AdminLabourWalletPage() {
                       <p className="text-xs text-slate-400">{new Date(w.createdAt).toLocaleString()}</p>
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-700">
-                      {w.labor?.name || 'N/A'}
+                      {w.labourId?.fullName || 'N/A'}
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-900">
                       ₹{(w.amount || 0).toLocaleString('en-IN')}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase ${
-                        w.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                        w.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                       }`}>
                         {w.status}
                       </span>
@@ -408,21 +380,25 @@ export function AdminLabourWalletPage() {
       {/* Action Modal */}
       {selectedRequest && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4">
+          <div className="w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4">
               <div>
                 <h3 className="font-bold text-slate-900">Process Request</h3>
                 <p className="text-xs font-semibold text-slate-500">#{selectedRequest._id}</p>
               </div>
               <button 
-                onClick={() => setSelectedRequest(null)}
+                onClick={() => {
+                  setSelectedRequest(null)
+                  setRejecting(false)
+                  setRejectNote('')
+                }}
                 className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto">
               <div className="mb-6 rounded-xl bg-blue-50 p-4 text-center border border-blue-100">
                 <p className="text-sm font-semibold text-blue-800">Requested Amount</p>
                 <p className="text-4xl font-black text-blue-600 mt-1">₹{(selectedRequest.amount || 0).toLocaleString('en-IN')}</p>
@@ -450,10 +426,10 @@ export function AdminLabourWalletPage() {
                       <span className="text-slate-500">IFSC Code</span>
                       <span className="font-mono font-bold text-slate-900">{selectedRequest.bankDetails.ifscCode}</span>
                     </div>
-                    {selectedRequest.bankDetails.qrCode && (
+                    {(selectedRequest.bankDetails.qrCodeUrl || selectedRequest.bankDetails.qrCode) && (
                       <div className="border-t border-slate-200 p-4 flex flex-col items-center bg-slate-50">
                         <span className="text-xs font-bold uppercase text-slate-500 mb-2 flex items-center gap-1"><QrCode className="w-3 h-3"/> QR Code</span>
-                        <img src={selectedRequest.bankDetails.qrCode} alt="QR Code" className="w-32 h-32 object-contain rounded-lg border border-slate-200" />
+                        <img src={selectedRequest.bankDetails.qrCodeUrl || selectedRequest.bankDetails.qrCode} alt="QR Code" className="w-32 h-32 object-contain rounded-lg border border-slate-200" />
                       </div>
                     )}
                   </div>
@@ -462,20 +438,48 @@ export function AdminLabourWalletPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button 
-                  onClick={() => handleUpdateStatus(selectedRequest._id, 'REJECTED')}
-                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-rose-100 bg-white px-4 py-3 text-sm font-bold text-rose-600 transition hover:bg-rose-50 hover:border-rose-200"
-                >
-                  <XCircle className="h-4 w-4" /> Reject
-                </button>
-                <button 
-                  onClick={() => handleUpdateStatus(selectedRequest._id, 'COMPLETED')}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600"
-                >
-                  <CheckCircle2 className="h-4 w-4" /> Mark Paid
-                </button>
-              </div>
+              {rejecting ? (
+                <div className="rounded-xl border border-rose-100 bg-rose-50 p-4">
+                  <p className="mb-2 text-sm font-bold text-rose-800">Reason for Rejection (Required)</p>
+                  <textarea
+                    className="w-full rounded-lg border border-rose-200 bg-white p-3 text-sm outline-none focus:border-rose-400"
+                    rows="3"
+                    placeholder="Enter reason..."
+                    value={rejectNote}
+                    onChange={(e) => setRejectNote(e.target.value)}
+                  ></textarea>
+                  <div className="mt-3 flex gap-2">
+                    <button 
+                      onClick={() => setRejecting(false)}
+                      className="flex-1 rounded-lg bg-white py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      disabled={!rejectNote.trim()}
+                      onClick={() => handleUpdateStatus(selectedRequest._id, 'REJECTED', rejectNote)}
+                      className="flex-1 rounded-lg bg-rose-600 py-2 text-sm font-bold text-white shadow-md hover:bg-rose-700 disabled:opacity-50"
+                    >
+                      Confirm Reject
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => setRejecting(true)}
+                    className="flex items-center justify-center gap-2 rounded-xl border-2 border-rose-100 bg-white px-4 py-3 text-sm font-bold text-rose-600 transition hover:bg-rose-50 hover:border-rose-200"
+                  >
+                    <XCircle className="h-4 w-4" /> Reject
+                  </button>
+                  <button 
+                    onClick={() => handleUpdateStatus(selectedRequest._id, 'APPROVED')}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600"
+                  >
+                    <CheckCircle2 className="h-4 w-4" /> Mark Paid
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

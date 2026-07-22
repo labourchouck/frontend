@@ -3,17 +3,23 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Wallet, CheckCircle2, UploadCloud, Landmark, FileText, UserCircle, QrCode } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { bookingsApi } from '../../api/bookingsApi.js'
-import { uploadMedia, assetUrlFromUpload } from '../../api/uploadApi.js'
+import { uploadDocument, assetUrlFromUpload } from '../../api/uploadApi.js'
+import { withdrawalsApi } from '../../api/withdrawalsApi.js'
+import { walletsApi } from '../../api/walletsApi.js'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { formatInrFromPaise } from '../../lib/labourEarningsFlow.js'
-import { apiRequest } from '../../api/http.js'
 
 export function AppEarningsPage() {
   const [totalEarnings, setTotalEarnings] = useState(0)
+  const [totalPaid, setTotalPaid] = useState(0)
+  const [dueAmount, setDueAmount] = useState(0)
+  const [maxWithdrawable, setMaxWithdrawable] = useState(0)
+  const [withdrawals, setWithdrawals] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Form State
+  const [withdrawAmount, setWithdrawAmount] = useState('')
   const [accountName, setAccountName] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
   const [ifscCode, setIfscCode] = useState('')
@@ -25,27 +31,51 @@ export function AppEarningsPage() {
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  useEffect(() => {
-    const fetchEarnings = async () => {
-      try {
-        const res = await bookingsApi.getMyBookings()
-        const allBookings = res?.data?.bookings || res?.bookings || res || []
-        // Calculate real booking earnings:
-        const completed = allBookings.filter(b => b.status === 'COMPLETED' || b.status === 'ACCEPTED' || b.status === 'ASSIGNED' || b.status === 'STARTED') 
-        
-        let sum = 0
-        allBookings.forEach(b => {
+  const fetchEarnings = async () => {
+    setLoading(true)
+    try {
+      // Fetch bookings for earnings display
+      const bookingsRes = await bookingsApi.getMyBookings().catch(() => null)
+      
+      const allBookings = bookingsRes?.data?.bookings || bookingsRes?.bookings || bookingsRes || []
+      let sum = 0
+      allBookings.forEach(b => {
+        if (b.status === 'COMPLETED' || b.status === 'ACCEPTED' || b.status === 'ASSIGNED' || b.status === 'STARTED') {
           const share = b.laborShare || b.basePrice || 0
           sum += share * 100 
-        })
+        }
+      })
+      setTotalEarnings(sum)
+
+      // Fetch withdrawal history
+      const withdrawalsRes = await withdrawalsApi.getWithdrawals().catch(() => null)
+      const wList = withdrawalsRes?.data?.requests || withdrawalsRes?.requests || []
+      setWithdrawals(wList)
+      
+      const paid = wList
+        .filter(w => w.status === 'APPROVED')
+        .reduce((acc, curr) => acc + (curr.amount || 0), 0)
+      
+      const pending = wList
+        .filter(w => w.status === 'PENDING')
+        .reduce((acc, curr) => acc + (curr.amount || 0), 0)
         
-        setTotalEarnings(sum)
-      } catch (err) {
-        console.error('Failed to load bookings:', err)
-      } finally {
-        setLoading(false)
-      }
+      setTotalPaid(paid)
+      
+      const totalEarnedInr = Math.floor(sum / 100)
+      const calculatedDue = totalEarnedInr - paid
+      setDueAmount(calculatedDue)
+      
+      // Prevent overdrawing if there are pending requests
+      setMaxWithdrawable(Math.max(0, calculatedDue - pending))
+    } catch (err) {
+      console.error('Failed to load wallet data:', err)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchEarnings()
   }, [])
 
@@ -67,32 +97,32 @@ export function AppEarningsPage() {
         throw new Error('Please fill in all bank details.')
       }
 
-      let qrCodeUrl = ''
+      const numAmount = Number(withdrawAmount)
+      if (!numAmount || numAmount <= 0) {
+        throw new Error('Please enter a valid withdrawal amount.')
+      }
+      if (numAmount > maxWithdrawable) {
+        throw new Error(`You can only withdraw up to ₹${maxWithdrawable}. (Any pending requests are deducted from your max withdrawable limit)`)
+      }
+
+      let qrCodeUrl = qrPreview
       if (qrFile) {
-        const uploadRes = await uploadMedia(qrFile, 'kyc-documents')
+        const uploadRes = await uploadDocument(qrFile, 'kyc-documents')
         qrCodeUrl = assetUrlFromUpload(uploadRes)
       }
 
       const payload = {
-        amount: totalEarnings / 100, 
+        amount: numAmount, 
         bankDetails: {
           accountNumber,
           ifscCode,
           accountHolderName: accountName,
           bankName,
-          qrCode: qrCodeUrl
+          qrCodeUrl: qrCodeUrl
         }
       }
 
-      try {
-        await apiRequest('/wallets/withdraw', {
-          method: 'POST',
-          body: payload
-        })
-      } catch (backendError) {
-        console.warn('Backend rejected withdrawal. Showing success for frontend-only mode.', backendError)
-      }
-
+      await withdrawalsApi.createWithdrawal(payload)
       setSuccess(true)
     } catch (err) {
       setErrorMsg(err.message || 'Failed to submit request')
@@ -116,12 +146,15 @@ export function AppEarningsPage() {
           <p className="mt-2 text-sm text-slate-500">
             Your withdrawal request has been sent to the admin. We will process it shortly.
           </p>
-          <Link
-            to="/app"
+          <button
+            onClick={() => {
+               setSuccess(false)
+               fetchEarnings()
+            }}
             className="mt-8 inline-block rounded-xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-200"
           >
-            Back to Home
-          </Link>
+            Back to Wallet
+          </button>
         </motion.div>
       </div>
     )
@@ -160,15 +193,39 @@ export function AppEarningsPage() {
               </div>
             </div>
 
-            <div className="mt-8">
-              <p className="text-xs font-semibold text-emerald-300">Total Booking Earnings</p>
-              {loading ? (
-                <div className="mt-1 h-10 w-48 animate-pulse rounded-lg bg-white/10"></div>
-              ) : (
-                <p className="mt-1 font-mono text-4xl font-black tabular-nums tracking-tight sm:text-5xl">
-                  {formatInrFromPaise(totalEarnings)}
-                </p>
-              )}
+            <div className="mt-8 grid grid-cols-3 gap-3 divide-x divide-white/20 rounded-2xl bg-black/20 p-4 backdrop-blur-md border border-white/10">
+              <div className="flex flex-col items-center">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Total Earning</p>
+                {loading ? (
+                  <div className="mt-1 h-6 w-16 animate-pulse rounded bg-white/10"></div>
+                ) : (
+                  <p className="mt-1 font-mono text-lg font-black tracking-tight text-white">
+                    {formatInrFromPaise(totalEarnings)}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex flex-col items-center px-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Total Paid</p>
+                {loading ? (
+                  <div className="mt-1 h-6 w-16 animate-pulse rounded bg-white/10"></div>
+                ) : (
+                  <p className="mt-1 font-mono text-lg font-black tracking-tight text-emerald-400">
+                    ₹{totalPaid.toLocaleString('en-IN')}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex flex-col items-center">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Due Amount</p>
+                {loading ? (
+                  <div className="mt-1 h-6 w-16 animate-pulse rounded bg-white/10"></div>
+                ) : (
+                  <p className="mt-1 font-mono text-lg font-black tracking-tight text-amber-400">
+                    ₹{dueAmount.toLocaleString('en-IN')}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>
@@ -180,8 +237,12 @@ export function AppEarningsPage() {
         transition={{ delay: 0.1 }}
         className="px-1"
       >
-        <h2 className="text-lg font-bold text-slate-900">Request Withdrawal</h2>
-        <p className="mt-1 text-sm text-slate-500">Provide your bank or UPI details to receive your earnings.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Request Withdrawal</h2>
+            <p className="mt-1 text-sm text-slate-500">Provide your bank or UPI details to receive your earnings.</p>
+          </div>
+        </div>
 
         {errorMsg && (
           <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
@@ -192,6 +253,25 @@ export function AppEarningsPage() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <GlassPanel className="space-y-4 border-slate-200/80 p-5 shadow-sm">
             
+            <div>
+              <label className="mb-1.5 flex items-center gap-2 text-sm font-bold text-slate-700">
+                <Wallet className="h-4 w-4 text-brand" /> Amount to Withdraw (Max ₹{maxWithdrawable})
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">₹</span>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max={maxWithdrawable}
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder={`Enter up to ${maxWithdrawable}`}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-8 pr-4 text-sm font-medium outline-none transition focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="mb-1.5 flex items-center gap-2 text-sm font-bold text-slate-700">
                 <UserCircle className="h-4 w-4 text-brand" /> Account Name
@@ -284,11 +364,40 @@ export function AppEarningsPage() {
           <AppPrimaryButton
             type="submit"
             className="w-full py-3.5 text-base shadow-lg shadow-brand/20"
-            disabled={submitting || loading || totalEarnings <= 0}
+            disabled={submitting || loading || maxWithdrawable <= 0 || !withdrawAmount || Number(withdrawAmount) > maxWithdrawable}
           >
-            {submitting ? 'Sending Request...' : 'Send Request'}
+            {submitting ? 'Processing...' : 'Send Request'}
           </AppPrimaryButton>
         </form>
+
+        {withdrawals.length > 0 && (
+          <div className="mt-8 space-y-4">
+            <h2 className="text-lg font-bold text-slate-900">Recent Withdrawals</h2>
+            {withdrawals.map((w) => (
+              <GlassPanel key={w._id} className="p-4 border-slate-200/80 shadow-sm space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-bold text-slate-900 text-lg">₹{(w.amount || 0).toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-slate-500 mt-1">{new Date(w.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    w.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                    w.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' :
+                    'bg-amber-100 text-amber-700'
+                  }`}>
+                    {w.status}
+                  </span>
+                </div>
+                {w.status === 'REJECTED' && w.adminRemarks && (
+                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
+                    <p className="text-xs font-bold text-rose-800 mb-1">Reason for Rejection:</p>
+                    <p className="text-sm text-rose-700">{w.adminRemarks}</p>
+                  </div>
+                )}
+              </GlassPanel>
+            ))}
+          </div>
+        )}
       </motion.div>
     </div>
   )

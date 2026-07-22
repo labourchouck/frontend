@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Landmark, TrendingUp, Calendar, Download, Search, Filter, X, ChevronLeft, ChevronRight, UserCircle, Wrench, Wallet, Percent, HandCoins } from 'lucide-react'
+import { Landmark, TrendingUp, Calendar, Download, Search, Filter, X, ChevronLeft, ChevronRight, UserCircle, Wrench, Wallet, Percent, HandCoins, Settings, Save } from 'lucide-react'
 import { adminBookingsApi } from '../../api/adminBookingsApi.js'
+import { adminSettingsApi } from '../../api/adminSettingsApi.js'
 
 export function AdminPlatformFeePage() {
   const [bookings, setBookings] = useState([])
@@ -14,6 +15,13 @@ export function AdminPlatformFeePage() {
 
   // Modal State
   const [selectedBooking, setSelectedBooking] = useState(null)
+  
+  // Settings State
+  const [settings, setSettings] = useState(null)
+  const [isEditingSettings, setIsEditingSettings] = useState(false)
+  const [feeType, setFeeType] = useState('fixed')
+  const [feeValue, setFeeValue] = useState(0)
+  const [savingSettings, setSavingSettings] = useState(false)
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -21,6 +29,14 @@ export function AdminPlatformFeePage() {
         const res = await adminBookingsApi.getAllBookings({ limit: 5000 })
         const all = res?.data?.bookings || res?.bookings || res || []
         setBookings(Array.isArray(all) ? all : [])
+        
+        const settingsRes = await adminSettingsApi.getSettings()
+        const fetchedSettings = settingsRes?.data?.settings || settingsRes?.settings
+        if (fetchedSettings) {
+          setSettings(fetchedSettings)
+          setFeeType(fetchedSettings.platformFee?.type || 'fixed')
+          setFeeValue(fetchedSettings.platformFee?.value || 0)
+        }
       } catch (err) {
         console.error('Failed to fetch bookings:', err)
       } finally {
@@ -130,20 +146,50 @@ export function AdminPlatformFeePage() {
     document.body.removeChild(link)
   }
 
+  const handleSaveSettings = async () => {
+    setSavingSettings(true)
+    try {
+      await adminSettingsApi.updatePlatformFees({ type: feeType, value: Number(feeValue), isActive: true })
+      setSettings(prev => ({
+        ...prev,
+        platformFee: { ...prev?.platformFee, type: feeType, value: Number(feeValue) }
+      }))
+      setIsEditingSettings(false)
+    } catch (err) {
+      console.error('Failed to update platform fee settings', err)
+      alert('Failed to update settings')
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
   return (
     <div className="space-y-6 relative">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Platform Fee Ledger</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+            Platform Fee Ledger
+            <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+              {settings?.platformFee?.type === 'percentage' ? `${settings.platformFee.value}%` : `₹${settings?.platformFee?.value || 0}`}
+            </span>
+          </h1>
           <p className="text-sm text-slate-500">Analytics and history of platform fees collected.</p>
         </div>
-        <button 
-          onClick={handleExportCSV}
-          disabled={filteredBookings.length === 0}
-          className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
-        >
-          <Download className="h-4 w-4" /> Export CSV
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsEditingSettings(true)}
+            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <Settings className="h-4 w-4" /> Edit Config
+          </button>
+          <button 
+            onClick={handleExportCSV}
+            disabled={filteredBookings.length === 0}
+            className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -370,6 +416,77 @@ export function AdminPlatformFeePage() {
                 className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {isEditingSettings && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                <Settings className="h-4 w-4 text-emerald-600" /> Platform Fee Config
+              </h3>
+              <button 
+                onClick={() => setIsEditingSettings(false)}
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">Fee Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFeeType('fixed')}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${feeType === 'fixed' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    Fixed Amount (₹)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFeeType('percentage')}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${feeType === 'percentage' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    Percentage (%)
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">
+                  {feeType === 'fixed' ? 'Amount (₹)' : 'Percentage (%)'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step={feeType === 'percentage' ? "0.1" : "1"}
+                  value={feeValue}
+                  onChange={(e) => setFeeValue(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                />
+              </div>
+            </div>
+            
+            <div className="border-t border-slate-100 bg-slate-50/80 px-6 py-4 flex gap-3">
+              <button 
+                onClick={() => setIsEditingSettings(false)}
+                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveSettings}
+                disabled={savingSettings}
+                className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Save className="h-4 w-4" /> {savingSettings ? 'Saving...' : 'Save Config'}
               </button>
             </div>
           </div>
