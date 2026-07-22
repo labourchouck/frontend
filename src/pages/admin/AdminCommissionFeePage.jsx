@@ -21,6 +21,7 @@ export function AdminCommissionFeePage() {
   const [isEditingSettings, setIsEditingSettings] = useState(false)
   const [commissionValue, setCommissionValue] = useState(0)
   const [savingSettings, setSavingSettings] = useState(false)
+  const [actualAmounts, setActualAmounts] = useState({ commissionAmount: 0, platformFeesAmount: 0, serviceAmount: 0 })
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -34,6 +35,12 @@ export function AdminCommissionFeePage() {
         if (fetchedSettings) {
           setSettings(fetchedSettings)
           setCommissionValue(fetchedSettings.commission?.globalPercentage || 0)
+        }
+
+        const amountsRes = await adminSettingsApi.getCommissionFeeAmounts()
+        const fetchedAmounts = amountsRes?.data || amountsRes
+        if (fetchedAmounts) {
+          setActualAmounts(fetchedAmounts)
         }
       } catch (err) {
         console.error('Failed to fetch bookings:', err)
@@ -219,31 +226,31 @@ export function AdminCommissionFeePage() {
 
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="overflow-hidden rounded-2xl border border-blue-100 bg-blue-50/50 p-5">
-          <p className="text-xs font-bold uppercase tracking-wider text-blue-800/70">All-Time Revenue</p>
+        <div className="overflow-hidden rounded-2xl border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-blue-800/70">Total Commission</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-blue-700">₹{loading ? '...' : metrics.allTime.toLocaleString('en-IN')}</span>
+            <span className="text-3xl font-black text-blue-700">₹{loading ? '...' : (actualAmounts.commissionAmount || 0).toLocaleString('en-IN')}</span>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5">
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-800/70">This Month</p>
+        <div className="overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-indigo-800/70">Platform Fees</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-indigo-700">₹{loading ? '...' : metrics.currentMonth.toLocaleString('en-IN')}</span>
+            <span className="text-3xl font-black text-indigo-700">₹{loading ? '...' : (actualAmounts.platformFeesAmount || 0).toLocaleString('en-IN')}</span>
           </div>
         </div>
         
-        <div className="overflow-hidden rounded-2xl border border-violet-100 bg-violet-50/50 p-5">
-          <p className="text-xs font-bold uppercase tracking-wider text-violet-800/70">Avg. Per Booking</p>
+        <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-emerald-800/70">Service Amount</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-violet-700">₹{loading ? '...' : metrics.average.toLocaleString('en-IN')}</span>
+            <span className="text-3xl font-black text-emerald-700">₹{loading ? '...' : (actualAmounts.serviceAmount || 0).toLocaleString('en-IN')}</span>
           </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Filtered Total</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Avg. Comm. / Booking</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900">₹{loading ? '...' : metrics.filteredTotal.toLocaleString('en-IN')}</span>
+            <span className="text-3xl font-black text-slate-900">₹{loading ? '...' : metrics.average.toLocaleString('en-IN')}</span>
           </div>
         </div>
       </div>

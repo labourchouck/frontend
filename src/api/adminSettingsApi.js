@@ -5,6 +5,10 @@ export const adminSettingsApi = {
     return apiRequest('/admin/settings', { method: 'GET' })
   },
 
+  getCommissionFeeAmounts: () => {
+    return apiRequest('/admin/commission-fee', { method: 'GET' })
+  },
+
   updatePlatformFees: (payload) => {
     return apiRequest('/admin/settings/platform-fees', {
       method: 'PATCH',
