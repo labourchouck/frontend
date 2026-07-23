@@ -1,7 +1,36 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Zap, CalendarClock } from 'lucide-react'
+import LottieExport from 'lottie-react'
+const Lottie = LottieExport.default || LottieExport
+
+const TypewriterText = ({ text, className }) => {
+  const [displayedText, setDisplayedText] = useState('');
+
+  useEffect(() => {
+    let i = 0;
+    setDisplayedText(''); // Reset on mount
+    const interval = setInterval(() => {
+      if (i <= text.length) {
+        setDisplayedText(text.slice(0, i));
+        i++;
+      } else {
+        // Pause for 2 seconds (20 ticks) at the end, then loop
+        if (i > text.length + 20) {
+          i = 0;
+        } else {
+          i++;
+        }
+      }
+    }, 100); // 100ms per tick
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return <span className={className}>{displayedText || '\u00A0'}</span>;
+};
+import instantAnimation from '../../../assets/lotties/booking (1).json'
+import scheduleAnimation from '../../../assets/lotties/schedule.json'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { IndividualHomeCategoryRail } from '../../../components/app/individual/IndividualHomeCategoryRail.jsx'
 import { IndividualHomeHeroCarousel } from '../../../components/app/individual/IndividualHomeHeroCarousel.jsx'
@@ -288,21 +317,23 @@ export function IndividualHomeScreen({ user }) {
           formatDay={formatBookingDay}
         />
 
-        <div className="mx-4 flex items-center justify-center gap-4 py-4">
+        <div className="mx-2 flex items-stretch justify-center gap-2 py-2">
           <button
             onClick={() => navigate('/app/search')}
-            className="group relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-[2rem] bg-emerald-500 py-3.5 shadow-[0_6px_0_#047857,_0_12px_20px_rgba(16,185,129,0.3)] transition-all hover:bg-emerald-400 active:translate-y-[4px] active:shadow-[0_2px_0_#047857,_0_6px_10px_rgba(16,185,129,0.3)]"
+            className="group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 p-2 border border-slate-200 shadow-sm shadow-emerald-500/15 transition-all active:scale-95 hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/30 hover:border-emerald-200"
+            aria-label="Instant Booking"
           >
-            <Zap className="relative z-10 h-5 w-5 text-white transition-transform group-hover:scale-110" strokeWidth={2.5} />
-            <span className="relative z-10 text-xs font-black uppercase tracking-wider text-white drop-shadow-md">Instant</span>
+            <TypewriterText text="Instant" className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-700" />
+            <Lottie animationData={instantAnimation} loop={true} className="h-16 w-16 object-contain" />
           </button>
 
           <button
             onClick={() => navigate('/app/search')}
-            className="group relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-[2rem] bg-slate-800 py-3.5 shadow-[0_6px_0_#0f172a,_0_12px_20px_rgba(15,23,42,0.3)] transition-all hover:bg-slate-700 active:translate-y-[4px] active:shadow-[0_2px_0_#0f172a,_0_6px_10px_rgba(15,23,42,0.3)]"
+            className="group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 p-2 border border-slate-200 shadow-sm shadow-emerald-500/15 transition-all active:scale-95 hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/30 hover:border-emerald-200"
+            aria-label="Schedule Booking"
           >
-            <CalendarClock className="relative z-10 h-5 w-5 text-white transition-transform group-hover:scale-110" strokeWidth={2.5} />
-            <span className="relative z-10 text-xs font-black uppercase tracking-wider text-white drop-shadow-md">Schedule</span>
+            <TypewriterText text="Schedule" className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-700" />
+            <Lottie animationData={scheduleAnimation} loop={true} className="h-14 w-14 object-contain" />
           </button>
         </div>
 
