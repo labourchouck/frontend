@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { Zap, CalendarClock } from 'lucide-react'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { IndividualHomeCategoryRail } from '../../../components/app/individual/IndividualHomeCategoryRail.jsx'
 import { IndividualHomeHeroCarousel } from '../../../components/app/individual/IndividualHomeHeroCarousel.jsx'
@@ -286,6 +287,24 @@ export function IndividualHomeScreen({ user }) {
           loading={bookingsLoading}
           formatDay={formatBookingDay}
         />
+
+        <div className="mx-4 flex items-center justify-center gap-4 py-4">
+          <button
+            onClick={() => navigate('/app/search')}
+            className="group relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-[2rem] bg-emerald-500 py-3.5 shadow-[0_6px_0_#047857,_0_12px_20px_rgba(16,185,129,0.3)] transition-all hover:bg-emerald-400 active:translate-y-[4px] active:shadow-[0_2px_0_#047857,_0_6px_10px_rgba(16,185,129,0.3)]"
+          >
+            <Zap className="relative z-10 h-5 w-5 text-white transition-transform group-hover:scale-110" strokeWidth={2.5} />
+            <span className="relative z-10 text-xs font-black uppercase tracking-wider text-white drop-shadow-md">Instant</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/app/search')}
+            className="group relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-[2rem] bg-slate-800 py-3.5 shadow-[0_6px_0_#0f172a,_0_12px_20px_rgba(15,23,42,0.3)] transition-all hover:bg-slate-700 active:translate-y-[4px] active:shadow-[0_2px_0_#0f172a,_0_6px_10px_rgba(15,23,42,0.3)]"
+          >
+            <CalendarClock className="relative z-10 h-5 w-5 text-white transition-transform group-hover:scale-110" strokeWidth={2.5} />
+            <span className="relative z-10 text-xs font-black uppercase tracking-wider text-white drop-shadow-md">Schedule</span>
+          </button>
+        </div>
 
         <IndividualHomeWorkerCarousel
           title="Nearby labour"
