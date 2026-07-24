@@ -23,6 +23,7 @@ function vendorHidesShellHeader(pathname) {
   if (pathname.startsWith('/vendor/analytics')) return true
   if (pathname.startsWith('/vendor/support')) return true
   if (pathname.startsWith('/vendor/profile')) return true
+  if (pathname.startsWith('/vendor/mart')) return true
   return false
 }
 

@@ -123,3 +123,22 @@ export async function fetchAppMartBanners() {
   const data = await apiRequest('/buildmart/app/banners');
   return data;
 }
+
+export async function getAdminBuildmartProducts(status = 'PENDING') {
+  const query = status ? `?status=${status}` : '';
+  const data = await apiRequest(`/buildmart/admin/products${query}`);
+  return data;
+}
+
+export async function getAdminBuildmartProductById(id) {
+  const data = await apiRequest(`/buildmart/admin/products/${id}`);
+  return data;
+}
+
+export async function reviewAdminBuildmartProduct(id, payload) {
+  const data = await apiRequest(`/buildmart/admin/products/${id}/review`, {
+    method: 'PATCH',
+    body: payload,
+  });
+  return data;
+}

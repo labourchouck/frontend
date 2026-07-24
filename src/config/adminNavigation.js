@@ -22,6 +22,7 @@ import {
   Wrench,
   Map,
   HandCoins,
+  ClipboardCheck,
 } from 'lucide-react'
 
 /**
@@ -79,6 +80,7 @@ export const ADMIN_NAV_SECTIONS = [
     title: 'Operations',
     items: [
       { to: '/admin/mart', label: 'Mart', icon: Package },
+      { to: '/admin/mart/reviews', label: 'Product Reviews', icon: ClipboardCheck },
       { to: '/admin/bookings', label: 'Bookings & requests', icon: ClipboardList },
       { to: '/admin/allocations', label: 'Workforce allocation', icon: Network },
       { to: '/admin/attendance', label: 'Attendance', icon: Clock },

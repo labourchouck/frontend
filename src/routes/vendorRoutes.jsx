@@ -9,6 +9,9 @@ import { VendorEarningsPage } from '../panels/vendor/pages/VendorEarningsPage.js
 import { VendorProfilePage } from '../panels/vendor/pages/VendorProfilePage.jsx'
 import { VendorSupportPage } from '../panels/vendor/pages/VendorSupportPage.jsx'
 import { VendorAnalyticsPage } from '../panels/vendor/pages/VendorAnalyticsPage.jsx'
+import { VendorMartPage } from '../panels/vendor/pages/VendorMartPage.jsx'
+import { VendorMartProductCreatePage } from '../panels/vendor/pages/VendorMartProductCreatePage.jsx'
+import { VendorMartProductsListPage } from '../panels/vendor/pages/VendorMartProductsListPage.jsx'
 
 /** Nested `/vendor/*` routes — Fragment of `<Route>` nodes for React Router. */
 export const vendorChildRoutes = (
@@ -23,5 +26,10 @@ export const vendorChildRoutes = (
     <Route path="analytics" element={<VendorAnalyticsPage />} />
     <Route path="profile" element={<VendorProfilePage />} />
     <Route path="support" element={<VendorSupportPage />} />
+    <Route path="mart">
+      <Route index element={<VendorMartPage />} />
+      <Route path="category/:categoryId" element={<VendorMartProductCreatePage />} />
+      <Route path="products" element={<VendorMartProductsListPage />} />
+    </Route>
   </>
 )

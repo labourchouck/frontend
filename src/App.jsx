@@ -21,6 +21,7 @@ import { AdminUsersPage } from './pages/admin/AdminUsersPage.jsx'
 import { AdminLabourPage } from './pages/admin/AdminLabourPage.jsx'
 import { AdminBusinessVerificationPage } from './pages/admin/AdminBusinessVerificationPage.jsx'
 import { AdminMartPage } from './pages/admin/AdminMartPage.jsx'
+import { AdminMartProductReviewsPage } from './pages/admin/AdminMartProductReviewsPage.jsx'
 import { AdminBookingsPage } from './pages/admin/AdminBookingsPage.jsx'
 import { AdminAllocationsPage } from './pages/admin/AdminAllocationsPage.jsx'
 import { AdminAttendancePage } from './pages/admin/AdminAttendancePage.jsx'
@@ -121,6 +122,7 @@ function App() {
             <Route path="labour" element={<AdminLabourPage />} />
             <Route path="business-verification" element={<AdminBusinessVerificationPage />} />
             <Route path="mart" element={<AdminMartPage />} />
+            <Route path="mart/reviews" element={<AdminMartProductReviewsPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
             <Route path="allocations" element={<AdminAllocationsPage />} />
             <Route path="attendance" element={<AdminAttendancePage />} />

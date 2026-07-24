@@ -18,7 +18,7 @@ export function VendorPageLayout({ hero, children, sheet = false }) {
   }
 
   return (
-    <div className="min-w-0 space-y-4 overflow-x-hidden pb-2">
+    <div className="min-w-0 w-full space-y-4 overflow-x-hidden pb-2">
       {hero}
       {children ? <div className="space-y-4 px-4">{children}</div> : null}
     </div>

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Users,
   Wallet,
+  ShoppingCart,
 } from 'lucide-react'
 import { ApprovalGate } from '../../components/shared/ApprovalGate.jsx'
 import { AppSectionHeader } from '../../components/app-ui/layout/AppSectionHeader.jsx'
@@ -232,6 +233,21 @@ export function VendorHomeScreen({ user }) {
             </ul>
           </section>
         ) : null}
+
+        <section className="mb-4">
+          <Link to="/vendor/mart" className="block">
+            <div className="flex items-center gap-4 rounded-3xl border border-white/10 buildmart-gradient p-4 buildmart-glow transition-all hover:-translate-y-0.5 hover:shadow-xl">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                <ShoppingCart className="h-5 w-5 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-bold text-white">App Mart</h3>
+                <p className="truncate text-xs font-medium text-white/90">Buy materials, tools & safety gear</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-white opacity-70" />
+            </div>
+          </Link>
+        </section>
 
         <section>
           <AppSectionHeader title="Supply workflow" />
