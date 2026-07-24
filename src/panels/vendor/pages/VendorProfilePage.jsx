@@ -80,7 +80,7 @@ export function VendorProfilePage() {
   const reviewNote = profile?.reviewNote
   const isApproved = status === 'approved'
   const inReview = Boolean(submittedAt) && !isApproved && status !== 'rejected'
-  const canEdit = !isApproved && !inReview
+  const canEdit = !inReview
 
   const [form, setForm] = useState(() => profileToForm(profile, user))
   const [docType, setDocType] = useState(VENDOR_DOCUMENT_TYPES.SHOP_ESTABLISHMENT)
