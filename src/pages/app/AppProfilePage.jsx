@@ -38,6 +38,9 @@ import { assetUrlFromUpload, uploadMedia } from '../../api/uploadApi.js'
 import { UPLOAD_FOLDERS } from '../../constants/uploadFolders.js'
 import { AppBadge } from '../../components/app-ui/data-display/AppBadge.jsx'
 import { AppSectionHeader } from '../../components/app-ui/layout/AppSectionHeader.jsx'
+import { AppModal } from '../../components/app-ui/feedback/AppModal.jsx'
+import { AppTextInput } from '../../components/app-ui/inputs/AppTextInput.jsx'
+import { AppButton } from '../../components/app-ui/buttons/AppButton.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { patchCurrentUser } from '../../api/userProfileApi.js'
 import { ApiError } from '../../api/http.js'
@@ -164,6 +167,11 @@ export function AppProfilePage() {
   const [photoErr, setPhotoErr] = useState('')
   const [localPreview, setLocalPreview] = useState(null)
 
+  const [editNameOpen, setEditNameOpen] = useState(false)
+  const [editNameValue, setEditNameValue] = useState('')
+  const [savingName, setSavingName] = useState(false)
+  const [nameErr, setNameErr] = useState('')
+
   const labourCategories = user?.labourProfile?.categoryIds
   const labourKyc = user?.labourProfile?.kycStatus
   const statusPill = roleStatusPill(user)
@@ -239,6 +247,32 @@ export function AppProfilePage() {
       setPhotoSaving(false)
     }
   }, [dispatch])
+
+  const handleEditNameOpen = useCallback(() => {
+    setEditNameValue(user?.fullName || '')
+    setNameErr('')
+    setEditNameOpen(true)
+  }, [user?.fullName])
+
+  const handleSaveName = useCallback(async (e) => {
+    e.preventDefault()
+    const trimmed = editNameValue.trim()
+    if (!trimmed) {
+      setNameErr('Name cannot be empty')
+      return
+    }
+    setSavingName(true)
+    setNameErr('')
+    try {
+      const res = await patchCurrentUser({ fullName: trimmed })
+      dispatch(setUser(res.data.user))
+      setEditNameOpen(false)
+    } catch (err) {
+      setNameErr(err instanceof ApiError ? err.message : 'Could not save name')
+    } finally {
+      setSavingName(false)
+    }
+  }, [editNameValue, dispatch])
 
   const handleSignOut = () => {
     logout()
@@ -400,7 +434,23 @@ export function AppProfilePage() {
 
       <GlassPanel className="border-slate-200/90 p-4 ring-1 ring-slate-100/90">
         <AppSectionHeader title="Account details" className="mb-1" />
-        <DetailRow icon={Sparkles} label="Full name" value={user?.fullName || '—'} />
+        <DetailRow 
+          icon={Sparkles} 
+          label="Full name" 
+          value={
+            <div className="flex items-center justify-end gap-2">
+              <span className="truncate">{user?.fullName || '—'}</span>
+              <button
+                type="button"
+                onClick={handleEditNameOpen}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-brand/10 hover:text-brand"
+                aria-label="Edit name"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          } 
+        />
         <DetailRow
           icon={Phone}
           label="Mobile"
@@ -492,6 +542,42 @@ export function AppProfilePage() {
           dev token: {token.slice(0, 28)}…
         </p>
       ) : null}
+
+      <AppModal 
+        open={editNameOpen} 
+        onClose={() => !savingName && setEditNameOpen(false)} 
+        title="Edit Profile Name"
+      >
+        <form onSubmit={handleSaveName} className="space-y-4">
+          <div>
+            <label htmlFor="edit-full-name" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
+              Full Name
+            </label>
+            <AppTextInput
+              id="edit-full-name"
+              placeholder="e.g. Rahul Kumar"
+              value={editNameValue}
+              onChange={(e) => setEditNameValue(e.target.value)}
+              disabled={savingName}
+              autoFocus
+            />
+            {nameErr ? <p className="mt-1.5 text-xs font-medium text-rose-600">{nameErr}</p> : null}
+          </div>
+          <div className="flex gap-3 pt-2">
+            <AppButton 
+              type="button" 
+              variant="secondary" 
+              onClick={() => setEditNameOpen(false)} 
+              disabled={savingName}
+            >
+              Cancel
+            </AppButton>
+            <AppButton type="submit" loading={savingName}>
+              Save
+            </AppButton>
+          </div>
+        </form>
+      </AppModal>
     </motion.div>
   )
 }
