@@ -157,51 +157,81 @@ export function AdminBuildMartLeadsPage() {
             return (
               <GlassPanel key={lead._id} className="p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 space-y-1">
+                  <div className="min-w-0 space-y-1 w-full">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-extrabold text-slate-900">{lead.productName}</p>
+                      <p className="text-base font-extrabold text-slate-900">{lead.productName}</p>
                       <StatusPill status={lead.status} />
                     </div>
                     {lead.variantLabel ? (
-                      <p className="text-xs font-medium text-slate-500">Variant: {lead.variantLabel}</p>
+                      <p className="text-xs font-bold text-brand tracking-wide uppercase">Variant: {lead.variantLabel}</p>
                     ) : null}
-                    <p className="text-sm text-slate-700">
-                      {lead.name} · <span className="font-mono">{lead.phone}</span>
-                    </p>
-                    <p className="text-xs text-slate-500">{lead.siteLocation}</p>
-                    <p className="text-xs font-semibold text-slate-600">
-                      Qty: {lead.quantity}
-                      {lead.deliveryDate ? ` · Delivery ${lead.deliveryDate}` : ''}
-                    </p>
-                    {lead.notes ? <p className="text-xs italic text-slate-500">{lead.notes}</p> : null}
-                    <p className="text-[10px] text-slate-400">
-                      {new Date(lead.createdAt).toLocaleString()}
-                      {lead.userRole ? ` · ${lead.userRole}` : ''}
+                    
+                    <div className="bg-slate-50 rounded-2xl p-4 mt-3 ring-1 ring-slate-100">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Customer Details</p>
+                          <p className="font-bold text-slate-800">{lead.name}</p>
+                          <p className="text-slate-600 font-mono mt-0.5">{lead.phone}</p>
+                          <p className="text-slate-500 text-[11px] mt-1">Role: <span className="font-semibold text-slate-700 capitalize">{lead.userRole || 'Unknown'}</span></p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Requirements</p>
+                          <p className="font-bold text-slate-800">Qty: {lead.quantity}</p>
+                          <p className="text-slate-600 mt-0.5">{lead.siteLocation}</p>
+                          {lead.deliveryDate && <p className="text-slate-600 text-xs mt-1 font-semibold">Delivery: {lead.deliveryDate}</p>}
+                        </div>
+                      </div>
+                      
+                      {lead.notes && (
+                        <div className="mt-3 pt-3 border-t border-slate-200/70">
+                          <p className="text-xs font-semibold text-slate-700"><span className="text-slate-500">Notes:</span> {lead.notes}</p>
+                        </div>
+                      )}
+                      
+                      <div className="mt-3 pt-3 border-t border-slate-200/70">
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Vendor Assignment</p>
+                         {lead.vendorId ? (
+                           <div>
+                             <p className="font-bold text-slate-800">{lead.vendorId.fullName || lead.vendorId.businessName || 'Assigned Vendor'}</p>
+                             <p className="text-slate-600 font-mono text-xs mt-0.5">{lead.vendorId.phone} {lead.vendorId.email ? `· ${lead.vendorId.email}` : ''}</p>
+                           </div>
+                         ) : (
+                           <p className="text-xs font-semibold text-amber-600">Unassigned (No vendor matching this product)</p>
+                         )}
+                      </div>
+                    </div>
+                    
+                    <p className="text-[10px] font-bold text-slate-400 pt-2">
+                      Received: {new Date(lead.createdAt).toLocaleString()} · Source: {lead.source || 'buildmart_app'}
                     </p>
                   </div>
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <select
-                      value={lead.status}
-                      onChange={(e) => handleStatusChange(lead._id, e.target.value)}
-                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-bold"
-                    >
-                      {STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="flex shrink-0 flex-col gap-2 sm:items-end w-full sm:w-auto mt-3 sm:mt-0">
                     {wa ? (
                       <a
                         href={wa}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#20bd5a] w-full"
                       >
-                        <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                        <MessageCircle className="h-4 w-4" aria-hidden />
                         WhatsApp
                       </a>
                     ) : null}
+                    
+                    <div className="w-full">
+                      <select
+                        value={lead.status}
+                        onChange={(e) => handleStatusChange(lead._id, e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-700 focus:border-brand focus:ring-1 focus:ring-brand"
+                      >
+                        <option value="" disabled>Update Status</option>
+                        {STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => (
+                          <option key={o.value} value={o.value}>
+                            Mark as {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </GlassPanel>
