@@ -193,14 +193,18 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
   }, [tradeGroups, hubSearch])
 
   const syncFromUser = useCallback(() => {
-    let raw = user?.labourProfile?.subcategoryIds
-    if (!raw || raw.length === 0) raw = user?.labourProfile?.categoryIds ?? []
+    let raw = user?.labourProfile?.serviceIds
+    if (!raw || raw.length === 0) {
+      raw = user?.labourProfile?.subcategoryIds
+      if (!raw || raw.length === 0) raw = user?.labourProfile?.categoryIds ?? []
+    }
     const m = new Map()
     const pricings = user?.labourProfile?.servicePricing || []
     
     raw.forEach((x) => {
       const id = typeof x === 'object' && x?._id ? String(x._id) : String(x)
-      const pricing = pricings.find(p => String(p.subcategoryId) === id)
+      // First try to match by serviceId, fallback to subcategoryId for legacy profiles
+      const pricing = pricings.find(p => String(p.serviceId) === id || String(p.subcategoryId) === id)
       m.set(id, { minPrice: pricing?.minPrice || '', maxPrice: pricing?.maxPrice || '' })
     })
     setSelected(m)
@@ -218,7 +222,28 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
     fetchLabourCategoriesGrouped()
       .then((res) => {
         if (!cancelled) {
-          setGroups(res.data?.groups ?? [])
+          const rawGroups = res.data?.groups ?? []
+          
+          // Flatten subcategories to services for Labour UI
+          const modifiedGroups = rawGroups.map(group => {
+            const flattenedServices = []
+            for (const sub of group.categories || []) {
+              for (const srv of sub.services || []) {
+                flattenedServices.push({
+                  _id: srv._id,
+                  name: srv.name,
+                  subtitle: sub.name, // Display subcategory name as subtitle
+                  subcategoryId: sub._id
+                })
+              }
+            }
+            return {
+              ...group,
+              categories: flattenedServices
+            }
+          })
+          
+          setGroups(modifiedGroups)
           if (res.data?.meta) setMeta((m) => ({ ...m, ...res.data.meta }))
         }
       })
@@ -295,8 +320,20 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
         setError('Maximum price must be greater than or equal to minimum price.')
         return
       }
+      
+      // Look up the subcategoryId from the active groups
+      let subcategoryId = id
+      for (const group of tradeGroups) {
+        for (const cat of group.categories || []) {
+          if (String(cat._id) === id) {
+            if (cat.subcategoryId) subcategoryId = String(cat.subcategoryId)
+          }
+        }
+      }
+
       servicesPayload.push({
-        subcategoryId: id,
+        serviceId: id,
+        subcategoryId: subcategoryId,
         minPrice: Number(pricing.minPrice),
         maxPrice: Number(pricing.maxPrice)
       })

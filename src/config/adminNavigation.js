@@ -60,6 +60,7 @@ export const ADMIN_NAV_SECTIONS = [
     items: [
       { to: '/admin/users', label: 'Individuals & corporates', icon: Users },
       { to: '/admin/business-verification', label: 'Corporate & vendor KYC', icon: FileCheck },
+      { to: '/admin/vendors', label: 'Vendors & Crew', icon: Users },
     ],
   },
   {
@@ -138,6 +139,7 @@ const ROUTE_TITLES = [
   { prefix: '/admin/sub-categories', title: 'Sub-Categories' },
   { prefix: '/admin/categories', title: 'Categories' },
   { prefix: '/admin/business-verification', title: 'Corporate & vendor KYC' },
+  { prefix: '/admin/vendors', title: 'Vendors & Crew' },
   { prefix: '/admin/labour', title: 'Labour & KYC' },
   { prefix: '/admin/users', title: 'Individuals & corporates' },
   { prefix: '/admin/zones', title: 'Manage Radius' },

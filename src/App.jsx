@@ -39,6 +39,7 @@ import { AdminTimeSlotsPage } from './pages/admin/AdminTimeSlotsPage.jsx'
 import { AdminPlatformFeePage } from './pages/admin/AdminPlatformFeePage.jsx'
 import { AdminCommissionFeePage } from './pages/admin/AdminCommissionFeePage.jsx'
 import { AdminLabourWalletPage } from './pages/admin/AdminLabourWalletPage.jsx'
+import { AdminVendorsPage } from './pages/admin/AdminVendorsPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
@@ -120,6 +121,7 @@ function App() {
             <Route path="sub-categories" element={<AdminSubCategoriesPage />} />
             <Route path="services" element={<AdminServicesPage />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="vendors" element={<AdminVendorsPage />} />
             <Route path="labour" element={<AdminLabourPage />} />
             <Route path="business-verification" element={<AdminBusinessVerificationPage />} />
             <Route path="mart" element={<AdminMartPage />} />
