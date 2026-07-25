@@ -81,6 +81,7 @@ export const ADMIN_NAV_SECTIONS = [
     items: [
       { to: '/admin/mart', label: 'Mart', icon: Package },
       { to: '/admin/mart/reviews', label: 'Product Reviews', icon: ClipboardCheck },
+      { to: '/admin/mart/enquiries', label: 'Quote Leads', icon: MessageSquare },
       { to: '/admin/bookings', label: 'Bookings & requests', icon: ClipboardList },
       { to: '/admin/allocations', label: 'Workforce allocation', icon: Network },
       { to: '/admin/attendance', label: 'Attendance', icon: Clock },
@@ -129,6 +130,8 @@ const ROUTE_TITLES = [
   { prefix: '/admin/billing', title: 'Payments & billing' },
   { prefix: '/admin/attendance', title: 'Attendance' },
   { prefix: '/admin/allocations', title: 'Workforce allocation' },
+  { prefix: '/admin/mart/enquiries', title: 'Quote Leads' },
+  { prefix: '/admin/mart/reviews', title: 'Product Reviews' },
   { prefix: '/admin/mart', title: 'Mart' },
   { prefix: '/admin/bookings', title: 'Bookings & requests' },
   { prefix: '/admin/services', title: 'Services' },

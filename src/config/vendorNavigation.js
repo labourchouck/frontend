@@ -7,6 +7,8 @@ import {
   LifeBuoy,
   UserRound,
   Users,
+  Package,
+  MessageCircle,
 } from 'lucide-react'
 
 export const vendorNavigation = {
@@ -24,6 +26,8 @@ export const vendorNavigation = {
     { id: 'crew', to: '/vendor/crew', label: 'Workforce', icon: Users },
     { id: 'attendance', to: '/vendor/attendance', label: 'Attendance', icon: Clock },
     { id: 'earnings', to: '/vendor/earnings', label: 'Earnings & payouts', icon: IndianRupee },
+    { id: 'mart', to: '/vendor/mart', label: 'My Products', icon: Package },
+    { id: 'enquiries', to: '/vendor/mart/enquiries', label: 'Product Leads', icon: MessageCircle },
     { id: 'analytics', to: '/vendor/analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'support', to: '/vendor/support', label: 'Support', icon: LifeBuoy },
     { id: 'profile', to: '/vendor/profile', label: 'Profile & KYC', icon: UserRound },
@@ -40,6 +44,9 @@ export function getVendorTitle(pathname) {
   if (pathname.startsWith('/vendor/earnings')) return 'Earnings'
   if (pathname.startsWith('/vendor/analytics')) return 'Analytics'
   if (pathname.startsWith('/vendor/support')) return 'Support'
+  if (pathname.startsWith('/vendor/mart/enquiries')) return 'Product Leads'
+  if (pathname.startsWith('/vendor/mart/products')) return 'My Products'
+  if (pathname.startsWith('/vendor/mart')) return 'Mart'
   if (pathname.startsWith('/vendor/profile')) return 'Profile'
   return 'Dashboard'
 }

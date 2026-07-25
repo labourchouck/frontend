@@ -71,7 +71,7 @@ export function VendorAppShell() {
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
 
   return (
-    <div className="relative min-h-dvh w-full text-slate-900" data-panel="vendor">
+    <div className="relative flex h-[100dvh] flex-col overflow-hidden w-full text-slate-900" data-panel="vendor">
       <AppAmbientBackground />
 
       <AnimatePresence>
@@ -180,7 +180,7 @@ export function VendorAppShell() {
         ) : null}
       </AnimatePresence>
 
-      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-lg flex-col">
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-lg flex-col">
         {isVendorHome ? (
           <>
             <div
@@ -195,7 +195,7 @@ export function VendorAppShell() {
         ) : null}
 
         {!hideShellHeader ? (
-          <header className="sticky top-0 z-30 px-3 pt-3">
+          <header className="shrink-0 z-30 px-3 pt-3">
             <GlassPanel className="flex items-center gap-3 px-3 py-2.5">
               <button
                 type="button"
@@ -217,7 +217,7 @@ export function VendorAppShell() {
         ) : null}
 
         <main
-          className={`relative z-10 min-w-0 flex-1 overflow-x-hidden pb-28 ${
+          className={`relative z-10 min-w-0 flex-1 overflow-y-auto overscroll-contain overflow-x-hidden pb-28 ${
             hideShellHeader
               ? 'px-0 pt-[max(0.25rem,env(safe-area-inset-top,0px))]'
               : 'px-4 pt-4'

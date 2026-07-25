@@ -89,9 +89,14 @@ export function VendorMartPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-orange-200">Categories</p>
             </div>
           </div>
-          <Link to="/vendor/mart/products" className="absolute right-4 top-10 flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20">
-            My Uploads
-          </Link>
+          <div className="absolute right-4 top-9 flex items-center gap-2">
+            <Link to="/vendor/mart/enquiries" className="flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20 shadow-sm ring-1 ring-white/20">
+              Product Leads
+            </Link>
+            <Link to="/vendor/mart/products" className="flex items-center rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20 shadow-sm ring-1 ring-white/20">
+              My Uploads
+            </Link>
+          </div>
 
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
