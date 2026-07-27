@@ -16,6 +16,18 @@ export const workforceApi = baseApi.injectEndpoints({
       transformResponse: unwrap,
       providesTags: ['Projects'],
     }),
+    getCorporateAnalytics: build.query({
+      query: (params) => ({ url: '/corporate/analytics', params }),
+      transformResponse: unwrap,
+    }),
+    getCorporateVendorAttendance: build.query({
+      query: (params) => ({ url: '/corporate/vendor-attendance', params }),
+      transformResponse: unwrap,
+    }),
+    getCorporateTransactions: build.query({
+      query: () => '/corporate/transactions',
+      transformResponse: unwrap,
+    }),
     createCorporateProject: build.mutation({
       query: (body) => ({ url: '/corporate/projects', method: 'POST', body }),
       transformResponse: unwrap,
@@ -72,6 +84,32 @@ export const workforceApi = baseApi.injectEndpoints({
       query: () => ({ url: '/corporate/verification/submit', method: 'POST' }),
       transformResponse: unwrap,
       invalidatesTags: ['CorporateProfile', 'BusinessVerification'],
+    }),
+    createCorporateComplaint: build.mutation({
+      query: (body) => ({ url: '/corporate/complaints', method: 'POST', body }),
+      transformResponse: unwrap,
+      invalidatesTags: ['Complaints'],
+    }),
+    getCorporateComplaints: build.query({
+      query: () => '/corporate/complaints',
+      transformResponse: unwrap,
+      providesTags: ['Complaints'],
+    }),
+    rateCorporateAssignment: build.mutation({
+      query: ({ assignmentId, ...body }) => ({
+        url: `/corporate/assignments/${assignmentId}/rate`,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: unwrap,
+    }),
+    initPayment: build.mutation({
+      query: (body) => ({ url: '/payments/init', method: 'POST', body }),
+      transformResponse: unwrap,
+    }),
+    verifyPayment: build.mutation({
+      query: (body) => ({ url: '/payments/verify', method: 'POST', body }),
+      transformResponse: unwrap,
     }),
     getVendorDashboard: build.query({
       query: () => '/vendor/dashboard',
