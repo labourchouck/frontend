@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
@@ -42,6 +42,7 @@ import {
 } from '../../../lib/vendorVerificationChecklist.js'
 import { CorporateVerificationChecklist } from '../../../components/corporate/CorporateVerificationChecklist.jsx'
 import { VendorVerificationHero } from '../../../components/vendor/VendorVerificationHero.jsx'
+import { VendorDeleteAccountModal } from '../../../components/vendor/VendorDeleteAccountModal.jsx'
 import { LabourKycWorkflowTimeline } from '../../../components/labour/kyc/LabourKycWorkflowTimeline.jsx'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
@@ -72,6 +73,7 @@ function profileToForm(profile, user) {
 export function VendorProfilePage() {
   const reduce = useReducedMotion()
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { user, logout } = useAuth()
   const profile = user?.contractorProfile
   const documents = profile?.documents ?? []
@@ -88,6 +90,7 @@ export function VendorProfilePage() {
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // API setup replaced with direct vendorApi calls inside handlers
 
@@ -223,6 +226,17 @@ export function VendorProfilePage() {
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleDeleteAccount = async () => {
+    await vendorApi.deleteAccount()
+    await logout()
+    navigate('/auth', { replace: true })
+  }
+
+  const handleSignOut = async () => {
+    await logout()
+    navigate('/auth', { replace: true })
   }
 
   const uploadedTypes = new Set(documents.map((d) => d.documentType).filter(Boolean))
@@ -620,16 +634,31 @@ export function VendorProfilePage() {
         </ul>
       </GlassPanel>
 
-      <div className="mt-8 pt-4">
+      <div className="mt-8 flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
-          onClick={logout}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-3.5 text-sm font-bold text-rose-600 transition hover:bg-rose-100"
+          onClick={() => setShowDeleteModal(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white py-3.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 sm:w-auto sm:px-6"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+          Delete account
+        </button>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100 sm:w-auto sm:px-6"
         >
           <LogOut className="h-4 w-4" aria-hidden />
           Sign out
         </button>
       </div>
+
+      {showDeleteModal && (
+        <VendorDeleteAccountModal
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteAccount}
+        />
+      )}
     </motion.div>
   )
 }

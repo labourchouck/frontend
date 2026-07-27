@@ -8,6 +8,10 @@ export const vendorApi = {
     method: 'PATCH', 
     body: data 
   }),
+
+  deleteAccount: () => apiRequest('/users/me', {
+    method: 'DELETE'
+  }),
   
   uploadDocument: (data) => apiRequest('/vendor/documents', { 
     method: 'POST', 

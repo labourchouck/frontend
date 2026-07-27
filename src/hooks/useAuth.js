@@ -28,7 +28,7 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      await apiRequest('/logout', { method: 'POST' })
+      await apiRequest('/auth/logout', { method: 'POST' })
     } catch (e) {
       // Ignore network errors on logout
     }

@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Users } from 'lucide-react'
+import { ArrowLeft, Users, Star, Loader2 } from 'lucide-react'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
+import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { PipelineTimeline } from '../../../components/shared/PipelineTimeline.jsx'
-import { useGetRequestQuery } from '../../../store/api/workforceApi.js'
+import { useGetRequestQuery, useRateCorporateAssignmentMutation } from '../../../store/api/workforceApi.js'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -12,9 +14,27 @@ function formatDate(d) {
 export function CorporateRequestDetailPage() {
   const { id } = useParams()
   const { data, isLoading, isError } = useGetRequestQuery(id, { skip: !id })
+  const [rateAssignment, { isLoading: isRating }] = useRateCorporateAssignmentMutation()
+
+  const [ratingState, setRatingState] = useState({ id: null, rating: 5, comment: '' })
 
   const request = data?.request
   const assignments = data?.assignments ?? []
+
+  const handleRate = async (assignmentId) => {
+    try {
+      await rateAssignment({
+        assignmentId,
+        rating: ratingState.rating,
+        comment: ratingState.comment
+      }).unwrap()
+      alert('Rating submitted successfully')
+      setRatingState({ id: null, rating: 5, comment: '' })
+    } catch (err) {
+      console.error(err)
+      alert('Failed to submit rating')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -76,16 +96,68 @@ export function CorporateRequestDetailPage() {
         ) : (
           <ul className="mt-3 divide-y divide-slate-100">
             {assignments.map((a) => (
-              <li key={a._id} className="flex items-center justify-between py-2.5">
-                <div>
-                  <p className="text-sm font-bold text-slate-900">
-                    {a.labourId?.fullName || 'Worker'}
-                  </p>
-                  <p className="text-xs text-slate-500">{a.labourId?.phone || a.status}</p>
+              <li key={a._id} className="flex flex-col py-2.5 border-b border-slate-100 last:border-0">
+                <div className="flex w-full items-start justify-between py-1">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">
+                      {a.labourId?.fullName || 'Worker'}
+                    </p>
+                    <p className="text-xs text-slate-500">{a.labourId?.phone || a.status}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">
+                      {a.status}
+                    </span>
+                    {a.status !== 'CANCELLED' && ratingState.id !== a._id && (
+                      <button 
+                        onClick={() => setRatingState({ id: a._id, rating: 5, comment: '' })}
+                        className="text-[10px] font-bold text-brand uppercase tracking-wider hover:underline"
+                      >
+                        Rate Worker
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">
-                  {a.status}
-                </span>
+                
+                {/* INLINE RATING FORM */}
+                {ratingState.id === a._id && (
+                  <div className="bg-slate-50 rounded-lg p-3 mb-2 border border-slate-200">
+                    <p className="text-xs font-bold text-slate-700 mb-2">Rate {a.labourId?.fullName || 'Worker'}</p>
+                    <div className="flex gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <button 
+                          key={star} 
+                          onClick={() => setRatingState(prev => ({ ...prev, rating: star }))}
+                        >
+                          <Star className={`h-5 w-5 ${ratingState.rating >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+                        </button>
+                      ))}
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="Add a comment..."
+                      className="w-full text-xs p-2 rounded border border-slate-200 mb-2 outline-none focus:ring-1 focus:ring-brand"
+                      value={ratingState.comment}
+                      onChange={(e) => setRatingState(prev => ({ ...prev, comment: e.target.value }))}
+                    />
+                    <div className="flex items-center gap-2">
+                      <AppPrimaryButton 
+                        onClick={() => handleRate(a._id)} 
+                        disabled={isRating}
+                        className="!py-1.5 !px-3 !text-[10px]"
+                      >
+                        {isRating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                        Submit Rating
+                      </AppPrimaryButton>
+                      <button 
+                        onClick={() => setRatingState({ id: null, rating: 5, comment: '' })}
+                        className="text-[10px] font-bold text-slate-500 uppercase hover:text-slate-700"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
