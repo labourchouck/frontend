@@ -14,6 +14,7 @@ import {
   Trash2,
   Upload,
   Users,
+  LogOut,
 } from 'lucide-react'
 import { assetUrlFromUpload, uploadDocument } from '../../../api/uploadApi.js'
 import { UPLOAD_FOLDERS } from '../../../constants/uploadFolders.js'
@@ -71,7 +72,7 @@ function profileToForm(profile, user) {
 export function VendorProfilePage() {
   const reduce = useReducedMotion()
   const dispatch = useDispatch()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const profile = user?.contractorProfile
   const documents = profile?.documents ?? []
 
@@ -618,6 +619,17 @@ export function VendorProfilePage() {
           })}
         </ul>
       </GlassPanel>
+
+      <div className="mt-8 pt-4">
+        <button
+          type="button"
+          onClick={logout}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-3.5 text-sm font-bold text-rose-600 transition hover:bg-rose-100"
+        >
+          <LogOut className="h-4 w-4" aria-hidden />
+          Sign out
+        </button>
+      </div>
     </motion.div>
   )
 }

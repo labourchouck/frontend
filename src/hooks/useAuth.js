@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { buildGuestUser, clearBootRole, readBootRole, writeBootRole } from '../lib/bootPersona.js'
 import { clearSession, setCredentials } from '../store/slices/authSlice.js'
+import { apiRequest } from '../api/http.js'
 
 export function useAuth() {
   const dispatch = useDispatch()
@@ -25,7 +26,12 @@ export function useAuth() {
     setBootRoleState(role)
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await apiRequest('/logout', { method: 'POST' })
+    } catch (e) {
+      // Ignore network errors on logout
+    }
     clearBootRole()
     setBootRoleState(null)
     dispatch(clearSession())

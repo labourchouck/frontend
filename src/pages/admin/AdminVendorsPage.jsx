@@ -103,9 +103,15 @@ export function AdminVendorsPage() {
                       {vendor.crew?.map(crew => (
                         <div key={crew._id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                           <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <UserCircle2 className="size-5 text-slate-400" />
-                              <span className="text-[13px] font-bold text-slate-800">{crew.fullName}</span>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <UserCircle2 className="size-8 text-slate-400 shrink-0" />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[13px] font-bold text-slate-800 truncate">{crew.fullName || '—'}</span>
+                                <div className="flex flex-col mt-0.5 text-[11px] font-medium text-slate-500">
+                                  <span className="truncate">{crew.email || 'No email'}</span>
+                                  <span>{crew.phone ? `+91 ${crew.phone}` : 'No phone'}</span>
+                                </div>
+                              </div>
                             </div>
                             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
                               {crew.labourProfile?.kycStatus === 'verified' ? 'KYC Verified' : crew.labourProfile?.kycStatus}

@@ -11,11 +11,14 @@ import {
   ShieldCheck,
   Store,
   X,
+  Trash2,
 } from 'lucide-react'
 import { CORPORATE_DOCUMENT_LABELS } from '../../constants/corporateVerification.js'
 import { VENDOR_DOCUMENT_LABELS, VENDOR_TYPE_LABELS } from '../../constants/vendorVerification.js'
 import { CORPORATE_STATUS } from '../../constants/userRoles.js'
 import { AdminVerificationProfileDetails } from '../../components/admin/AdminVerificationProfileDetails.jsx'
+import { AdminBusinessDeleteModal } from './components/AdminBusinessDeleteModal.jsx'
+import { deleteAdminUser } from '../../api/adminUsersApi.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import {
@@ -100,6 +103,7 @@ export function AdminBusinessVerificationPage() {
 
   const [reviewId, setReviewId] = useState(null)
   const [detailUser, setDetailUser] = useState(null)
+  const [deletingUser, setDeletingUser] = useState(null)
   const [reviewNote, setReviewNote] = useState('')
   const [detailError, setDetailError] = useState('')
 
@@ -370,17 +374,27 @@ export function AdminBusinessVerificationPage() {
                           {p?.documents?.length ?? 0} file{(p?.documents?.length ?? 0) === 1 ? '' : 's'}
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => setReviewId(u._id)}
-                            className={`rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
-                              canReview
-                                ? 'border border-brand/30 bg-brand/10 text-brand hover:bg-brand/15'
-                                : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                            }`}
-                          >
-                            {canReview ? 'Review' : 'View'}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setReviewId(u._id)}
+                              className={`rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
+                                canReview
+                                  ? 'border border-brand/30 bg-brand/10 text-brand hover:bg-brand/15'
+                                  : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              {canReview ? 'Review' : 'View'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingUser(u)}
+                              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition-colors"
+                              title="Delete Business"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -452,17 +466,27 @@ export function AdminBusinessVerificationPage() {
                     <span className="text-xs text-slate-600">
                       {p?.documents?.length ?? 0} file{(p?.documents?.length ?? 0) === 1 ? '' : 's'}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setReviewId(u._id)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                        canReview
-                          ? 'border border-brand/30 bg-brand/10 text-brand hover:bg-brand/15'
-                          : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {canReview ? 'Review docs' : 'View docs'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setReviewId(u._id)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                          canReview
+                            ? 'border border-brand/30 bg-brand/10 text-brand hover:bg-brand/15'
+                            : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {canReview ? 'Review docs' : 'View docs'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeletingUser(u)}
+                        className="flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-100"
+                        title="Delete Business"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </GlassPanel>
               )
@@ -668,6 +692,19 @@ export function AdminBusinessVerificationPage() {
             </div>
           </motion.div>
         </div>
+      ) : null}
+
+      {deletingUser ? (
+        <AdminBusinessDeleteModal
+          user={deletingUser}
+          businessName={businessNameFor(deletingUser, tab)}
+          onClose={() => setDeletingUser(null)}
+          onConfirm={async (id) => {
+            await deleteAdminUser(id)
+            setDeletingUser(null)
+            activeQuery.refetch()
+          }}
+        />
       ) : null}
     </div>
   )
