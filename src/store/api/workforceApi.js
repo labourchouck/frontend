@@ -62,6 +62,10 @@ export const workforceApi = baseApi.injectEndpoints({
       transformResponse: unwrap,
       invalidatesTags: ['Requests', 'CorporateDashboard', 'AdminRequests'],
     }),
+    searchVendors: build.mutation({
+      query: (body) => ({ url: '/corporate/vendors/search', method: 'POST', body }),
+      transformResponse: unwrap,
+    }),
     getCorporateInvoices: build.query({
       query: () => '/corporate/invoices',
       transformResponse: unwrap,
@@ -286,6 +290,7 @@ export const {
   useGetMyRequestsQuery,
   useGetRequestQuery,
   useCreateRequestMutation,
+  useSearchVendorsMutation,
   useGetCorporateInvoicesQuery,
   usePatchCorporateMeMutation,
   useAddCorporateDocumentMutation,

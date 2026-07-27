@@ -4,9 +4,11 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { apiRequest } from '../../../api/http.js'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
+import { AppSearchableSelect } from '../../../components/app-ui/inputs/AppSearchableSelect.jsx'
 import {
   useCreateRequestMutation,
   useGetCorporateProjectsQuery,
+  useSearchVendorsMutation,
 } from '../../../store/api/workforceApi.js'
 
 const inputClass =
@@ -20,7 +22,7 @@ const SCHEDULE_OPTIONS = [
 ]
 
 function emptyLine() {
-  return { categoryId: '', quantity: 1 }
+  return { categoryId: '', serviceId: '', quantity: 1 }
 }
 
 export function CorporateRequestNewPage() {
@@ -29,7 +31,7 @@ export function CorporateRequestNewPage() {
   const [createRequest, { isLoading }] = useCreateRequestMutation()
   const projects = projectsData?.projects ?? []
 
-  const [projectId, setProjectId] = useState('')
+  const [projectName, setProjectName] = useState('')
   const [scheduleType, setScheduleType] = useState('daily')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -40,25 +42,22 @@ export function CorporateRequestNewPage() {
   const [lines, setLines] = useState([emptyLine()])
   const [categories, setCategories] = useState([])
   const [error, setError] = useState('')
+  const [searchResults, setSearchResults] = useState(null)
+  
+  const [searchVendors, { isLoading: isSearching }] = useSearchVendorsMutation()
 
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      try {
-        const json = await apiRequest('/labour-categories/grouped')
-        if (cancelled) return
-        const payload = json?.data ?? json
-        const flat = []
-        for (const group of payload?.groups ?? []) {
-          for (const c of group.categories ?? []) {
-            flat.push({ id: c._id || c.id, name: c.name, group: group.name })
-          }
+      ; (async () => {
+        try {
+          const json = await apiRequest('/labour-categories/grouped')
+          if (cancelled) return
+          const payload = json?.data ?? json
+          setCategories(payload?.groups ?? [])
+        } catch {
+          if (!cancelled) setCategories([])
         }
-        setCategories(flat)
-      } catch {
-        if (!cancelled) setCategories([])
-      }
-    })()
+      })()
     return () => {
       cancelled = true
     }
@@ -71,18 +70,37 @@ export function CorporateRequestNewPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSearchResults(null)
     const validLines = lines.filter((l) => l.categoryId)
     if (!validLines.length) {
       setError('Add at least one skill line')
       return
     }
+
+    try {
+      const res = await searchVendors({
+        lines: validLines.map((l) => ({
+          categoryId: l.categoryId,
+          serviceId: l.serviceId || undefined,
+          quantity: Number(l.quantity) || 1,
+        })),
+      }).unwrap()
+      setSearchResults(res.vendors || [])
+    } catch (err) {
+      setError(err?.data?.message || err?.message || 'Could not search vendors')
+    }
+  }
+
+  const handleFinalSubmit = async () => {
+    setError('')
+    const validLines = lines.filter((l) => l.categoryId)
     if (!startDate) {
       setError('Start date is required')
       return
     }
     try {
       await createRequest({
-        projectId: projectId || undefined,
+        projectName: projectName.trim() || undefined,
         scheduleType,
         startDate,
         endDate: endDate || undefined,
@@ -92,6 +110,7 @@ export function CorporateRequestNewPage() {
         notes: notes.trim() || undefined,
         lines: validLines.map((l) => ({
           categoryId: l.categoryId,
+          serviceId: l.serviceId || undefined,
           quantity: Number(l.quantity) || 1,
         })),
       }).unwrap()
@@ -115,14 +134,13 @@ export function CorporateRequestNewPage() {
             <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
               Project
             </label>
-            <select className={inputClass} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-              <option value="">No project</option>
-              {projects.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <input 
+              type="text"
+              className={inputClass} 
+              value={projectName} 
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="Enter project name (optional)"
+            />
           </div>
 
           <div>
@@ -134,45 +152,86 @@ export function CorporateRequestNewPage() {
                 className="inline-flex items-center gap-1 text-xs font-bold text-brand"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add line
+                Add More
               </button>
             </div>
-            <ul className="space-y-2">
-              {lines.map((line, idx) => (
-                <li key={idx} className="flex gap-2">
-                  <select
-                    className={`${inputClass} flex-1`}
-                    value={line.categoryId}
-                    onChange={(e) => updateLine(idx, { categoryId: e.target.value })}
-                    required={idx === 0}
-                  >
-                    <option value="">Select skill</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                        {c.group ? ` (${c.group})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min={1}
-                    className={`${inputClass} w-20`}
-                    value={line.quantity}
-                    onChange={(e) => updateLine(idx, { quantity: e.target.value })}
-                  />
-                  {lines.length > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-500"
-                      aria-label="Remove line"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </li>
-              ))}
+            <ul className="space-y-4">
+              {lines.map((line, idx) => {
+                const selectedCategory = categories.find(c => c._id === line.categoryId || c.id === line.categoryId)
+                let availableServices = []
+
+                if (selectedCategory) {
+                  const subcats = selectedCategory.categories || []
+                  subcats.forEach(sc => {
+                    if (sc.services) availableServices.push(...sc.services)
+                  })
+                } else {
+                  // If no category selected, show all services from all categories
+                  categories.forEach(c => {
+                    const subcats = c.categories || []
+                    subcats.forEach(sc => {
+                      if (sc.services) availableServices.push(...sc.services)
+                    })
+                  })
+                }
+
+                return (
+                  <li key={idx} className="flex flex-col sm:flex-row gap-3 items-end">
+                    <div className="flex-1 w-full">
+                      <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Category</label>
+                      <AppSearchableSelect
+                        value={line.categoryId}
+                        onChange={(val) => updateLine(idx, { categoryId: val, serviceId: '' })}
+                        options={categories.map(c => ({ value: c._id || c.id, label: c.name }))}
+                        placeholder="Select category"
+                      />
+                    </div>
+                    <div className="flex-1 w-full">
+                      <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Service</label>
+                      <AppSearchableSelect
+                        value={line.serviceId}
+                        onChange={(val) => {
+                          let patch = { serviceId: val };
+                          if (val && !line.categoryId) {
+                            for (const c of categories) {
+                              for (const sc of (c.categories || [])) {
+                                if ((sc.services || []).some(s => s._id === val)) {
+                                  patch.categoryId = c._id || c.id;
+                                  break;
+                                }
+                              }
+                              if (patch.categoryId) break;
+                            }
+                          }
+                          updateLine(idx, patch);
+                        }}
+                        options={availableServices.map(s => ({ value: s._id, label: s.name }))}
+                        placeholder="Select service (optional)"
+                      />
+                    </div>
+                    <div className="w-full sm:w-24 shrink-0">
+                      <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Count</label>
+                      <input
+                        type="number"
+                        min={1}
+                        className={`${inputClass}`}
+                        value={line.quantity}
+                        onChange={(e) => updateLine(idx, { quantity: e.target.value })}
+                      />
+                    </div>
+                    {lines.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}
+                        className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 mb-[2px]"
+                        aria-label="Remove line"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </li>
+                )
+              })}
             </ul>
           </div>
 
@@ -253,10 +312,54 @@ export function CorporateRequestNewPage() {
 
           {error ? <p className="text-sm font-semibold text-rose-700">{error}</p> : null}
 
-          <AppPrimaryButton type="submit" className="w-full" loading={isLoading}>
-            Submit request
+          <AppPrimaryButton type="submit" className="w-full" loading={isSearching}>
+            Search Vendors
           </AppPrimaryButton>
         </form>
+
+        {searchResults !== null && (
+          <div className="mt-8 border-t border-slate-100 pt-8">
+            <h3 className="mb-4 text-lg font-bold text-slate-800">
+              Matching Vendors ({searchResults.length})
+            </h3>
+            
+            {searchResults.length === 0 ? (
+              <div className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">
+                No vendors found matching all your requirements. Try adjusting your skill lines.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {searchResults.map((vendor) => (
+                  <div key={vendor._id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div>
+                      <h4 className="font-bold text-slate-800">{vendor.businessName}</h4>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {vendor.fullName} • ⭐ {vendor.rating.toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-brand">{vendor.matchingCrewSize} matching crew</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-8">
+              <AppPrimaryButton 
+                type="button" 
+                className="w-full bg-slate-800 hover:bg-slate-900" 
+                loading={isLoading}
+                onClick={handleFinalSubmit}
+              >
+                Submit Request to LabourChowck
+              </AppPrimaryButton>
+              <p className="mt-2 text-center text-xs text-slate-500">
+                We will notify matching vendors on your behalf
+              </p>
+            </div>
+          </div>
+        )}
       </AppSurface>
     </div>
   )
