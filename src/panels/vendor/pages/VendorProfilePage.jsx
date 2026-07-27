@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
@@ -73,6 +73,7 @@ function profileToForm(profile, user) {
 export function VendorProfilePage() {
   const reduce = useReducedMotion()
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { user, logout } = useAuth()
   const profile = user?.contractorProfile
   const documents = profile?.documents ?? []
@@ -229,7 +230,13 @@ export function VendorProfilePage() {
 
   const handleDeleteAccount = async () => {
     await vendorApi.deleteAccount()
-    logout()
+    await logout()
+    navigate('/auth', { replace: true })
+  }
+
+  const handleSignOut = async () => {
+    await logout()
+    navigate('/auth', { replace: true })
   }
 
   const uploadedTypes = new Set(documents.map((d) => d.documentType).filter(Boolean))
@@ -638,7 +645,7 @@ export function VendorProfilePage() {
         </button>
         <button
           type="button"
-          onClick={logout}
+          onClick={handleSignOut}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100 sm:w-auto sm:px-6"
         >
           <LogOut className="h-4 w-4" aria-hidden />
