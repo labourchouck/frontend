@@ -136,7 +136,7 @@ export function LabourHomeScreen({ user }) {
   const [activeBookings, setActiveBookings] = useState([])
 
   const loadBookings = useCallback(() => {
-    if (!user) return
+    if (!user || user.id === 'guest') return
     bookingsApi.getMyBookings().then(res => {
       setActiveBookings(res.data?.bookings || [])
     }).catch(err => {

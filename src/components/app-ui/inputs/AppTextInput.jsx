@@ -11,8 +11,7 @@ export const AppTextInput = forwardRef(function AppTextInput(
       {leftSlot ? <span className="shrink-0 text-slate-400">{leftSlot}</span> : null}
       <input
         ref={ref}
-        outline="none"
-        className={`min-w-0 flex-1 bg-transparent py-2.5 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 ${inputClassName}`}
+        className={`min-w-0 flex-1 bg-transparent py-2.5 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none ${inputClassName}`}
         {...rest}
       />
       {rightSlot ? <span className="shrink-0 text-slate-400">{rightSlot}</span> : null}

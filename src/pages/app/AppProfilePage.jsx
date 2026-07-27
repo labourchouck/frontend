@@ -24,6 +24,8 @@ import {
   ShieldCheck,
   Sparkles,
   Wrench,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react'
 import { BOOT_ROUTES } from '../../constants/bootFlow.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -42,7 +44,7 @@ import { AppModal } from '../../components/app-ui/feedback/AppModal.jsx'
 import { AppTextInput } from '../../components/app-ui/inputs/AppTextInput.jsx'
 import { AppButton } from '../../components/app-ui/buttons/AppButton.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
-import { patchCurrentUser } from '../../api/userProfileApi.js'
+import { patchCurrentUser, deleteCurrentUser } from '../../api/userProfileApi.js'
 import { ApiError } from '../../api/http.js'
 import { setUser } from '../../store/slices/authSlice.js'
 
@@ -157,7 +159,7 @@ function QuickLinkCard({ to, icon: Icon, label }) {
 }
 
 export function AppProfilePage() {
-  const { user, token, logout } = useAuth()
+  const { user, token, logout, setBootRole } = useAuth()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const reduce = useReducedMotion()
@@ -167,10 +169,16 @@ export function AppProfilePage() {
   const [photoErr, setPhotoErr] = useState('')
   const [localPreview, setLocalPreview] = useState(null)
 
-  const [editNameOpen, setEditNameOpen] = useState(false)
+  const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [editNameValue, setEditNameValue] = useState('')
-  const [savingName, setSavingName] = useState(false)
-  const [nameErr, setNameErr] = useState('')
+  const [editPhoneValue, setEditPhoneValue] = useState('')
+  const [editEmailValue, setEditEmailValue] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileErr, setProfileErr] = useState('')
+
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [deleteErr, setDeleteErr] = useState('')
 
   const labourCategories = user?.labourProfile?.categoryIds
   const labourKyc = user?.labourProfile?.kycStatus
@@ -248,36 +256,76 @@ export function AppProfilePage() {
     }
   }, [dispatch])
 
-  const handleEditNameOpen = useCallback(() => {
+  const handleEditProfileOpen = useCallback(() => {
     setEditNameValue(user?.fullName || '')
-    setNameErr('')
-    setEditNameOpen(true)
-  }, [user?.fullName])
+    setEditPhoneValue(user?.phone || '')
+    setEditEmailValue(user?.email || '')
+    setProfileErr('')
+    setEditProfileOpen(true)
+  }, [user])
 
-  const handleSaveName = useCallback(async (e) => {
+  const handleSaveProfile = useCallback(async (e) => {
     e.preventDefault()
-    const trimmed = editNameValue.trim()
-    if (!trimmed) {
-      setNameErr('Name cannot be empty')
+    const trimmedName = editNameValue.trim()
+    const trimmedPhone = editPhoneValue.trim()
+    const trimmedEmail = editEmailValue.trim()
+    
+    if (!trimmedName) {
+      setProfileErr('Name cannot be empty')
       return
     }
-    setSavingName(true)
-    setNameErr('')
-    try {
-      const res = await patchCurrentUser({ fullName: trimmed })
-      dispatch(setUser(res.data.user))
-      setEditNameOpen(false)
-    } catch (err) {
-      setNameErr(err instanceof ApiError ? err.message : 'Could not save name')
-    } finally {
-      setSavingName(false)
+    if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
+      setProfileErr('Enter a valid 10-digit phone number')
+      return
     }
-  }, [editNameValue, dispatch])
+    
+    setSavingProfile(true)
+    setProfileErr('')
+    try {
+      const res = await patchCurrentUser({ 
+        fullName: trimmedName,
+        phone: trimmedPhone || undefined,
+        email: trimmedEmail || undefined
+      })
+      dispatch(setUser(res.data.user))
+      setEditProfileOpen(false)
+    } catch (err) {
+      setProfileErr(err instanceof ApiError ? err.message : 'Could not save profile')
+    } finally {
+      setSavingProfile(false)
+    }
+  }, [editNameValue, editPhoneValue, editEmailValue, dispatch])
 
-  const handleSignOut = () => {
-    logout()
-    navigate(BOOT_ROUTES.SPLASH, { replace: true })
+  const handleSignOut = async () => {
+    const role = user?.role
+    await logout()
+    if (role === USER_ROLES.LABOUR) {
+      // Restore boot role so they land on guest labour home instead of individual home
+      setBootRole(role)
+      navigate('/app', { replace: true })
+    } else {
+      navigate(BOOT_ROUTES.SPLASH, { replace: true })
+    }
   }
+
+  const handleDeleteAccount = useCallback(async () => {
+    setDeletingAccount(true)
+    setDeleteErr('')
+    const role = user?.role
+    try {
+      await deleteCurrentUser()
+      await logout()
+      if (role === USER_ROLES.LABOUR) {
+        setBootRole(role)
+        navigate('/app', { replace: true })
+      } else {
+        navigate(BOOT_ROUTES.SPLASH, { replace: true })
+      }
+    } catch (err) {
+      setDeleteErr(err instanceof ApiError ? err.message : 'Could not delete account')
+      setDeletingAccount(false)
+    }
+  }, [user, logout, navigate, setBootRole])
 
   const quickLinks = []
   quickLinks.push({ to: '/app', icon: Home, label: 'Home' })
@@ -442,7 +490,7 @@ export function AppProfilePage() {
               <span className="truncate">{user?.fullName || '—'}</span>
               <button
                 type="button"
-                onClick={handleEditNameOpen}
+                onClick={handleEditProfileOpen}
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-brand/10 hover:text-brand"
                 aria-label="Edit name"
               >
@@ -454,10 +502,39 @@ export function AppProfilePage() {
         <DetailRow
           icon={Phone}
           label="Mobile"
-          value={user?.phone ? `+91 ${user.phone}` : '—'}
+          value={
+            <div className="flex items-center justify-end gap-2">
+              <span className="truncate">{user?.phone ? `+91 ${user.phone}` : '—'}</span>
+              <button
+                type="button"
+                onClick={handleEditProfileOpen}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-brand/10 hover:text-brand"
+                aria-label="Edit phone"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          }
           sub="Used for OTP sign-in"
         />
-        <DetailRow icon={Mail} label="Email" value={user?.email?.trim() || '—'} sub="Optional on your account" />
+        <DetailRow 
+          icon={Mail} 
+          label="Email" 
+          value={
+            <div className="flex items-center justify-end gap-2">
+              <span className="truncate">{user?.email?.trim() || '—'}</span>
+              <button
+                type="button"
+                onClick={handleEditProfileOpen}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-brand/10 hover:text-brand"
+                aria-label="Edit email"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          } 
+          sub="Optional on your account" 
+        />
         <DetailRow icon={ShieldCheck} label="Last session" value={lastActive || '—'} />
       </GlassPanel>
 
@@ -531,10 +608,19 @@ export function AppProfilePage() {
       <button
         type="button"
         onClick={handleSignOut}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200/90 bg-rose-50/90 py-3.5 text-sm font-bold text-rose-900 shadow-sm transition hover:bg-rose-50 active:scale-[0.99]"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-[0.99]"
       >
         <LogOut className="h-4 w-4" aria-hidden />
         Sign out
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setDeleteOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200/90 bg-rose-50/90 py-3.5 text-sm font-bold text-rose-900 shadow-sm transition hover:bg-rose-50 active:scale-[0.99]"
+      >
+        <Trash2 className="h-4 w-4" aria-hidden />
+        Delete account
       </button>
 
       {import.meta.env.DEV && token ? (
@@ -544,11 +630,11 @@ export function AppProfilePage() {
       ) : null}
 
       <AppModal 
-        open={editNameOpen} 
-        onClose={() => !savingName && setEditNameOpen(false)} 
-        title="Edit Profile Name"
+        open={editProfileOpen} 
+        onClose={() => !savingProfile && setEditProfileOpen(false)} 
+        title="Edit Profile"
       >
-        <form onSubmit={handleSaveName} className="space-y-4">
+        <form onSubmit={handleSaveProfile} className="space-y-4">
           <div>
             <label htmlFor="edit-full-name" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
               Full Name
@@ -558,25 +644,91 @@ export function AppProfilePage() {
               placeholder="e.g. Rahul Kumar"
               value={editNameValue}
               onChange={(e) => setEditNameValue(e.target.value)}
-              disabled={savingName}
+              disabled={savingProfile}
               autoFocus
             />
-            {nameErr ? <p className="mt-1.5 text-xs font-medium text-rose-600">{nameErr}</p> : null}
           </div>
+          <div>
+            <label htmlFor="edit-phone" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
+              Mobile Number
+            </label>
+            <AppTextInput
+              id="edit-phone"
+              type="tel"
+              placeholder="10-digit number"
+              value={editPhoneValue}
+              onChange={(e) => setEditPhoneValue(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              disabled={savingProfile}
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-email" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">
+              Email Address
+            </label>
+            <AppTextInput
+              id="edit-email"
+              type="email"
+              placeholder="e.g. rahul@example.com"
+              value={editEmailValue}
+              onChange={(e) => setEditEmailValue(e.target.value)}
+              disabled={savingProfile}
+            />
+          </div>
+          
+          {profileErr ? <p className="mt-1.5 text-xs font-medium text-rose-600">{profileErr}</p> : null}
+          
           <div className="flex gap-3 pt-2">
             <AppButton 
               type="button" 
               variant="secondary" 
-              onClick={() => setEditNameOpen(false)} 
-              disabled={savingName}
+              onClick={() => setEditProfileOpen(false)} 
+              disabled={savingProfile}
             >
               Cancel
             </AppButton>
-            <AppButton type="submit" loading={savingName}>
+            <AppButton type="submit" loading={savingProfile}>
               Save
             </AppButton>
           </div>
         </form>
+      </AppModal>
+
+      <AppModal 
+        open={deleteOpen} 
+        onClose={() => !deletingAccount && setDeleteOpen(false)} 
+        title="Delete Account"
+      >
+        <div className="space-y-4">
+          <div className="flex gap-4 items-start">
+             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+               <AlertTriangle className="size-5" />
+             </div>
+             <div>
+               <p className="text-sm text-slate-600">
+                 Are you sure you want to delete your account? This action cannot be undone and will permanently remove your data, verified documents, and access.
+               </p>
+             </div>
+          </div>
+          {deleteErr ? <p className="mt-1.5 text-xs font-medium text-rose-600">{deleteErr}</p> : null}
+          <div className="flex gap-3 pt-2">
+            <AppButton 
+              type="button" 
+              variant="secondary" 
+              onClick={() => setDeleteOpen(false)} 
+              disabled={deletingAccount}
+            >
+              Cancel
+            </AppButton>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deletingAccount}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-rose-700 disabled:opacity-50"
+            >
+              {deletingAccount ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+              Delete
+            </button>
+          </div>
+        </div>
       </AppModal>
     </motion.div>
   )
