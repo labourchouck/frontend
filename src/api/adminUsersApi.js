@@ -17,6 +17,17 @@ export async function reviewLabourKycAdmin(userId, body) {
   return json.data?.user ?? null
 }
 
+export function updateAdminUserStatus(userId, isActive) {
+  return apiRequest(`/users/${userId}/status`, {
+    method: 'PATCH',
+    body: { isActive },
+  })
+}
+
+export function deleteAdminUser(userId) {
+  return apiRequest(`/users/${userId}`, { method: 'DELETE' })
+}
+
 /**
  * @param {{ search?: string, role?: string, status?: 'all' | 'active' | 'inactive', kycStatus?: 'all' | 'pending' | 'verified' | 'failed', page?: number, limit?: number }} params
  */
