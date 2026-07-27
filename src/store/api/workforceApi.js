@@ -16,6 +16,11 @@ export const workforceApi = baseApi.injectEndpoints({
       transformResponse: unwrap,
       providesTags: ['Projects'],
     }),
+    getCorporateBanners: build.query({
+      query: () => '/corporate/banners',
+      transformResponse: unwrap,
+      providesTags: ['Banners'],
+    }),
     getCorporateAnalytics: build.query({
       query: (params) => ({ url: '/corporate/analytics', params }),
       transformResponse: unwrap,
@@ -27,6 +32,11 @@ export const workforceApi = baseApi.injectEndpoints({
     getCorporateTransactions: build.query({
       query: () => '/corporate/transactions',
       transformResponse: unwrap,
+    }),
+    listCorporateVendors: build.query({
+      query: () => '/corporate/vendors',
+      transformResponse: unwrap,
+      providesTags: ['Vendors'],
     }),
     createCorporateProject: build.mutation({
       query: (body) => ({ url: '/corporate/projects', method: 'POST', body }),
@@ -132,9 +142,14 @@ export const workforceApi = baseApi.injectEndpoints({
       providesTags: ['VendorJobs'],
     }),
     acceptVendorJob: build.mutation({
-      query: (id) => ({ url: `/vendor/jobs/${id}/accept`, method: 'POST' }),
+      query: (requestId) => ({ url: `/vendor/jobs/${requestId}/accept`, method: 'POST' }),
       transformResponse: unwrap,
-      invalidatesTags: ['VendorJobs', 'VendorDashboard'],
+      invalidatesTags: ['VendorJobs', 'VendorDashboard', 'Crew'],
+    }),
+    getVendorDirectRequests: build.query({
+      query: () => '/vendor/direct-requests',
+      transformResponse: unwrap,
+      providesTags: ['VendorDirectRequests'],
     }),
     getVendorSettlements: build.query({
       query: () => '/vendor/settlements',
