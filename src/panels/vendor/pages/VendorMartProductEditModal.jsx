@@ -197,16 +197,16 @@ export function VendorMartProductEditModal({ isOpen, onClose, product, onSuccess
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl pointer-events-auto"
+              className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl pointer-events-auto border border-orange-100"
             >
-              <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white p-4">
-                <h2 className="text-lg font-black text-slate-900">Edit Product</h2>
-                <button onClick={onClose} className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200">
-                  <X className="h-4 w-4" />
+              <div className="flex shrink-0 items-center justify-between border-b border-orange-100/50 bg-white p-4">
+                <h2 className="text-lg font-extrabold tracking-tight text-slate-900">Edit Product</h2>
+                <button onClick={onClose} className="rounded-full bg-orange-50 p-2 text-bm-orange transition hover:bg-orange-100">
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 buildmart-gradient-soft">
                 {fetching ? (
                   <div className="flex h-32 items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-bm-terracotta" />
@@ -220,8 +220,8 @@ export function VendorMartProductEditModal({ isOpen, onClose, product, onSuccess
                     )}
                     
                     {/* Basic Details */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                      <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-slate-800">Basic Info</h3>
+                    <div className="rounded-3xl border border-orange-100/90 bg-white p-5 shadow-sm">
+                      <h3 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-bm-terracotta">Basic Info</h3>
                       <div className="space-y-4">
                         <div className="group">
                           <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
@@ -294,8 +294,8 @@ export function VendorMartProductEditModal({ isOpen, onClose, product, onSuccess
                     </div>
 
                     {/* Descriptions */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                      <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-slate-800">Descriptions</h3>
+                    <div className="rounded-3xl border border-orange-100/90 bg-white p-5 shadow-sm">
+                      <h3 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-bm-terracotta">Descriptions</h3>
                       <div className="space-y-4">
                         <div className="group">
                           <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
@@ -334,11 +334,11 @@ export function VendorMartProductEditModal({ isOpen, onClose, product, onSuccess
                     </div>
 
                     {/* Specifications */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div className="rounded-3xl border border-orange-100/90 bg-white p-5 shadow-sm">
                       <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Specifications</h3>
-                        <button type="button" onClick={handleAddSpec} className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-200">
-                          <Plus className="h-3 w-3" /> Add Spec
+                        <h3 className="text-xs font-extrabold uppercase tracking-widest text-bm-terracotta">Specifications</h3>
+                        <button type="button" onClick={handleAddSpec} className="flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1.5 text-[11px] font-extrabold text-bm-orange hover:bg-orange-100 transition">
+                          <Plus className="h-3.5 w-3.5" /> Add Spec
                         </button>
                       </div>
                       <div className="space-y-3">
@@ -367,11 +367,11 @@ export function VendorMartProductEditModal({ isOpen, onClose, product, onSuccess
                     </div>
 
                     {/* Variants */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div className="rounded-3xl border border-orange-100/90 bg-white p-5 shadow-sm">
                       <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Variants</h3>
-                        <button type="button" onClick={handleAddVariant} className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-200">
-                          <Plus className="h-3 w-3" /> Add Variant
+                        <h3 className="text-xs font-extrabold uppercase tracking-widest text-bm-terracotta">Variants</h3>
+                        <button type="button" onClick={handleAddVariant} className="flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1.5 text-[11px] font-extrabold text-bm-orange hover:bg-orange-100 transition">
+                          <Plus className="h-3.5 w-3.5" /> Add Variant
                         </button>
                       </div>
                       <div className="space-y-4">
@@ -420,10 +420,10 @@ export function VendorMartProductEditModal({ isOpen, onClose, product, onSuccess
                     </div>
 
                     {/* Images */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                    <div className="rounded-3xl border border-orange-100/90 bg-white p-5 shadow-sm">
                       <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-800">Media</h3>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{formData.images.length} added</span>
+                        <h3 className="text-xs font-extrabold uppercase tracking-widest text-bm-terracotta">Media</h3>
+                        <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-extrabold text-bm-orange ring-1 ring-orange-200/50">{formData.images.length} added</span>
                       </div>
                       
                       <div className="group relative flex gap-2 mb-4">
@@ -470,14 +470,14 @@ export function VendorMartProductEditModal({ isOpen, onClose, product, onSuccess
                 ) : null}
               </div>
               
-              <div className="shrink-0 border-t border-slate-100 bg-white p-4">
+              <div className="shrink-0 border-t border-orange-100/50 bg-white p-4">
                 <button
                   type="submit"
                   form="edit-product-form"
                   disabled={loading || fetching}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7a280e] to-[#c45c26] py-3.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-70"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl buildmart-gradient py-4 text-sm font-extrabold text-white buildmart-glow transition hover:opacity-90 disabled:opacity-70"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save & Resubmit'}
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Save & Resubmit'}
                 </button>
               </div>
             </motion.div>

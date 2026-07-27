@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2, Loader2, MessageCircle } from 'lucide-react'
 import { AppBottomSheetBackdrop, AppBottomSheetChrome, AppBottomSheetPanel } from '../app-ui/feedback/AppBottomSheet.jsx'
@@ -56,7 +57,7 @@ export function BuildMartRequestQuoteSheet({
     setError('')
     try {
       const lead = await submitBuildMartQuote({
-        productId: product.id,
+        productId: product.id || product._id,
         productName: product.name,
         variantId: variant?.id,
         variantLabel: variant?.label,
@@ -78,10 +79,10 @@ export function BuildMartRequestQuoteSheet({
 
   const waUrl = savedLead ? buildWhatsAppLeadUrl(savedLead) : null
 
-  return (
+  const sheet = (
     <AnimatePresence>
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+        <div className="fixed inset-0 z-[200] flex items-end justify-center sm:items-center">
           <AppBottomSheetBackdrop onClose={onClose} />
           <AppBottomSheetPanel
             titleId="bm-quote-title"
@@ -192,7 +193,7 @@ export function BuildMartRequestQuoteSheet({
                   whileTap={reduce ? undefined : { scale: 0.98 }}
                 >
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-                  Submit quote request
+                  Send quote request
                 </motion.button>
               </form>
             )}
@@ -201,4 +202,7 @@ export function BuildMartRequestQuoteSheet({
       ) : null}
     </AnimatePresence>
   )
+
+  if (typeof document === 'undefined') return null
+  return createPortal(sheet, document.body)
 }

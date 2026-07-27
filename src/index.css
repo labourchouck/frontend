@@ -22,6 +22,7 @@
 
 html {
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -31,6 +32,7 @@ body {
   background: var(--color-page);
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
 }
 
 ::selection {

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
-import { fetchAdminUsers } from '../../api/adminUsersApi.js'
+import { ChevronLeft, ChevronRight, RefreshCw, Search, Users, Eye, Trash2 } from 'lucide-react'
+import { fetchAdminUsers, deleteAdminUser } from '../../api/adminUsersApi.js'
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { ROLE_LABELS, ROLE_LIST } from '../../constants/userRoles.js'
 import { formatLastLoginDisplay } from '../../lib/formatAdminLastLogin.js'
+import { AdminUserViewModal } from './components/AdminUserViewModal.jsx'
+import { AdminUserDeleteModal } from './components/AdminUserDeleteModal.jsx'
 
 function StatusPill({ active }) {
   return (
@@ -44,7 +46,10 @@ export function AdminUsersPage() {
   const [total, setTotal] = useState(0)
   const [pages, setPages] = useState(1)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
+  
+  const [viewingUser, setViewingUser] = useState(null)
+  const [deletingUser, setDeletingUser] = useState(null)
 
   useEffect(() => {
     const fromUrl = searchParams.get('role')
@@ -62,7 +67,7 @@ export function AdminUsersPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    setError('')
+    setError(null)
     try {
       const data = await fetchAdminUsers({
         search: debouncedSearch,
@@ -177,6 +182,7 @@ export function AdminUsersPage() {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Last login</th>
                 <th className="px-4 py-3">Joined</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -188,6 +194,9 @@ export function AdminUsersPage() {
                           <div className="h-4 animate-pulse rounded bg-slate-200/80" />
                         </td>
                       ))}
+                      <td className="px-4 py-3">
+                        <div className="h-4 animate-pulse rounded bg-slate-200/80" />
+                      </td>
                     </tr>
                   ))
                 : items.map((u) => (
@@ -206,6 +215,24 @@ export function AdminUsersPage() {
                       <td className="px-4 py-3 text-xs text-slate-600">{formatLastLoginDisplay(u.lastLoginAt) || '—'}</td>
                       <td className="px-4 py-3 text-xs text-slate-500">
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setViewingUser(u._id)}
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-brand/10 hover:text-brand transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="size-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingUser(u)}
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition-colors"
+                            title="Delete User"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -246,6 +273,20 @@ export function AdminUsersPage() {
                     Last login: {formatLastLoginDisplay(u.lastLoginAt) || '—'}
                   </span>
                 </div>
+                <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                  <button
+                    onClick={() => setViewingUser(u._id)}
+                    className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-brand/10 hover:text-brand transition-colors"
+                  >
+                    <Eye className="size-3.5" /> View
+                  </button>
+                  <button
+                    onClick={() => setDeletingUser(u)}
+                    className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-rose-100 hover:text-rose-600 transition-colors"
+                  >
+                    <Trash2 className="size-3.5" /> Delete
+                  </button>
+                </div>
               </GlassPanel>
             ))}
         {!loading && items.length === 0 ? (
@@ -283,6 +324,25 @@ export function AdminUsersPage() {
           </div>
         </div>
       ) : null}
+
+      {viewingUser && (
+        <AdminUserViewModal
+          userId={viewingUser}
+          onClose={() => setViewingUser(null)}
+        />
+      )}
+
+      {deletingUser && (
+        <AdminUserDeleteModal
+          user={deletingUser}
+          onClose={() => setDeletingUser(null)}
+          onConfirm={async (id) => {
+            await deleteAdminUser(id)
+            setDeletingUser(null)
+            load() // refresh list
+          }}
+        />
+      )}
     </div>
   )
 }

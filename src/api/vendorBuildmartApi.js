@@ -55,3 +55,29 @@ export async function deleteVendorBuildmartProduct(id) {
   });
   return data;
 }
+
+/**
+ * Fetch all product enquiries (leads) for the vendor.
+ * GET /api/v1/vendor/buildmart/enquiries
+ */
+export async function getVendorBuildmartEnquiries({ page = 1, limit = 20, status = 'all' } = {}) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('limit', String(limit))
+  if (status && status !== 'all') params.set('status', status)
+
+  const data = await apiRequest(`/vendor/buildmart/enquiries?${params}`)
+  return data?.data ?? data
+}
+
+/**
+ * Update the status of a specific lead.
+ * PATCH /api/v1/vendor/buildmart/enquiries/:id/status
+ */
+export async function updateVendorBuildmartEnquiryStatus(id, status) {
+  const data = await apiRequest(`/vendor/buildmart/enquiries/${id}/status`, {
+    method: 'PATCH',
+    body: { status }
+  });
+  return data?.data?.lead ?? data?.lead ?? data;
+}

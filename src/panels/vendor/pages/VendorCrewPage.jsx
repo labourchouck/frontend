@@ -95,29 +95,84 @@ export function VendorCrewPage() {
             <ul className="space-y-2">
               {crew.map((w) => (
                 <li key={w._id}>
-                  <VendorCard className="space-y-2.5">
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">{w.fullName}</p>
-                      <p className="text-xs text-slate-500">{w.phone}</p>
-                      {w.skills?.length ? (
-                        <p className="mt-1 line-clamp-2 text-xs text-slate-600">{w.skills.join(' · ')}</p>
-                      ) : null}
-                      {w.activeSite ? (
-                        <p className="mt-1 line-clamp-2 text-[10px] font-semibold text-slate-500">{w.activeSite}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-wrap items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                      <div className="flex gap-1.5">
-                        <AppBadge variant={w.kycStatus === 'approved' ? 'emerald' : 'amber'} uppercase={false} className="text-[10px]">
-                          KYC {w.kycStatus || 'pending'}
+                  <VendorCard className="space-y-3">
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-extrabold text-slate-900">{w.fullName}</p>
+                          <p className="text-xs font-mono font-medium text-slate-500 mt-0.5">{w.phone}</p>
+                        </div>
+                        <AppBadge variant={w.labourProfile?.kycStatus === 'verified' ? 'emerald' : w.labourProfile?.kycStatus === 'failed' ? 'rose' : 'amber'} uppercase={false} className="text-[10px] shrink-0 font-bold px-2 py-1">
+                          KYC {w.labourProfile?.kycStatus || 'pending'}
                         </AppBadge>
-                        <AppBadge variant={w.availability === 'on_site' ? 'brand' : 'neutral'} uppercase={false} className="text-[10px]">
-                          {w.availability === 'on_site' ? 'On site' : w.availability === 'leave' ? 'On leave' : 'Available'}
+                      </div>
+
+                      {w.labourProfile?.categoryIds?.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Categories</p>
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {w.labourProfile.categoryIds.map(c => (
+                               <span key={c._id} className="inline-flex rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-700">{c.name}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {w.labourProfile?.skills?.length > 0 && (
+                        <div className="mt-3 bg-slate-50/50 p-2 rounded-xl border border-slate-100">
+                          <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">Legacy Skills</p>
+                          <p className="line-clamp-2 text-[11px] font-semibold text-slate-600">{w.labourProfile.skills.join(' · ')}</p>
+                        </div>
+                      )}
+
+                      {w.labourProfile?.servicePricing?.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Services & Pricing</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {w.labourProfile.servicePricing.map((sp, idx) => {
+                              let serviceName = 'Unknown Service'
+                              
+                              if (typeof sp.serviceId === 'object' && sp.serviceId?.name) {
+                                serviceName = sp.serviceId.name
+                              } else if (sp.serviceId) {
+                                const found = w.labourProfile.serviceIds?.find(s => s._id === sp.serviceId)
+                                if (found) serviceName = found.name
+                              }
+                              
+                              if (serviceName === 'Unknown Service') {
+                                if (typeof sp.subcategoryId === 'object' && sp.subcategoryId?.name) {
+                                  serviceName = sp.subcategoryId.name
+                                } else {
+                                  const found = w.labourProfile.subcategoryIds?.find(s => s._id === sp.subcategoryId)
+                                  if (found) serviceName = found.name
+                                }
+                              }
+                              
+                              return (
+                                <div key={idx} className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 transition-all hover:bg-white hover:shadow-sm hover:border-brand/30 cursor-pointer">
+                                  <span className="text-[11px] font-bold text-slate-700 truncate mr-2">
+                                    {serviceName}
+                                  </span>
+                                  <span className="shrink-0 rounded-md bg-brand/10 px-2 py-1 text-[10px] font-extrabold text-brand">
+                                    ₹{sp.minPrice} - ₹{sp.maxPrice}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
+                      <div className="flex gap-2">
+                        <AppBadge variant={w.labourProfile?.availabilityStatus === 'on_site' ? 'brand' : 'neutral'} uppercase={false} className="text-[10px] font-bold px-2 py-1">
+                          {w.labourProfile?.availabilityStatus === 'on_site' ? 'On site' : w.labourProfile?.availabilityStatus === 'busy' ? 'Busy' : 'Available'}
                         </AppBadge>
                       </div>
                       <button 
                         onClick={() => handleRemove(w._id)}
-                        className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-md"
+                        className="text-[10px] font-extrabold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl hover:bg-rose-100 transition shadow-sm"
                       >
                         Remove
                       </button>

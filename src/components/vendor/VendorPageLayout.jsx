@@ -9,7 +9,9 @@ export function VendorPageLayout({ hero, children, sheet = false }) {
   if (sheet) {
     return (
       <div className="min-w-0 overflow-x-hidden pb-2">
-        {hero}
+        <div className="sticky top-0 z-10">
+          {hero}
+        </div>
         <section className="relative z-20 -mt-5 space-y-5 rounded-t-[1.75rem] bg-white px-4 pb-6 pt-5 shadow-[0_-12px_40px_-18px_rgba(15,23,42,0.12)] ring-1 ring-slate-100/90">
           {children}
         </section>
