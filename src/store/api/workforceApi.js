@@ -271,6 +271,14 @@ export const workforceApi = baseApi.injectEndpoints({
 
 export const {
   useGetCorporateDashboardQuery,
+  useGetCorporateAnalyticsQuery,
+  useGetCorporateVendorAttendanceQuery,
+  useGetCorporateTransactionsQuery,
+  useCreateCorporateComplaintMutation,
+  useGetCorporateComplaintsQuery,
+  useRateCorporateAssignmentMutation,
+  useInitPaymentMutation,
+  useVerifyPaymentMutation,
   useGetCorporateProjectsQuery,
   useCreateCorporateProjectMutation,
   useGetCorporateProjectQuery,

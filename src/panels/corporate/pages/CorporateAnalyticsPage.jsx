@@ -1,14 +1,15 @@
-import { BarChart3, Building2, ClipboardList, Clock, FileText } from 'lucide-react'
+import { BarChart3, Building2, ClipboardList, Clock, FileText, IndianRupee } from 'lucide-react'
 import { CORPORATE_STATUS } from '../../../constants/userRoles.js'
 import { ApprovalGate } from '../../../components/shared/ApprovalGate.jsx'
 import { OpsStatCard } from '../../../components/shared/OpsStatCard.jsx'
 import { useAuth } from '../../../hooks/useAuth.js'
-import { useGetCorporateDashboardQuery } from '../../../store/api/workforceApi.js'
+import { useGetCorporateDashboardQuery, useGetCorporateAnalyticsQuery } from '../../../store/api/workforceApi.js'
 
 export function CorporateAnalyticsPage() {
   const { user } = useAuth()
   const approved = user?.corporateProfile?.status === CORPORATE_STATUS.APPROVED
   const { data, isLoading } = useGetCorporateDashboardQuery(undefined, { skip: !approved })
+  const { data: analyticsData, isLoading: analyticsLoading } = useGetCorporateAnalyticsQuery(undefined, { skip: !approved })
 
   if (!approved) {
     return (
@@ -58,6 +59,41 @@ export function CorporateAnalyticsPage() {
           icon={FileText}
           tone="warn"
         />
+        <OpsStatCard
+          label="Total Spend"
+          value={analyticsLoading ? '—' : `₹${analyticsData?.totalSpend?.toLocaleString() || 0}`}
+          icon={IndianRupee}
+          tone="brand"
+        />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 className="text-sm font-bold text-slate-800">Attendance Trends</h3>
+        {analyticsLoading ? (
+          <p className="mt-4 text-sm text-slate-500">Loading trends...</p>
+        ) : analyticsData?.attendanceTrends?.length > 0 ? (
+          <div className="mt-4 space-y-3">
+            {analyticsData.attendanceTrends.map((trend, i) => {
+              const total = trend.present + trend.absent || 1
+              const presentPct = Math.round((trend.present / total) * 100)
+              
+              return (
+                <div key={i} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-slate-700">{new Date(trend.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                    <span className="text-slate-500">{trend.present} Present / {trend.absent} Absent</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 flex">
+                    <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${presentPct}%` }} />
+                    <div className="h-full bg-red-400 transition-all duration-500" style={{ width: `${100 - presentPct}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-slate-500">No attendance data available.</p>
+        )}
       </div>
     </div>
   )
