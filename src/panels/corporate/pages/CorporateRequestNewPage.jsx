@@ -239,20 +239,16 @@ export function CorporateRequestNewPage() {
             <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
               Schedule
             </label>
-            <select
-              className={inputClass}
+            <AppSearchableSelect
               value={scheduleType}
-              onChange={(e) => setScheduleType(e.target.value)}
-            >
-              {SCHEDULE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={setScheduleType}
+              options={SCHEDULE_OPTIONS}
+              hideSearch={true}
+              placeholder="Select schedule"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
                 Start date
@@ -273,7 +269,7 @@ export function CorporateRequestNewPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
                 Shift start

@@ -290,6 +290,7 @@ export const workforceApi = baseApi.injectEndpoints({
 
 export const {
   useGetCorporateDashboardQuery,
+  useGetCorporateBannersQuery,
   useGetCorporateAnalyticsQuery,
   useGetCorporateVendorAttendanceQuery,
   useGetCorporateTransactionsQuery,

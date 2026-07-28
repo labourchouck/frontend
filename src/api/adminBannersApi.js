@@ -1,7 +1,8 @@
 import { apiRequest } from './http.js'
 
-export function fetchAdminBanners() {
-  return apiRequest('/admin/banners')
+export function fetchAdminBanners(panel) {
+  const url = panel ? `/admin/banners?panel=${panel}` : '/admin/banners'
+  return apiRequest(url)
 }
 
 export function createAdminBanner(formData) {

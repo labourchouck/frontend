@@ -31,11 +31,11 @@ import { AdminPricingPage } from './pages/admin/AdminPricingPage.jsx'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage.jsx'
 import { AdminModulePlaceholder } from './components/admin/AdminModulePlaceholder.jsx'
 import { AdminReportsPage } from './pages/admin/AdminReportsPage.jsx'
+import { AdminCorporateBannersPage } from './pages/admin/AdminCorporateBannersPage.jsx'
 import { AdminBannersPage } from './pages/admin/AdminBannersPage.jsx'
 import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage.jsx'
 import { AdminProfilePage } from './pages/admin/AdminProfilePage.jsx'
 import { AdminZonesPage } from './pages/admin/AdminZonesPage.jsx'
-import { AdminTimeSlotsPage } from './pages/admin/AdminTimeSlotsPage.jsx'
 import { AdminPlatformFeePage } from './pages/admin/AdminPlatformFeePage.jsx'
 import { AdminCommissionFeePage } from './pages/admin/AdminCommissionFeePage.jsx'
 import { AdminLabourWalletPage } from './pages/admin/AdminLabourWalletPage.jsx'
@@ -122,6 +122,7 @@ function App() {
             <Route path="services" element={<AdminServicesPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="vendors" element={<AdminVendorsPage />} />
+            <Route path="corporate-banners" element={<AdminCorporateBannersPage />} />
             <Route path="labour" element={<AdminLabourPage />} />
             <Route path="business-verification" element={<AdminBusinessVerificationPage />} />
             <Route path="mart" element={<AdminMartPage />} />
@@ -138,7 +139,6 @@ function App() {
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="zones" element={<AdminZonesPage />} />
-            <Route path="time-slots" element={<AdminTimeSlotsPage />} />
             <Route path="platform-fee" element={<AdminPlatformFeePage />} />
             <Route path="commission-fee" element={<AdminCommissionFeePage />} />
             <Route path="labour-wallet" element={<AdminLabourWalletPage />} />

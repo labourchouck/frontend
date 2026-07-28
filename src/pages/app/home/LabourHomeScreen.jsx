@@ -8,6 +8,7 @@ import {
   CalendarClock,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   Droplets,
@@ -44,7 +45,6 @@ import {
   readAppUserLocation,
 } from '../../../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../../../components/app/AppUserLocationModal.jsx'
-import { LabourCheckOutConfirmModal } from '../../../components/labour/LabourCheckOutConfirmModal.jsx'
 import { LabourAssignmentDetailModal } from '../../../components/labour/LabourAssignmentDetailModal.jsx'
 import { useLabourPresence } from '../../../hooks/useLabourPresence.js'
 import {
@@ -153,32 +153,23 @@ export function LabourHomeScreen({ user }) {
   const [safetyIdx, setSafetyIdx] = useState(0)
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
   const [workAreaModalOpen, setWorkAreaModalOpen] = useState(false)
-  const [checkOutModalOpen, setCheckOutModalOpen] = useState(false)
-  const [pendingCheckIn, setPendingCheckIn] = useState(false)
+  const [timeManagementOpen, setTimeManagementOpen] = useState(false)
   const [notifTick, setNotifTick] = useState(0)
   const [assignmentDetailOpen, setAssignmentDetailOpen] = useState(false)
   const { setOnline } = useLabourPresence()
-  const [isAvailable, setIsAvailable] = useState(user?.labourProfile?.availabilityStatus !== 'offline')
-
-  const handleToggleAvailability = async () => {
-    const nextStatus = isAvailable ? 'offline' : 'available'
-    setIsAvailable(!isAvailable) // Optimistic update
-
-    // Also sync with attendance online presence
-    setOnline(!isAvailable)
-
-    try {
-      // We will need to import locationApi below
-      const { updateLabourStatus } = await import('../../../api/locationApi.js')
-      await updateLabourStatus(nextStatus)
-      showToast(nextStatus === 'available' ? 'You are now online for job requests' : 'You are offline for requests')
-    } catch (err) {
-      console.error('Failed to update status:', err)
-      showToast('Failed to update status')
-      setIsAvailable(isAvailable) // Revert on failure
-      setOnline(isAvailable)
-    }
-  }
+  const [schedule, setSchedule] = useState(() => {
+    return user?.labourProfile?.schedule && user.labourProfile.schedule.length === 7 
+      ? user.labourProfile.schedule 
+      : [
+          { day: 'Monday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { day: 'Tuesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { day: 'Wednesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { day: 'Thursday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { day: 'Friday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { day: 'Saturday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+          { day: 'Sunday', startTime: '09:00', endTime: '17:00', isAvailable: false },
+        ]
+  })
 
   const firstName = user?.fullName?.split(/\s/)?.[0]
   const greeting = getTimeGreeting()
@@ -255,7 +246,7 @@ export function LabourHomeScreen({ user }) {
 
   const todayJob = todayAssignment.job
 
-  const schedule = useMemo(() => {
+  const upcomingSchedule = useMemo(() => {
     const scheduled = activeBookings.filter(b => b.type === 'SCHEDULED' && ['ACCEPTED'].includes(b.status) && b._id !== todayBooking?._id)
     return scheduled.map(b => ({
       id: b._id,
@@ -292,51 +283,6 @@ export function LabourHomeScreen({ user }) {
     window.setTimeout(() => setToast(''), 2600)
   }, [])
 
-  const punchLabels = useMemo(
-    () => ({
-      projectLabel: todayJob?.title || todayJob?.siteName || locationLabel || lastIn?.projectLabel || 'Unassigned',
-      workLabel: todayJob?.role || lastIn?.workLabel || primaryTrade,
-    }),
-    [todayJob, lastIn, primaryTrade, locationLabel],
-  )
-
-  const performCheckIn = useCallback(() => {
-    appendAttendancePunch('in', punchLabels)
-    setEntries(readAttendanceEntries())
-    setOnline(true)
-    showToast('Checked in — stay safe on site.')
-  }, [punchLabels, setOnline, showToast])
-
-  const handleCheckIn = () => {
-    if (lastType === 'in') {
-      showToast('You are already checked in.')
-      return
-    }
-    if (!hasWorkLocation) {
-      setPendingCheckIn(true)
-      setWorkAreaModalOpen(true)
-      showToast('Set your work area before check-in.')
-      return
-    }
-    performCheckIn()
-  }
-
-  const handleCheckOutRequest = () => {
-    if (lastType !== 'in') {
-      showToast('Check in first to start your shift.')
-      return
-    }
-    setCheckOutModalOpen(true)
-  }
-
-  const confirmCheckOut = useCallback(() => {
-    appendAttendancePunch('out', punchLabels)
-    setEntries(readAttendanceEntries())
-    setOnline(false)
-    setCheckOutModalOpen(false)
-    showToast('You are offline. No new job requests until you check in again.')
-  }, [punchLabels, setOnline, showToast])
-
   const handleWorkAreaSaved = useCallback(() => {
     const next = readAppUserLocation()
     setAppLocation(next)
@@ -347,14 +293,7 @@ export function LabourHomeScreen({ user }) {
         updateLabourLocation(next.lat, next.lng).catch(err => console.error('Failed to sync location to backend:', err))
       })
     }
-
-    if (pendingCheckIn && hasAppUserLocation(next)) {
-      setPendingCheckIn(false)
-      if (lastTodayType(readAttendanceEntries()) !== 'in') {
-        performCheckIn()
-      }
-    }
-  }, [pendingCheckIn, performCheckIn])
+  }, [])
 
   const handleAcceptOffer = async (offerId) => {
     if (!kycOk) {
@@ -541,116 +480,111 @@ export function LabourHomeScreen({ user }) {
       </section>
 
       <div className="space-y-5 px-4">
-        {/* 2. Attendance status — primary CTA */}
+        {/* Time Management Section */}
         <motion.section
           initial={reduce ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.04 }}
-          aria-labelledby="attendance-heading"
+          aria-labelledby="time-management-heading"
         >
-          <GlassPanel
-            className={`relative overflow-hidden border-2 p-4 ${onSite ? 'border-emerald-300/80 bg-emerald-50/80' : 'border-slate-200/90 bg-white'
-              }`}
-          >
-            {onSite ? (
-              <motion.span
-                className="pointer-events-none absolute right-4 top-4 h-3 w-3 rounded-full bg-emerald-500"
-                animate={reduce ? undefined : { scale: [1, 1.35, 1], opacity: [1, 0.5, 1] }}
-                transition={{ duration: 1.6, repeat: Infinity }}
-                aria-hidden
-              />
-            ) : null}
-            <motion.div className="flex items-start gap-3">
-              <span
-                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-inner ${onSite ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
-                  }`}
-              >
-                {onSite ? <CheckCircle2 className="h-6 w-6" aria-hidden /> : <Timer className="h-6 w-6" aria-hidden />}
-              </span>
-              <div className="min-w-0 flex-1">
-                <h2 id="attendance-heading" className="text-base font-extrabold text-slate-900">
-                  {onSite ? 'Checked in' : 'Not checked in'}
-                </h2>
-                <p className="mt-0.5 flex items-center gap-1 text-xs font-medium text-slate-600">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />
-                  <span className="truncate">Site: {siteLabel}</span>
-                </p>
-                {lastIn ? (
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    Since {formatPunchTime(lastIn.at)} · {formatSecondsAsClock(workedSecondsToday)} today
-                  </p>
-                ) : !hasWorkLocation ? (
-                  <p className="mt-1 text-xs font-semibold text-amber-800">
-                    Set your work area above before you can check in.
-                  </p>
-                ) : (
-                  <p className="mt-1 text-xs text-slate-500">Tap in when you reach the site — GPS logged on device.</p>
-                )}
-              </div>
-            </motion.div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {!onSite ? (
-                <AppPrimaryButton
-                  type="button"
-                  onClick={handleCheckIn}
-                  className="col-span-2 w-full py-4 text-base shadow-lg shadow-brand/25"
-                >
-                  <LogIn className="h-5 w-5" aria-hidden />
-                  Check in
-                </AppPrimaryButton>
-              ) : (
-                <AppPrimaryButton
-                  type="button"
-                  onClick={handleCheckOutRequest}
-                  className="col-span-2 w-full border-rose-200 bg-linear-to-r from-rose-600 to-rose-700 py-4 text-base shadow-lg shadow-rose-500/25 hover:brightness-110"
-                >
-                  <LogOut className="h-5 w-5" aria-hidden />
-                  Check out
-                </AppPrimaryButton>
-              )}
-            </div>
-            <Link
-              to="/app/attendance"
-              className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-brand underline-offset-4 hover:underline"
-            >
-              Full attendance history
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-            </Link>
-          </GlassPanel>
-        </motion.section>
-
-        {/* 3. Job requests toggle */}
-        <motion.section
-          initial={reduce ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          aria-labelledby="availability-heading"
-        >
-          <GlassPanel className="border-slate-200/90 p-4 flex items-center justify-between">
-            <div>
-              <h2 id="availability-heading" className="text-base font-extrabold text-slate-900">
-                Receive Job Requests
-              </h2>
-              <p className="mt-0.5 text-xs font-medium text-slate-500">
-                {isAvailable ? 'You will receive new job alerts.' : 'You are currently offline.'}
-              </p>
-            </div>
+          <GlassPanel className="border-slate-200/90 p-4">
             <button
               type="button"
-              onClick={handleToggleAvailability}
-              className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${isAvailable ? 'bg-brand' : 'bg-slate-300'
-                }`}
-              role="switch"
-              aria-checked={isAvailable}
+              onClick={() => setTimeManagementOpen(!timeManagementOpen)}
+              className="flex w-full items-center justify-between text-left focus:outline-none"
             >
-              <span className="sr-only">Toggle Job Requests</span>
-              <span
-                aria-hidden="true"
-                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isAvailable ? 'translate-x-3' : '-translate-x-3'
-                  }`}
+              <h2 id="time-management-heading" className="text-base font-extrabold text-slate-900">
+                Time Management
+              </h2>
+              <ChevronDown
+                className={`h-5 w-5 text-slate-400 transition-transform ${timeManagementOpen ? 'rotate-180' : ''}`}
+                aria-hidden
               />
             </button>
+            <AnimatePresence initial={false}>
+              {timeManagementOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                  animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+                  exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-4">
+                    {schedule.map((daySchedule, idx) => (
+                      <div key={daySchedule.day} className="flex flex-wrap items-center justify-between gap-y-3 gap-x-2 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                        <div className="w-24 shrink-0 font-medium text-slate-700 text-sm order-1">
+                          {daySchedule.day}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSchedule = [...schedule];
+                            newSchedule[idx] = { ...newSchedule[idx], isAvailable: !newSchedule[idx].isAvailable };
+                            setSchedule(newSchedule);
+                          }}
+                          className={`relative ml-2 inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 order-2 sm:order-3 ${
+                            daySchedule.isAvailable ? 'bg-brand' : 'bg-slate-300'
+                          }`}
+                          role="switch"
+                          aria-checked={daySchedule.isAvailable}
+                        >
+                          <span className="sr-only">Toggle {daySchedule.day} availability</span>
+                          <span
+                            aria-hidden="true"
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              daySchedule.isAvailable ? 'translate-x-2.5' : '-translate-x-2.5'
+                            }`}
+                          />
+                        </button>
+                        <div className="w-full sm:w-auto sm:flex-1 flex items-center gap-2 order-3 sm:order-2">
+                          <input 
+                            type="time" 
+                            value={daySchedule.startTime}
+                            onChange={(e) => {
+                              const newSchedule = [...schedule];
+                              newSchedule[idx] = { ...newSchedule[idx], startTime: e.target.value };
+                              setSchedule(newSchedule);
+                            }}
+                            disabled={!daySchedule.isAvailable}
+                            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-900 bg-slate-50 focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-50"
+                          />
+                          <span className="text-xs text-slate-500">to</span>
+                          <input 
+                            type="time" 
+                            value={daySchedule.endTime}
+                            onChange={(e) => {
+                              const newSchedule = [...schedule];
+                              newSchedule[idx] = { ...newSchedule[idx], endTime: e.target.value };
+                              setSchedule(newSchedule);
+                            }}
+                            disabled={!daySchedule.isAvailable}
+                            className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-900 bg-slate-50 focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-50"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+            
+            
+                  <AppPrimaryButton
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const { updateLabourSchedule } = await import('../../../api/userLabourApi.js')
+                        await updateLabourSchedule(schedule)
+                        showToast('Time schedule saved successfully')
+                      } catch (err) {
+                        showToast(err?.message || 'Failed to save schedule')
+                      }
+                    }}
+                    className="mt-5 w-full py-3.5 text-sm shadow-lg shadow-brand/25"
+                  >
+                    <CalendarClock className="mr-2 h-4 w-4" aria-hidden />
+                    Save Schedule
+                  </AppPrimaryButton>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </GlassPanel>
         </motion.section>
 
@@ -660,7 +594,6 @@ export function LabourHomeScreen({ user }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.06 }}
         >
-          <AppSectionHeader title="Today's assignment" className="mb-2 px-0.5" />
           {todayJob ? (
             <motion.div
               role="button"
@@ -685,6 +618,7 @@ export function LabourHomeScreen({ user }) {
                 </span>
               </div>
               <div className="space-y-2 p-4">
+                <h2 className="text-base font-extrabold text-slate-900 mb-2">Today's assignment</h2>
                 <p className="flex items-start gap-2 text-sm font-extrabold text-slate-900">
                   <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
                   {todayJob.siteName || todayJob.title}
@@ -726,8 +660,11 @@ export function LabourHomeScreen({ user }) {
               </div>
             </motion.div>
           ) : (
-            <GlassPanel className="border-dashed border-slate-300/90 p-5 text-center">
-              <HardHat className="mx-auto h-8 w-8 text-slate-300" aria-hidden />
+            <GlassPanel className="border-dashed border-slate-300/90 p-5 text-center relative">
+              <div className="absolute top-4 left-5">
+                <h2 className="text-base font-extrabold text-slate-900">Today's assignment</h2>
+              </div>
+              <HardHat className="mx-auto mt-6 h-8 w-8 text-slate-300" aria-hidden />
               <p className="mt-2 text-sm font-bold text-slate-800">No assignment for today</p>
               <p className="mt-1 text-xs text-slate-500">Check new job alerts below or open My Jobs.</p>
               <AppPrimaryButton as={Link} to="/app/jobs" className="mx-auto mt-4 w-full max-w-xs py-3 text-sm">
@@ -838,11 +775,11 @@ export function LabourHomeScreen({ user }) {
         ) : null}
 
         {/* 7. Upcoming schedule */}
-        {schedule.length > 0 ? (
+        {upcomingSchedule.length > 0 ? (
           <section aria-label="Upcoming schedule">
             <AppSectionHeader title="Upcoming schedule" className="mb-2 px-0.5" />
             <ol className="relative space-y-0 border-l-2 border-slate-200/90 pl-4 ml-1.5">
-              {schedule.map((row, i) => (
+              {upcomingSchedule.map((row, i) => (
                 <li key={`${row.id}-${i}`} className="relative pb-4 last:pb-0">
                   <span
                     className={`absolute -left-[1.3rem] top-1 flex h-3 w-3 rounded-full ring-4 ring-white ${row.tone === 'brand' ? 'bg-brand' : row.tone === 'amber' ? 'bg-amber-500' : 'bg-slate-300'
@@ -1029,20 +966,15 @@ export function LabourHomeScreen({ user }) {
         open={workAreaModalOpen}
         onClose={() => {
           setWorkAreaModalOpen(false)
-          setPendingCheckIn(false)
         }}
         onSaved={handleWorkAreaSaved}
         title="Work area"
-        subtitle="Required for check-in — enter manually or fetch GPS"
-        saveLabel={pendingCheckIn ? 'Save & check in' : 'Save work area'}
+        subtitle="Enter manually or fetch GPS"
+        saveLabel="Save work area"
         requireLocation
       />
 
-      <LabourCheckOutConfirmModal
-        open={checkOutModalOpen}
-        onClose={() => setCheckOutModalOpen(false)}
-        onConfirm={confirmCheckOut}
-      />
+
 
       <LabourAssignmentDetailModal
         open={assignmentDetailOpen}

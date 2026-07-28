@@ -6,12 +6,13 @@ import { ApprovalGate } from '../../../components/shared/ApprovalGate.jsx'
 import { OpsStatCard } from '../../../components/shared/OpsStatCard.jsx'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
-import { useGetCorporateDashboardQuery } from '../../../store/api/workforceApi.js'
+import { useGetCorporateDashboardQuery, useGetCorporateBannersQuery } from '../../../store/api/workforceApi.js'
 
 export function CorporateDashboardPage() {
   const { user } = useAuth()
   const approved = user?.corporateProfile?.status === CORPORATE_STATUS.APPROVED
   const { data, isLoading } = useGetCorporateDashboardQuery(undefined, { skip: !approved })
+  const { data: bannersData, isLoading: isLoadingBanners } = useGetCorporateBannersQuery(undefined, { skip: !approved })
 
   if (!approved) {
     return (
@@ -29,18 +30,31 @@ export function CorporateDashboardPage() {
 
   return (
     <div className="space-y-5">
-      <AppSurface tone="brandWash" className="border-slate-800/10 bg-slate-900 text-white">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-white/70">Enterprise</p>
-        <h2 className="mt-1 text-lg font-extrabold">
-          {user?.corporateProfile?.companyName || user?.fullName}
-        </h2>
-        <p className="mt-2 text-sm text-white/80">Bulk workforce, attendance billing, GST-ready invoices.</p>
-        <Link to="/corporate/requests/new" className="mt-4 inline-block">
-          <AppPrimaryButton type="button" className="bg-white text-slate-900 hover:bg-slate-100">
-            <Plus className="mr-2 h-4 w-4" />
-            New workforce request
-          </AppPrimaryButton>
-        </Link>
+      <AppSurface flush tone="brandWash" className="border-slate-800/10 bg-slate-900 text-white relative group">
+        {/* Background Banners */}
+        {!isLoadingBanners && bannersData?.banners?.length > 0 && (
+          <div className="absolute inset-0 z-0 flex overflow-x-auto snap-x snap-mandatory no-scrollbar">
+            {bannersData.banners.map((banner) => (
+              <img
+                key={banner._id}
+                src={banner.imageUrl}
+                alt="Corporate Banner"
+                className="w-full h-full object-cover snap-center shrink-0"
+              />
+            ))}
+          </div>
+        )}
+
+
+        {/* Content Wrapper */}
+        <div className="relative z-10 p-4 sm:p-5 flex items-end min-h-[140px]">
+          <Link to="/corporate/requests/new" className="inline-block mt-auto">
+            <AppPrimaryButton type="button" size="sm" className="bg-brand text-white border-none shadow-sm hover:bg-brand-600">
+              <Plus className="h-3.5 w-3.5" />
+              New workforce request
+            </AppPrimaryButton>
+          </Link>
+        </div>
       </AppSurface>
 
       <div className="grid grid-cols-2 gap-3">

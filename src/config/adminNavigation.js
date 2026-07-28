@@ -106,14 +106,16 @@ export const ADMIN_NAV_SECTIONS = [
   },
   {
     title: 'Content',
-    items: [{ to: '/admin/banners', label: 'Banners', icon: Image }],
+    items: [
+      { to: '/admin/banners', label: 'Banners', icon: Image },
+      { to: '/admin/corporate-banners', label: 'Corporate Banners', icon: Image },
+    ],
   },
   {
     title: 'System',
     items: [
       { to: '/admin/profile', label: 'Profile', icon: UserCog },
       { to: '/admin/settings', label: 'Settings', icon: Settings },
-      { to: '/admin/time-slots', label: 'Time Slots', icon: Clock },
     ],
   },
 ]
@@ -123,6 +125,7 @@ const ROUTE_TITLES = [
   { prefix: '/admin/complaints', title: 'Complaints' },
   { prefix: '/admin/settings', title: 'Settings' },
   { prefix: '/admin/banners', title: 'Banners' },
+  { prefix: '/admin/corporate-banners', title: 'Corporate Banners' },
   { prefix: '/admin/reports', title: 'Reports & analytics' },
   { prefix: '/admin/pricing', title: 'Pricing & rates' },
   { prefix: '/admin/platform-fee', title: 'Platform Fee' },
@@ -143,7 +146,6 @@ const ROUTE_TITLES = [
   { prefix: '/admin/labour', title: 'Labour & KYC' },
   { prefix: '/admin/users', title: 'Individuals & corporates' },
   { prefix: '/admin/zones', title: 'Manage Radius' },
-  { prefix: '/admin/time-slots', title: 'Time Slots' },
   { prefix: '/admin', title: 'Dashboard' },
 ]
 

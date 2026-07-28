@@ -8,6 +8,7 @@ export function AppSearchableSelect({
   placeholder = 'Select...',
   disabled = false,
   className = '',
+  hideSearch = false,
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -52,17 +53,19 @@ export function AppSearchableSelect({
 
       {isOpen && !disabled && (
         <div className="absolute z-50 mt-1 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
-          <div className="relative mb-2">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              autoFocus
-              className="w-full rounded-xl bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none border border-transparent focus:border-brand/30 focus:bg-white"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          {!hideSearch && (
+            <div className="relative mb-2">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                autoFocus
+                className="w-full rounded-xl bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none border border-transparent focus:border-brand/30 focus:bg-white"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          )}
           <div className="max-h-48 overflow-y-auto">
             {filteredOptions.length > 0 ? (
               <ul className="space-y-1">

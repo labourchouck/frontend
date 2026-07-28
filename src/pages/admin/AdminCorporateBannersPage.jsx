@@ -4,7 +4,7 @@ import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { fetchAdminBanners, createAdminBanner, deleteAdminBanner } from '../../api/adminBannersApi.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 
-export function AdminBannersPage() {
+export function AdminCorporateBannersPage() {
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -14,7 +14,7 @@ export function AdminBannersPage() {
   const loadBanners = async () => {
     try {
       setLoading(true)
-      const res = await fetchAdminBanners('APP')
+      const res = await fetchAdminBanners('CORPORATE')
       setBanners(res.data?.banners ?? [])
       setError('')
     } catch (e) {
@@ -37,8 +37,8 @@ export function AdminBannersPage() {
       setError('')
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('panel', 'APP')
-      
+      formData.append('panel', 'CORPORATE')
+
       await createAdminBanner(formData)
       await loadBanners()
     } catch (err) {
@@ -65,11 +65,16 @@ export function AdminBannersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Banners</h1>
-        <input 
-          type="file" 
-          accept="image/*" 
-          className="hidden" 
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Corporate Banners</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Upload banners that will be visible on the Corporate dashboards.
+          </p>
+        </div>
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
           ref={fileInputRef}
           onChange={handleFileChange}
         />
@@ -103,10 +108,10 @@ export function AdminBannersPage() {
           {banners.map(banner => (
             <GlassPanel key={banner._id} className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
               <div className="aspect-[21/9] w-full bg-slate-100">
-                <img 
-                  src={banner.imageUrl} 
-                  alt="Banner" 
-                  className="h-full w-full object-cover" 
+                <img
+                  src={banner.imageUrl}
+                  alt="Banner"
+                  className="h-full w-full object-cover"
                 />
               </div>
               <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
