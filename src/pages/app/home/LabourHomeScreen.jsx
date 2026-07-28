@@ -156,7 +156,7 @@ export function LabourHomeScreen({ user }) {
   const [timeManagementOpen, setTimeManagementOpen] = useState(false)
   const [notifTick, setNotifTick] = useState(0)
   const [assignmentDetailOpen, setAssignmentDetailOpen] = useState(false)
-  const { setOnline } = useLabourPresence()
+  const { online, setOnline } = useLabourPresence()
   const [schedule, setSchedule] = useState(() => {
     return user?.labourProfile?.schedule && user.labourProfile.schedule.length === 7 
       ? user.labourProfile.schedule 
@@ -170,6 +170,25 @@ export function LabourHomeScreen({ user }) {
           { day: 'Sunday', startTime: '09:00', endTime: '17:00', isAvailable: false },
         ]
   })
+
+  const isScheduleOffline = useMemo(() => {
+    if (!online) return false
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const currentDay = days[new Date().getDay()]
+    const todaySchedule = schedule.find(s => s.day === currentDay)
+    
+    if (!todaySchedule || !todaySchedule.isAvailable) return true
+    
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    const currentIstStr = `${hh}:${mm}`
+    
+    if (currentIstStr < todaySchedule.startTime || currentIstStr > todaySchedule.endTime) {
+      return true
+    }
+    return false
+  }, [online, schedule])
 
   const firstName = user?.fullName?.split(/\s/)?.[0]
   const greeting = getTimeGreeting()
@@ -480,6 +499,22 @@ export function LabourHomeScreen({ user }) {
       </section>
 
       <div className="space-y-5 px-4">
+        {isScheduleOffline && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4"
+          >
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" aria-hidden />
+            <div>
+              <h3 className="text-sm font-bold text-amber-500">Currently Offline (Schedule)</h3>
+              <p className="mt-1 text-xs text-slate-300">
+                Your global toggle is on, but your current schedule shows you are offline or outside working hours. You will not receive any instant or scheduled bookings right now.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Time Management Section */}
         <motion.section
           initial={reduce ? false : { opacity: 0, y: 10 }}
@@ -493,9 +528,14 @@ export function LabourHomeScreen({ user }) {
               onClick={() => setTimeManagementOpen(!timeManagementOpen)}
               className="flex w-full items-center justify-between text-left focus:outline-none"
             >
-              <h2 id="time-management-heading" className="text-base font-extrabold text-slate-900">
-                Time Management
-              </h2>
+              <div className="flex flex-col items-start">
+                <h2 id="time-management-heading" className="text-base font-extrabold text-slate-900">
+                  Time Management
+                </h2>
+                <span className="text-[11px] font-semibold text-slate-500 mt-0.5 uppercase tracking-wide">
+                  {new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
+              </div>
               <ChevronDown
                 className={`h-5 w-5 text-slate-400 transition-transform ${timeManagementOpen ? 'rotate-180' : ''}`}
                 aria-hidden

@@ -454,6 +454,12 @@ export function IndividualBookingFlowPage() {
       setFormError('Add your work location to continue.')
       return false
     }
+
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    const currentIstStr = `${hh}:${mm}`
+
     if (draft.bookingType === 'scheduled') {
       if (!draft.serviceDate) {
         setFormError('Choose a date for scheduled booking.')
@@ -464,7 +470,19 @@ export function IndividualBookingFlowPage() {
         return false
       }
       if (!draft.timeSlot) {
-        setFormError('Pick a time slot.')
+        setFormError('Pick a start time.')
+        return false
+      }
+      if (!draft.endTime) {
+        setFormError('Pick an end time.')
+        return false
+      }
+      if (draft.serviceDate === todayISODate() && draft.timeSlot < currentIstStr) {
+        setFormError('Start time cannot be in the past.')
+        return false
+      }
+      if (draft.timeSlot >= draft.endTime) {
+        setFormError('End time must be after start time.')
         return false
       }
     }
@@ -519,6 +537,7 @@ export function IndividualBookingFlowPage() {
         durationKind: draft.durationKind,
         durationDays: days,
         timeSlot: draft.timeSlot,
+        endTime: draft.endTime,
         scheduledAt: draft.serviceDate,
         imageNames: uploadedImageUrls,
       }
@@ -556,7 +575,7 @@ export function IndividualBookingFlowPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-500 font-semibold">Time slot</span>
-              <span className="text-slate-900 font-bold">{draft.timeSlot}</span>
+              <span className="text-slate-900 font-bold">{draft.timeSlot} - {draft.endTime}</span>
             </div>
           </div>
           <motion.div className="mt-6 flex flex-col gap-2">
@@ -1032,11 +1051,13 @@ export function IndividualBookingFlowPage() {
             </motion.div>
 
             {draft.bookingType === 'instant' ? (
-              <div className="lc-booking-highlight flex items-center gap-2">
-                <Zap className="h-5 w-5 text-brand" aria-hidden />
-                <div>
-                  <p className="text-sm font-bold text-black">ASAP</p>
-                  <p className="text-xs font-medium text-black/70">Earliest available slot</p>
+              <div className="space-y-3">
+                <div className="lc-booking-highlight flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-brand" aria-hidden />
+                  <div>
+                    <p className="text-sm font-bold text-black">ASAP</p>
+                    <p className="text-xs font-medium text-black/70">Earliest available slot</p>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1054,26 +1075,29 @@ export function IndividualBookingFlowPage() {
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black"
                   />
                 </motion.div>
-                <div>
-                  <FieldLabel>Time slot</FieldLabel>
-                  <div className="grid grid-cols-2 gap-2">
-                    {filteredTimeSlots.map((slot) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => syncDraft({ timeSlot: slot })}
-                        className="lc-booking-slot"
-                        data-active={draft.timeSlot === slot ? 'true' : 'false'}
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                    {filteredTimeSlots.length === 0 && (
-                      <div className="col-span-2 rounded-xl bg-slate-50 p-3 text-center text-xs text-slate-500 border border-slate-100">
-                        No time slots available for this date.
-                      </div>
-                    )}
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <motion.div>
+                    <FieldLabel htmlFor="scheduled-time">Start Time</FieldLabel>
+                    <input
+                      id="scheduled-time"
+                      name="timeSlot"
+                      type="time"
+                      value={draft.timeSlot || ''}
+                      onChange={(e) => syncDraft({ timeSlot: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black outline-none focus:border-brand focus:ring-1"
+                    />
+                  </motion.div>
+                  <motion.div>
+                    <FieldLabel htmlFor="scheduled-end-time">End Time</FieldLabel>
+                    <input
+                      id="scheduled-end-time"
+                      name="endTime"
+                      type="time"
+                      value={draft.endTime || ''}
+                      onChange={(e) => syncDraft({ endTime: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black outline-none focus:border-brand focus:ring-1"
+                    />
+                  </motion.div>
                 </div>
               </div>
             )}

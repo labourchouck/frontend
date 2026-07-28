@@ -83,6 +83,7 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/mart', label: 'Mart', icon: Package },
       { to: '/admin/mart/reviews', label: 'Product Reviews', icon: ClipboardCheck },
       { to: '/admin/mart/enquiries', label: 'Quote Leads', icon: MessageSquare },
+      { to: '/admin/mart-subscriptions', label: 'Mart Subscriptions', icon: Package },
       { to: '/admin/bookings', label: 'Bookings & requests', icon: ClipboardList },
       { to: '/admin/allocations', label: 'Workforce allocation', icon: Network },
       { to: '/admin/attendance', label: 'Attendance', icon: Clock },
@@ -109,6 +110,7 @@ export const ADMIN_NAV_SECTIONS = [
     items: [
       { to: '/admin/banners', label: 'Banners', icon: Image },
       { to: '/admin/corporate-banners', label: 'Corporate Banners', icon: Image },
+      { to: '/admin/vendor-banners', label: 'Vendor Banners', icon: Image },
     ],
   },
   {
@@ -126,6 +128,7 @@ const ROUTE_TITLES = [
   { prefix: '/admin/settings', title: 'Settings' },
   { prefix: '/admin/banners', title: 'Banners' },
   { prefix: '/admin/corporate-banners', title: 'Corporate Banners' },
+  { prefix: '/admin/vendor-banners', title: 'Vendor Banners' },
   { prefix: '/admin/reports', title: 'Reports & analytics' },
   { prefix: '/admin/pricing', title: 'Pricing & rates' },
   { prefix: '/admin/platform-fee', title: 'Platform Fee' },
@@ -136,6 +139,7 @@ const ROUTE_TITLES = [
   { prefix: '/admin/allocations', title: 'Workforce allocation' },
   { prefix: '/admin/mart/enquiries', title: 'Quote Leads' },
   { prefix: '/admin/mart/reviews', title: 'Product Reviews' },
+  { prefix: '/admin/mart-subscriptions', title: 'Mart Subscriptions' },
   { prefix: '/admin/mart', title: 'Mart' },
   { prefix: '/admin/bookings', title: 'Bookings & requests' },
   { prefix: '/admin/services', title: 'Services' },

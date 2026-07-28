@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import {
   BarChart3,
   ChevronRight,
@@ -33,6 +33,8 @@ const QUICK_ACTIONS = [
   { to: '/vendor/support', label: 'Support', icon: LifeBuoy, bg: 'from-rose-500/15 to-rose-50', tone: 'text-rose-700' },
 ]
 
+
+
 export function VendorHomeScreen({ user }) {
   const reduce = useReducedMotion()
   const navigate = useNavigate()
@@ -40,6 +42,16 @@ export function VendorHomeScreen({ user }) {
   const verified = user?.contractorProfile?.verificationStatus === 'approved'
   const [stats, setStats] = useState({})
   const [pendingJobs, setPendingJobs] = useState([])
+  const [banners, setBanners] = useState([])
+  const [bannerIdx, setBannerIdx] = useState(0)
+
+  useEffect(() => {
+    if (reduce || banners.length === 0) return undefined
+    const id = window.setInterval(() => {
+      setBannerIdx((i) => (i + 1) % banners.length)
+    }, 5000)
+    return () => window.clearInterval(id)
+  }, [reduce, banners])
 
   useEffect(() => {
     if (!verified || !unlocked) return
@@ -53,6 +65,9 @@ export function VendorHomeScreen({ user }) {
         const allJobs = jobsRes?.data?.allocations || []
         const pending = allJobs.filter(a => !a.vendorAcceptedAt && !a.vendorRejectedAt)
         setPendingJobs(pending.slice(0, 2))
+
+        const bannersRes = await vendorApi.getBanners()
+        setBanners(bannersRes?.data?.banners || [])
       } catch (err) {
         console.error('Failed to load vendor dashboard', err)
       }
@@ -235,7 +250,38 @@ export function VendorHomeScreen({ user }) {
         ) : null}
 
         <section className="mb-4">
-          <Link to="/vendor/mart" className="block">
+          {banners.length > 0 && (
+            <div className="relative aspect-[21/9] w-full overflow-hidden rounded-3xl mb-4 shadow-md bg-slate-100">
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={bannerIdx}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute inset-0"
+                >
+                  {banners[bannerIdx]?.targetUrl ? (
+                    <a href={banners[bannerIdx].targetUrl} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
+                      <img src={banners[bannerIdx].imageUrl} alt="Banner" className="h-full w-full object-cover" />
+                    </a>
+                  ) : (
+                    <img src={banners[bannerIdx]?.imageUrl} alt="Banner" className="h-full w-full object-cover" />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+              <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 gap-1.5 z-10">
+                {banners.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${i === bannerIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/60'}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Link to="/vendor/mart/subscription" className="block">
             <div className="flex items-center gap-4 rounded-3xl border border-white/10 buildmart-gradient p-4 buildmart-glow transition-all hover:-translate-y-0.5 hover:shadow-xl">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
                 <ShoppingCart className="h-5 w-5 text-white" />

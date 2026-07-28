@@ -297,35 +297,22 @@ export function AppProfilePage() {
   }, [editNameValue, editPhoneValue, editEmailValue, dispatch])
 
   const handleSignOut = async () => {
-    const role = user?.role
     await logout()
-    if (role === USER_ROLES.LABOUR) {
-      // Restore boot role so they land on guest labour home instead of individual home
-      setBootRole(role)
-      navigate('/app', { replace: true })
-    } else {
-      navigate(BOOT_ROUTES.SPLASH, { replace: true })
-    }
+    navigate('/auth', { replace: true })
   }
 
   const handleDeleteAccount = useCallback(async () => {
     setDeletingAccount(true)
     setDeleteErr('')
-    const role = user?.role
     try {
       await deleteCurrentUser()
       await logout()
-      if (role === USER_ROLES.LABOUR) {
-        setBootRole(role)
-        navigate('/app', { replace: true })
-      } else {
-        navigate(BOOT_ROUTES.SPLASH, { replace: true })
-      }
+      navigate('/auth', { replace: true })
     } catch (err) {
       setDeleteErr(err instanceof ApiError ? err.message : 'Could not delete account')
       setDeletingAccount(false)
     }
-  }, [user, logout, navigate, setBootRole])
+  }, [logout, navigate])
 
   const quickLinks = []
   quickLinks.push({ to: '/app', icon: Home, label: 'Home' })

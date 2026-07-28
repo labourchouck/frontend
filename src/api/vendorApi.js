@@ -67,5 +67,16 @@ export const vendorApi = {
   requestWithdrawal: (data) => apiRequest('/vendor/withdrawals/request', { 
     method: 'POST', 
     body: data 
+  }),
+
+  // 8. Banners
+  getBanners: () => apiRequest('/vendor/banners', { method: 'GET' }),
+
+  // 9. Subscriptions
+  getSubscriptionPlans: () => apiRequest('/vendor/subscriptions/plans', { method: 'GET' }),
+  
+  subscribeToPlan: (planId) => apiRequest('/vendor/subscriptions/subscribe', {
+    method: 'POST',
+    body: { planId }
   })
 }
