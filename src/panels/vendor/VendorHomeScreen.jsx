@@ -41,6 +41,7 @@ export function VendorHomeScreen({ user }) {
   const unlocked = isVendorPanelUnlocked(user)
   const verified = user?.contractorProfile?.verificationStatus === 'approved'
   const [stats, setStats] = useState({})
+  const [activeSubscription, setActiveSubscription] = useState(null)
   const [pendingJobs, setPendingJobs] = useState([])
   const [banners, setBanners] = useState([])
   const [bannerIdx, setBannerIdx] = useState(0)
@@ -60,6 +61,7 @@ export function VendorHomeScreen({ user }) {
       try {
         const statsRes = await vendorApi.getDashboardStats()
         setStats(statsRes?.data?.stats || {})
+        setActiveSubscription(statsRes?.data?.activeSubscription || null)
         
         const jobsRes = await vendorApi.getJobs()
         const allJobs = jobsRes?.data?.allocations || []
@@ -281,18 +283,37 @@ export function VendorHomeScreen({ user }) {
             </div>
           )}
 
-          <Link to="/vendor/mart/subscription" className="block">
-            <div className="flex items-center gap-4 rounded-3xl border border-white/10 buildmart-gradient p-4 buildmart-glow transition-all hover:-translate-y-0.5 hover:shadow-xl">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                <ShoppingCart className="h-5 w-5 text-white" />
+          {activeSubscription ? (
+            <div className="flex flex-col gap-3 rounded-3xl border border-orange-200/80 buildmart-gradient-soft p-4 shadow-sm mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#7a280e]/10">
+                  <ShoppingCart className="h-5 w-5 text-[#7a280e]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-bold text-[#7a280e]">{activeSubscription.plan?.name} Active</h3>
+                  <p className="text-xs font-medium text-[#7a280e]/80">
+                    Valid till {new Date(activeSubscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base font-bold text-white">App Mart</h3>
-                <p className="truncate text-xs font-medium text-white/90">Buy materials, tools & safety gear</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-white opacity-70" />
+              <Link to="/vendor/mart/subscription" className="flex items-center justify-center gap-1.5 rounded-xl bg-[#7a280e] py-2 text-xs font-bold text-white transition hover:bg-[#c45c26]">
+                Upgrade Plan
+              </Link>
             </div>
-          </Link>
+          ) : (
+            <Link to="/vendor/mart/subscription" className="block">
+              <div className="flex items-center gap-4 rounded-3xl border border-white/10 buildmart-gradient p-4 buildmart-glow transition-all hover:-translate-y-0.5 hover:shadow-xl">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                  <ShoppingCart className="h-5 w-5 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-bold text-white">App Mart</h3>
+                  <p className="truncate text-xs font-medium text-white/90">Buy materials, tools & safety gear</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-white opacity-70" />
+              </div>
+            </Link>
+          )}
         </section>
 
         <section>

@@ -5,9 +5,23 @@ import { Link, useNavigate } from 'react-router-dom'
 import { VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
 
 import { vendorApi } from '../../../api/vendorApi.js'
+import { paymentsApi } from '../../../api/paymentsApi.js'
+import { useAuth } from '../../../hooks/useAuth.js'
+
+function loadRazorpay() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) { resolve(true); return }
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
 
 export function VendorMartSubscriptionPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [plans, setPlans] = useState([])
   const [selectedPlan, setSelectedPlan] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -39,11 +53,66 @@ export function VendorMartSubscriptionPage() {
   const handleSubscribe = async (plan) => {
     setIsProcessing(true)
     try {
-      await vendorApi.subscribeToPlan(plan._id)
-      showToast(`Successfully subscribed to ${plan.name}!`)
-      setTimeout(() => {
-        navigate('/vendor/mart', { replace: true })
-      }, 1000)
+      // Load Razorpay SDK
+      const razorpayLoaded = await loadRazorpay()
+      if (!razorpayLoaded) {
+        showToast('Failed to load payment gateway')
+        setIsProcessing(false)
+        return
+      }
+
+      // Initialize payment
+      const initRes = await paymentsApi.initPayment({
+        amount: plan.price,
+        purpose: 'SUBSCRIPTION',
+        planId: plan._id
+      })
+
+      if (!initRes || !initRes.data || !initRes.data.order) {
+        showToast('Failed to initialize payment')
+        setIsProcessing(false)
+        return
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        amount: initRes.data.order.amount,
+        currency: initRes.data.order.currency,
+        name: 'LabourChowck',
+        description: `Subscription to ${plan.name}`,
+        order_id: initRes.data.order.id,
+        handler: async function (response) {
+          try {
+            await paymentsApi.verifyPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature
+            })
+            showToast(`Successfully subscribed to ${plan.name}!`)
+            setTimeout(() => {
+              navigate('/vendor/mart', { replace: true })
+            }, 1000)
+          } catch (err) {
+            console.error(err)
+            showToast('Payment verification failed')
+          }
+        },
+        prefill: {
+          name: user?.fullName || 'Vendor',
+          email: user?.email || '',
+          contact: user?.phone || ''
+        },
+        theme: {
+          color: '#7a280e'
+        }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', function (response) {
+        showToast('Payment failed')
+      })
+      rzp.open()
+
     } catch (err) {
       console.error(err)
       showToast('Failed to subscribe. Please try again.')

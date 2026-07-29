@@ -15,6 +15,7 @@ import {
   Upload,
   Users,
   LogOut,
+  ShoppingCart
 } from 'lucide-react'
 import { assetUrlFromUpload, uploadDocument } from '../../../api/uploadApi.js'
 import { UPLOAD_FOLDERS } from '../../../constants/uploadFolders.js'
@@ -91,6 +92,15 @@ export function VendorProfilePage() {
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [activeSubscription, setActiveSubscription] = useState(null)
+
+  useEffect(() => {
+    vendorApi.getMe().then(res => {
+      if (res?.data?.activeSubscription) {
+        setActiveSubscription(res.data.activeSubscription)
+      }
+    }).catch(console.error)
+  }, [])
 
   // API setup replaced with direct vendorApi calls inside handlers
 
@@ -322,6 +332,25 @@ export function VendorProfilePage() {
           <LabourKycWorkflowTimeline activeIndex={workflowStep} tone={ui.tone} steps={BUSINESS_WORKFLOW} />
         </div>
       </GlassPanel>
+
+      {activeSubscription && (
+        <GlassPanel className="flex flex-col gap-3 border-orange-200/80 buildmart-gradient-soft p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#7a280e]/10">
+              <ShoppingCart className="h-5 w-5 text-[#7a280e]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-extrabold text-[#7a280e]">{activeSubscription.plan?.name} Active</p>
+              <p className="text-xs font-medium text-[#7a280e]/80">
+                Valid till {new Date(activeSubscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+            </div>
+          </div>
+          <Link to="/vendor/mart/subscription" className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#7a280e] py-2.5 text-sm font-bold text-white transition hover:bg-[#c45c26]">
+            Upgrade Plan
+          </Link>
+        </GlassPanel>
+      )}
 
       <GlassPanel className="border-amber-200/40 bg-linear-to-br from-amber-50/80 to-white p-4 sm:p-5">
         <div className="flex items-center gap-2">
