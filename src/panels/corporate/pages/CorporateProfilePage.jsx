@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
@@ -14,7 +14,10 @@ import {
   ShieldCheck,
   Trash2,
   Upload,
+  LogOut,
 } from 'lucide-react'
+import { apiRequest } from '../../../api/http.js'
+import { VendorDeleteAccountModal } from '../../../components/vendor/VendorDeleteAccountModal.jsx'
 import { assetUrlFromUpload, uploadDocument } from '../../../api/uploadApi.js'
 import { UPLOAD_FOLDERS } from '../../../constants/uploadFolders.js'
 import {
@@ -74,7 +77,8 @@ function profileToForm(profile, user) {
 export function CorporateProfilePage() {
   const reduce = useReducedMotion()
   const dispatch = useDispatch()
-  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const profile = user?.corporateProfile
   const documents = profile?.documents ?? []
 
@@ -90,11 +94,25 @@ export function CorporateProfilePage() {
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const [patchCorporateMe] = usePatchCorporateMeMutation()
   const [addDocument] = useAddCorporateDocumentMutation()
   const [removeDocument] = useRemoveCorporateDocumentMutation()
   const [submitVerification] = useSubmitCorporateVerificationMutation()
+
+  const handleLogout = () => {
+    logout().finally(() => {
+      navigate('/auth')
+    })
+  }
+
+  const handleDeleteAccount = async () => {
+    await apiRequest('/users/me', { method: 'DELETE' })
+    logout().finally(() => {
+      navigate('/auth')
+    })
+  }
 
   useEffect(() => {
     setForm(profileToForm(profile, user))
@@ -612,6 +630,36 @@ export function CorporateProfilePage() {
           })}
         </ul>
       </GlassPanel>
+
+      <GlassPanel className="border-rose-200/50 bg-linear-to-br from-rose-50/80 to-white p-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-rose-800/80">Account settings</p>
+        <div className="mt-4 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <LogOut className="h-4 w-4 text-slate-500" aria-hidden />
+            Sign Out
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-100"
+          >
+            <Trash2 className="h-4 w-4 text-rose-600" aria-hidden />
+            Delete Account
+          </button>
+        </div>
+      </GlassPanel>
+
+      {showDeleteModal && (
+        <VendorDeleteAccountModal
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteAccount}
+        />
+      )}
     </div>
   )
 }

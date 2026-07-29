@@ -5,6 +5,9 @@ import { HardHat, Menu, X } from 'lucide-react'
 import { ButtonLink } from '../ui/ButtonLink'
 import { Container } from '../ui/Container'
 import { SITE } from '../../data/landingContent'
+import { useAuth } from '../../hooks/useAuth.js'
+import { USER_ROLES } from '../../constants/userRoles.js'
+import { writeBootRole } from '../../lib/bootPersona.js'
 
 const links = [
   { href: '#problem', label: 'Why LabourChowck' },
@@ -19,6 +22,31 @@ export function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const reduce = useReducedMotion()
+  const { user, logout } = useAuth()
+
+  const handleHireLabour = (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (user && user.role === USER_ROLES.INDIVIDUAL) {
+      window.location.href = '/app'
+      return
+    }
+    logout().finally(() => {
+      writeBootRole(USER_ROLES.INDIVIDUAL)
+      window.location.href = '/app'
+    })
+  }
+
+  const handleRegisterLabour = (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (user && user.role === USER_ROLES.LABOUR) {
+      window.location.href = '/app'
+      return
+    }
+    logout().finally(() => {
+      writeBootRole(USER_ROLES.LABOUR)
+      window.location.href = '/app'
+    })
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -78,10 +106,10 @@ export function Navbar() {
           >
             Sign in
           </Link>
-          <ButtonLink href="/auth" variant="secondary" className="!py-2.5 !text-xs">
+          <ButtonLink href="/app" variant="secondary" className="!py-2.5 !text-xs" onClick={handleRegisterLabour}>
             Register as Labour
           </ButtonLink>
-          <ButtonLink href="/app" variant="primary" className="!py-2.5 !text-xs">
+          <ButtonLink href="/app" variant="primary" className="!py-2.5 !text-xs" onClick={handleHireLabour}>
             Hire Labour
           </ButtonLink>
         </div>
@@ -130,10 +158,10 @@ export function Navbar() {
                 >
                   Sign in / Register
                 </Link>
-                <ButtonLink href="/app" variant="primary" onClick={() => setOpen(false)}>
+                <ButtonLink href="/app" variant="primary" onClick={(e) => { setOpen(false); handleHireLabour(e); }}>
                   Hire Labour
                 </ButtonLink>
-                <ButtonLink href="/auth" variant="secondary" onClick={() => setOpen(false)}>
+                <ButtonLink href="/app" variant="secondary" onClick={(e) => { setOpen(false); handleRegisterLabour(e); }}>
                   Register as Labour
                 </ButtonLink>
               </div>

@@ -6,9 +6,37 @@ import { ButtonLink } from '../ui/ButtonLink'
 import { Container } from '../ui/Container'
 import { GlassPanel } from '../ui/GlassPanel'
 import { ConstructionIllustration } from './ConstructionIllustration'
+import { useAuth } from '../../hooks/useAuth.js'
+import { USER_ROLES } from '../../constants/userRoles.js'
+import { writeBootRole } from '../../lib/bootPersona.js'
 
 export function Hero() {
   const reduce = useReducedMotion()
+  const { user, logout } = useAuth()
+
+  const handleHireLabour = (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (user && user.role === USER_ROLES.INDIVIDUAL) {
+      window.location.href = '/app'
+      return
+    }
+    logout().finally(() => {
+      writeBootRole(USER_ROLES.INDIVIDUAL)
+      window.location.href = '/app'
+    })
+  }
+
+  const handleRegisterLabour = (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (user && user.role === USER_ROLES.LABOUR) {
+      window.location.href = '/app'
+      return
+    }
+    logout().finally(() => {
+      writeBootRole(USER_ROLES.LABOUR)
+      window.location.href = '/app'
+    })
+  }
 
   return (
     <section
@@ -63,11 +91,11 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.18 }}
           >
-            <ButtonLink href="/app" variant="primary" className="group">
+            <ButtonLink href="/app" variant="primary" className="group" onClick={handleHireLabour}>
               Hire Labour
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
             </ButtonLink>
-            <ButtonLink href="/auth" variant="secondary">
+            <ButtonLink href="/app" variant="secondary" onClick={handleRegisterLabour}>
               Register as Labour
             </ButtonLink>
           </motion.div>
