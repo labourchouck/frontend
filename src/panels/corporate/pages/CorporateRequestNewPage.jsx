@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, MapPin } from 'lucide-react'
 import { apiRequest } from '../../../api/http.js'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
@@ -38,6 +38,96 @@ export function CorporateRequestNewPage() {
   const [shiftStart, setShiftStart] = useState('08:00')
   const [shiftEnd, setShiftEnd] = useState('18:00')
   const [locationText, setLocationText] = useState('')
+  const [latitude, setLatitude] = useState(null)
+  const [longitude, setLongitude] = useState(null)
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false)
+  const locationInputRef = useRef(null)
+  
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
+
+    const initAutocomplete = () => {
+      if (!locationInputRef.current) return
+      if (!window.google?.maps?.places?.Autocomplete) return
+      
+      const autocomplete = new window.google.maps.places.Autocomplete(locationInputRef.current, {
+        fields: ['formatted_address', 'geometry'],
+      })
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace()
+        if (place.geometry && place.geometry.location) {
+          const lat = place.geometry.location.lat()
+          const lng = place.geometry.location.lng()
+          setLatitude(lat)
+          setLongitude(lng)
+          if (place.formatted_address) {
+            setLocationText(place.formatted_address)
+          }
+        }
+      })
+    }
+
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initAutocomplete()
+      return
+    }
+
+    const existingScript = document.getElementById('google-maps-script')
+    if (!existingScript) {
+      const script = document.createElement('script')
+      script.id = 'google-maps-script'
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
+      script.async = true
+      script.onload = initAutocomplete
+      document.head.appendChild(script)
+    } else {
+      existingScript.addEventListener('load', initAutocomplete)
+    }
+  }, [])
+
+  const handleFetchLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser')
+      return
+    }
+    
+    setIsFetchingLocation(true)
+    setError('')
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude: lat, longitude: lng } = position.coords
+        setLatitude(lat)
+        setLongitude(lng)
+        
+        try {
+          const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+          if (!apiKey) {
+            setLocationText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+            setIsFetchingLocation(false)
+            return
+          }
+          
+          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`)
+          const data = await res.json()
+          
+          if (data.results && data.results.length > 0) {
+            setLocationText(data.results[0].formatted_address)
+          } else {
+            setLocationText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+          }
+        } catch (err) {
+          setLocationText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+        }
+        setIsFetchingLocation(false)
+      },
+      (err) => {
+        setError('Could not fetch location. Please allow location permissions.')
+        setIsFetchingLocation(false)
+      }
+    )
+  }
+
   const [notes, setNotes] = useState('')
   const [lines, setLines] = useState([emptyLine()])
   const [categories, setCategories] = useState([])
@@ -76,6 +166,10 @@ export function CorporateRequestNewPage() {
       setError('Add at least one skill line')
       return
     }
+    if (!startDate || !endDate) {
+      setError('Please select both start date and end date to estimate pricing')
+      return
+    }
 
     try {
       const res = await searchVendors({
@@ -84,6 +178,9 @@ export function CorporateRequestNewPage() {
           serviceId: l.serviceId || undefined,
           quantity: Number(l.quantity) || 1,
         })),
+        startDate,
+        endDate,
+        ...(latitude && longitude ? { lat: latitude, lng: longitude } : {}),
       }).unwrap()
       setSearchResults(res.vendors || [])
     } catch (err) {
@@ -107,6 +204,7 @@ export function CorporateRequestNewPage() {
         shiftStart,
         shiftEnd,
         locationText: locationText.trim() || undefined,
+        ...(latitude && longitude ? { lat: latitude, lng: longitude } : {}),
         notes: notes.trim() || undefined,
         lines: validLines.map((l) => ({
           categoryId: l.categoryId,
@@ -295,10 +393,27 @@ export function CorporateRequestNewPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
-              Location
-            </label>
-            <input className={inputClass} value={locationText} onChange={(e) => setLocationText(e.target.value)} />
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                Location
+              </label>
+              <button
+                type="button"
+                onClick={handleFetchLocation}
+                disabled={isFetchingLocation}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:text-brand/80 disabled:opacity-50"
+              >
+                <MapPin className="h-3 w-3" />
+                {isFetchingLocation ? 'Fetching...' : 'Fetch Location'}
+              </button>
+            </div>
+            <input 
+              ref={locationInputRef}
+              className={inputClass} 
+              value={locationText} 
+              onChange={(e) => setLocationText(e.target.value)} 
+              placeholder="Enter location or fetch automatically"
+            />
           </div>
 
           <div>
@@ -330,11 +445,17 @@ export function CorporateRequestNewPage() {
                     <div>
                       <h4 className="font-bold text-slate-800">{vendor.businessName}</h4>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {vendor.fullName} • ⭐ {vendor.rating.toFixed(1)}
+                        {vendor.fullName} • ⭐ {vendor.rating?.toFixed(1) || '0.0'}
+                        {vendor.distance !== undefined && ` • ${vendor.distance.toFixed(1)} km away`}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-brand">{vendor.matchingCrewSize} matching crew</div>
+                      <div className="text-sm font-bold text-brand">{vendor.availableCrewSize || vendor.matchingCrewSize || 0} matching crew</div>
+                      {vendor.priceDetails && (
+                        <div className="mt-1 text-xs font-semibold text-slate-700">
+                          Est. Total: ₹{vendor.priceDetails.estimatedTotal}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
