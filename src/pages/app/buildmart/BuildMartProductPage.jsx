@@ -203,7 +203,7 @@ export function BuildMartProductPage() {
             onClick={() => setQuoteOpen(true)}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl buildmart-gradient py-3.5 text-sm font-extrabold text-white buildmart-glow"
           >
-            Send Quote Request
+            Request Quote
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
           <button
