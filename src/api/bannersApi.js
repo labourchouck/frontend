@@ -1,5 +1,5 @@
 import { apiRequest } from './http.js'
 
 export function fetchActiveBanners() {
-  return apiRequest('/banners', { skipAuth: true })
+  return apiRequest(`/banners?_t=${Date.now()}`, { skipAuth: true })
 }

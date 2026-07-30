@@ -31,6 +31,7 @@ const byRole = {
     drawerNav: [
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
       { id: 'search', to: '/app/search', label: 'Search skills', icon: Search },
+      { id: 'subscription', to: '/app/subscriptions', label: 'My Subscription', icon: ShieldCheck },
       { id: 'buildmart', to: '/app/buildmart', label: 'BuildMart materials', icon: Package },
       { id: 'book', to: '/app/my-bookings', label: 'My bookings', icon: ClipboardList },
       { id: 'support', to: '/app/support', label: 'Support & issues', icon: LifeBuoy },
@@ -76,6 +77,7 @@ export function getAppShellTitle(pathname) {
   if (pathname.startsWith('/app/work-categories')) return 'Work types'
   if (pathname.startsWith('/app/booking/flow')) return 'Book labour'
   if (pathname.startsWith('/app/support')) return 'Support'
+  if (pathname.startsWith('/app/subscriptions')) return 'Subscription'
   if (pathname.startsWith('/app/profile')) return 'Profile'
   if (pathname.startsWith('/app/bookings')) return 'My bookings'
   if (pathname.startsWith('/app/search')) return 'Search'

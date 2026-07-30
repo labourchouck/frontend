@@ -24,6 +24,7 @@ import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { bookingsApi } from '../../../api/bookingsApi.js'
 import { getPublicSettings } from '../../../api/adminSettingsApi.js'
+import { userSubscriptionApi } from '../../../api/userSubscriptionApi.js'
 import { uploadMedia, assetUrlFromUpload } from '../../../api/uploadApi.js'
 import { BookingFindingScreen } from '../../../components/app/booking/BookingFindingScreen.jsx'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
@@ -107,6 +108,8 @@ export function IndividualBookingFlowPage() {
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
   const markerInstance = useRef(null)
+  
+  const [activeSubscription, setActiveSubscription] = useState(null)
 
   const { bookingEvent } = useBookingSocket(activeBookingId)
 
@@ -180,6 +183,19 @@ export function IndividualBookingFlowPage() {
       }).catch(err => console.error(err))
     }
   }, [activeBookingId, activeBooking, realUser])
+
+  useEffect(() => {
+    let cancelled = false
+    if (!realUser) return
+    userSubscriptionApi.getMySubscription()
+      .then((res) => {
+        if (!cancelled && res?.data?.subscription) {
+          setActiveSubscription(res.data.subscription)
+        }
+      })
+      .catch((err) => console.error('Failed to load active subscription', err))
+    return () => { cancelled = true }
+  }, [realUser])
 
   useEffect(() => {
     if (!bookingEvent) return
@@ -1175,6 +1191,27 @@ export function IndividualBookingFlowPage() {
                   <span>Total</span>
                   <span>{formatInr(calculatedBill.totalAmount)}</span>
                 </div>
+                {activeSubscription ? (
+                  <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-emerald-900 border border-emerald-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="font-bold text-sm">Active Plan: {activeSubscription.snapshotPlanDetails?.name || activeSubscription.plan?.name}</span>
+                    </div>
+                    <div className="text-xs font-medium">
+                      Bookings Used: <span className="font-bold">{activeSubscription.bookingsUsed}</span> / {activeSubscription.snapshotPlanDetails?.allowedBookings || activeSubscription.plan?.allowedBookings}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-xl bg-orange-50 p-3 text-orange-900 border border-orange-100 flex items-center justify-between">
+                    <span className="text-sm font-semibold">Get a plan to book labour easily</span>
+                    <button
+                      onClick={() => navigate('/app/subscriptions')}
+                      className="text-xs font-bold bg-orange-500 text-white px-3 py-1.5 rounded-lg"
+                    >
+                      View Plans
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

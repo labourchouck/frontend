@@ -50,6 +50,13 @@ export const adminSettingsApi = {
       body: payload,
     })
   },
+
+  updateUserSubscriptionToggle: (payload) => {
+    return apiRequest('/admin/settings/user-subscription-toggle', {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
 }
 
 // Public endpoint (no admin auth) — used in Checkout to fetch time slots

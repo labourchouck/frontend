@@ -19,5 +19,6 @@ export const adminSubscriptionsApi = {
     method: 'DELETE'
   }),
 
-  getVendorSubscriptions: () => apiRequest('/admin/subscriptions/vendors')
+  getVendorSubscriptions: () => apiRequest('/admin/subscriptions/vendors'),
+  getUserSubscriptions: () => apiRequest('/admin/subscriptions/users')
 }

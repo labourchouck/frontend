@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Zap, CalendarClock } from 'lucide-react'
+import { Zap, CalendarClock, Shield, ChevronRight } from 'lucide-react'
 import LottieExport from 'lottie-react'
 const Lottie = LottieExport.default || LottieExport
 
@@ -45,6 +45,7 @@ import { fetchDiscoverLabour, fetchDiscoverLabours } from '../../../api/discover
 import { fetchAppMartProducts } from '../../../api/buildmartApi.js'
 import { bookingsApi } from '../../../api/bookingsApi.js'
 import { ApiError } from '../../../api/http.js'
+import { userSubscriptionApi } from '../../../api/userSubscriptionApi.js'
 import { LabourPublicDetailSheet } from '../labour/LabourPublicDetailSheet.jsx'
 import { enrichDiscoverLabourUi, DEMO_LABOUR_ROWS } from '../../../lib/discoverLabourDummyUi.js'
 import { displayBookingsList, loadIndividualBookings } from '../../../lib/individualBookings.js'
@@ -90,6 +91,9 @@ export function IndividualHomeScreen({ user }) {
 
   const [products, setProducts] = useState([])
   const [productsLoading, setProductsLoading] = useState(true)
+
+  const [activeSubscription, setActiveSubscription] = useState(null)
+  const [showSubscriptionDetails, setShowSubscriptionDetails] = useState(false)
 
   const enrichedLabours = useMemo(() => {
     return labours.map((l) => ({ ...l, _ui: enrichDiscoverLabourUi(l) }))
@@ -253,6 +257,19 @@ export function IndividualHomeScreen({ user }) {
 
   useEffect(() => {
     let cancelled = false
+    if (!user) return
+    userSubscriptionApi.getMySubscription()
+      .then((res) => {
+        if (!cancelled && res?.data?.subscription) {
+          setActiveSubscription(res.data.subscription)
+        }
+      })
+      .catch((err) => console.error('Failed to load active subscription', err))
+    return () => { cancelled = true }
+  }, [user])
+
+  useEffect(() => {
+    let cancelled = false
     fetchAppMartProducts()
       .then((res) => {
         if (!cancelled) {
@@ -310,6 +327,72 @@ export function IndividualHomeScreen({ user }) {
 
       <section className="lc-individual-home-sheet space-y-6">
         <IndividualHomeHeroCarousel onBook={goSearch} />
+
+        {activeSubscription && (() => {
+          const planName = activeSubscription.snapshotPlanDetails?.name || activeSubscription.plan?.name
+          const allowed = activeSubscription.snapshotPlanDetails?.allowedBookings || activeSubscription.plan?.allowedBookings || 1
+          const used = activeSubscription.bookingsUsed || 0
+          const progress = Math.min(100, Math.round((used / allowed) * 100))
+
+          return (
+            <div className="mx-4 overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm shadow-brand/5 relative">
+              <button 
+                onClick={() => setShowSubscriptionDetails(!showSubscriptionDetails)}
+                className="w-full flex items-center justify-between p-3.5 focus:outline-none"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand shadow-sm">
+                    <Shield className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Active Plan</div>
+                    <div className="text-sm font-black leading-tight text-slate-900 line-clamp-1">{planName}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right mr-1">
+                     <div className="text-sm font-black text-brand tracking-tighter">
+                        {used}<span className="text-xs font-bold text-slate-300">/{allowed}</span>
+                     </div>
+                  </div>
+                  <ChevronRight className={`h-5 w-5 text-slate-400 transition-transform ${showSubscriptionDetails ? 'rotate-90' : ''}`} />
+                </div>
+              </button>
+              
+              <AnimatePresence>
+                {showSubscriptionDetails && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="px-4 pb-4"
+                  >
+                    <div className="border-t border-slate-100 pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bookings Used</span>
+                        <span className="text-[10px] font-bold text-brand">{progress}%</span>
+                      </div>
+                      <div className="relative mb-4 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div 
+                          className="absolute left-0 top-0 h-full rounded-full bg-brand transition-all duration-500 ease-out" 
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
+
+                      <button
+                        onClick={() => navigate('/app/subscriptions')}
+                        className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95 border border-slate-100"
+                      >
+                        Manage Subscription
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-1 group-hover:text-slate-600" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )
+        })()}
 
         <IndividualHomeRecentlyBooked
           bookings={recentBookings}

@@ -47,16 +47,15 @@ export function IndividualHomeHeroCarousel({ onBook }) {
 
   return (
     <section aria-label="Offers" className="mb-1">
-      <article className="lc-home-hero-slide !min-h-0 !bg-transparent aspect-[21/9] items-center justify-center">
+      <article className="lc-home-hero-slide !min-h-0 !bg-transparent aspect-[21/9] relative overflow-hidden rounded-[1.25rem]">
         <img
           key={slide._id}
           src={slide.imageUrl}
           alt=""
-          className="max-w-full max-h-full rounded-[1.25rem] object-contain shadow-sm"
+          className="w-full h-full object-fill shadow-sm"
           loading="lazy"
           decoding="async"
         />
-        {/* We removed the text overlay because admin will upload visual banners directly */}
       </article>
 
       {banners.length > 1 && (
