@@ -1,4 +1,28 @@
 /** Keep in sync with backend `vendorVerification.js` */
+export const INDIAN_CITIES = [
+  { city: 'Indore', state: 'Madhya Pradesh' },
+  { city: 'Bhopal', state: 'Madhya Pradesh' },
+  { city: 'Gwalior', state: 'Madhya Pradesh' },
+  { city: 'Jabalpur', state: 'Madhya Pradesh' },
+  { city: 'Ujjain', state: 'Madhya Pradesh' },
+  { city: 'Mumbai', state: 'Maharashtra' },
+  { city: 'Pune', state: 'Maharashtra' },
+  { city: 'Nagpur', state: 'Maharashtra' },
+  { city: 'Delhi', state: 'Delhi' },
+  { city: 'New Delhi', state: 'Delhi' },
+  { city: 'Bangalore', state: 'Karnataka' },
+  { city: 'Hyderabad', state: 'Telangana' },
+  { city: 'Chennai', state: 'Tamil Nadu' },
+  { city: 'Kolkata', state: 'West Bengal' },
+  { city: 'Ahmedabad', state: 'Gujarat' },
+  { city: 'Surat', state: 'Gujarat' },
+  { city: 'Jaipur', state: 'Rajasthan' },
+  { city: 'Lucknow', state: 'Uttar Pradesh' },
+  { city: 'Kanpur', state: 'Uttar Pradesh' },
+  { city: 'Patna', state: 'Bihar' },
+  { city: 'Chandigarh', state: 'Chandigarh' }
+]
+
 export const VENDOR_TYPES = {
   SOLE_PROPRIETOR: 'sole_proprietor',
   PARTNERSHIP: 'partnership_firm',

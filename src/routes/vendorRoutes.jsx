@@ -2,6 +2,7 @@ import { Route } from 'react-router-dom'
 import { VendorDashboardPage } from '../panels/vendor/pages/VendorDashboardPage.jsx'
 import { VendorCrewPage } from '../panels/vendor/pages/VendorCrewPage.jsx'
 import { VendorCrewNewPage } from '../panels/vendor/pages/VendorCrewNewPage.jsx'
+import { VendorCrewCreateProfilePage } from '../panels/vendor/pages/VendorCrewCreateProfilePage.jsx'
 import { VendorJobsPage } from '../panels/vendor/pages/VendorJobsPage.jsx'
 import { VendorJobDetailPage } from '../panels/vendor/pages/VendorJobDetailPage.jsx'
 import { VendorAttendancePage } from '../panels/vendor/pages/VendorAttendancePage.jsx'
@@ -21,6 +22,7 @@ export const vendorChildRoutes = (
     <Route index element={<VendorDashboardPage />} />
     <Route path="crew" element={<VendorCrewPage />} />
     <Route path="crew/new" element={<VendorCrewNewPage />} />
+    <Route path="crew/create-profile" element={<VendorCrewCreateProfilePage />} />
     <Route path="jobs" element={<VendorJobsPage />} />
     <Route path="jobs/:id" element={<VendorJobDetailPage />} />
     <Route path="attendance" element={<VendorAttendancePage />} />

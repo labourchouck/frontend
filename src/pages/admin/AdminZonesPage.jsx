@@ -71,6 +71,7 @@ export function AdminZonesPage() {
   const [toast, setToast] = useState({ message: '', variant: 'success' })
 
   const [bookingBroadcastRadius, setBookingBroadcastRadius] = useState('')
+  const [b2bBroadcastRadius, setB2bBroadcastRadius] = useState('')
   const [stats, setStats] = useState(null)
 
   const showToast = useCallback((message, variant = 'success') => {
@@ -91,6 +92,9 @@ export function AdminZonesPage() {
       if (settingsRes.data?.bookingBroadcastRadius != null) {
         setBookingBroadcastRadius(String(settingsRes.data.bookingBroadcastRadius))
       }
+      if (settingsRes.data?.b2bBroadcastRadius != null) {
+        setB2bBroadcastRadius(String(settingsRes.data.b2bBroadcastRadius))
+      }
       
       if (statsRes.data?.data) {
         setStats(statsRes.data.data)
@@ -108,14 +112,19 @@ export function AdminZonesPage() {
 
   const handleSave = async () => {
     if (!bookingBroadcastRadius || Number(bookingBroadcastRadius) <= 0) {
-      showToast('Radius must be greater than 0', 'error')
+      showToast('Booking Radius must be greater than 0', 'error')
+      return
+    }
+    if (!b2bBroadcastRadius || Number(b2bBroadcastRadius) <= 0) {
+      showToast('Corporate/Vendor Radius must be greater than 0', 'error')
       return
     }
     
     setSaving(true)
     try {
       await adminZonesApi.updateZoneSettings({
-        bookingBroadcastRadius: Number(bookingBroadcastRadius)
+        bookingBroadcastRadius: Number(bookingBroadcastRadius),
+        b2bBroadcastRadius: Number(b2bBroadcastRadius)
       })
       showToast('Broadcast radius updated successfully')
     } catch (err) {
@@ -157,8 +166,8 @@ export function AdminZonesPage() {
         <div className="lg:col-span-5 space-y-6">
           <SettingsSection
             icon={Target}
-            title="Broadcast Radius"
-            description="Maximum distance (in km) to notify labourers about a new booking"
+            title="Individuals -> Labour Radius"
+            description="Maximum distance (in km) to notify labourers about a new individual booking"
             accent="indigo-600"
           >
             <div>
@@ -176,15 +185,39 @@ export function AdminZonesPage() {
                 A larger radius increases matching chances but may increase travel time for workers.
               </p>
             </div>
-            
-            <AppPrimaryButton
-              type="button"
-              loading={saving}
-              onClick={handleSave}
-            >
-              Save Radius
-            </AppPrimaryButton>
           </SettingsSection>
+
+          <SettingsSection
+            icon={Target}
+            title="Corporate -> Vendors Radius"
+            description="Maximum distance (in km) to notify vendors about a new corporate request"
+            accent="brand"
+          >
+            <div>
+              <label className={labelClass}>Radius (in kilometers)</label>
+              <input
+                className={inputClass + ' mt-1.5'}
+                type="number"
+                min={1}
+                max={500}
+                placeholder="e.g. 50"
+                value={b2bBroadcastRadius}
+                onChange={(e) => setB2bBroadcastRadius(e.target.value)}
+              />
+              <p className="mt-2 text-xs text-slate-500">
+                Corporate requests typically cover a larger area as vendors are equipped for travel.
+              </p>
+            </div>
+          </SettingsSection>
+
+          <AppPrimaryButton
+            type="button"
+            loading={saving}
+            onClick={handleSave}
+            className="w-full"
+          >
+            Save All Settings
+          </AppPrimaryButton>
         </div>
 
         {/* Right Column: Statistics */}

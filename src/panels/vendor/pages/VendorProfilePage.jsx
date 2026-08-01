@@ -20,6 +20,7 @@ import {
 import { assetUrlFromUpload, uploadDocument } from '../../../api/uploadApi.js'
 import { UPLOAD_FOLDERS } from '../../../constants/uploadFolders.js'
 import {
+  INDIAN_CITIES,
   INDIAN_STATES,
   VENDOR_DOCUMENT_OPTIONS,
   VENDOR_DOCUMENT_TYPES,
@@ -93,6 +94,9 @@ export function VendorProfilePage() {
   const [banner, setBanner] = useState(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [activeSubscription, setActiveSubscription] = useState(null)
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false)
+  const [showStateSuggestions, setShowStateSuggestions] = useState(false)
+  const [fetchingLocation, setFetchingLocation] = useState(false)
 
   useEffect(() => {
     vendorApi.getMe().then(res => {
@@ -247,6 +251,38 @@ export function VendorProfilePage() {
   const handleSignOut = async () => {
     await logout()
     navigate('/auth', { replace: true })
+  }
+
+  const handleFetchLocation = () => {
+    if (!navigator.geolocation) {
+      setBanner({ variant: 'error', message: 'Geolocation is not supported by your browser' })
+      return
+    }
+
+    setFetchingLocation(true)
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+          const data = await response.json()
+          if (data && data.display_name) {
+            setForm(f => ({ ...f, businessAddress: data.display_name }))
+            setBanner({ variant: 'success', message: 'Location fetched successfully' })
+          } else {
+            setBanner({ variant: 'error', message: 'Address not found for current location' })
+          }
+        } catch (error) {
+          setBanner({ variant: 'error', message: 'Failed to fetch address' })
+        } finally {
+          setFetchingLocation(false)
+        }
+      },
+      (error) => {
+        setFetchingLocation(false)
+        setBanner({ variant: 'error', message: 'Failed to get current location. Please ensure location permissions are granted.' })
+      }
+    )
   }
 
   const uploadedTypes = new Set(documents.map((d) => d.documentType).filter(Boolean))
@@ -423,9 +459,21 @@ export function VendorProfilePage() {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className={labelClass} htmlFor="businessAddress">
-              Business address *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500" htmlFor="businessAddress">
+                Business address *
+              </label>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={handleFetchLocation}
+                  disabled={fetchingLocation || busy}
+                  className="text-[11px] font-bold text-brand hover:text-brand/80 flex items-center gap-1 bg-brand/5 px-2 py-1 rounded-md"
+                >
+                  {fetchingLocation ? 'Fetching...' : '📍 Fetch Location'}
+                </button>
+              )}
+            </div>
             <textarea
               id="businessAddress"
               rows={2}
@@ -436,24 +484,85 @@ export function VendorProfilePage() {
               placeholder="Office / yard / site address"
             />
           </div>
-          <div>
+          <div className="relative">
             <label className={labelClass} htmlFor="city">
               City *
             </label>
-            <input id="city" className={inputClass} value={form.city} onChange={setField('city')} disabled={!canEdit} />
+            <input
+              id="city"
+              autoComplete="off"
+              className={inputClass}
+              value={form.city}
+              onFocus={() => setShowCitySuggestions(true)}
+              onBlur={() => setTimeout(() => setShowCitySuggestions(false), 200)}
+              onChange={(e) => {
+                const value = e.target.value
+                let newState = form.state
+                const matchedCity = INDIAN_CITIES.find(c => c.city.toLowerCase() === value.toLowerCase())
+                if (matchedCity) {
+                  newState = matchedCity.state
+                }
+                setForm(f => ({ ...f, city: value, state: newState }))
+              }}
+              disabled={!canEdit}
+            />
+            {showCitySuggestions && canEdit && (
+              <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5 custom-scrollbar">
+                {INDIAN_CITIES.filter(c => c.city.toLowerCase().includes(form.city.toLowerCase())).length > 0 ? (
+                  INDIAN_CITIES.filter(c => c.city.toLowerCase().includes(form.city.toLowerCase())).map((c, i) => (
+                    <li
+                      key={i}
+                      className="cursor-pointer px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        setForm(prev => ({ ...prev, city: c.city, state: c.state }))
+                        setShowCitySuggestions(false)
+                      }}
+                    >
+                      {c.city}
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-3 text-sm text-slate-400">No matching cities found.</li>
+                )}
+              </ul>
+            )}
           </div>
-          <div>
+          <div className="relative">
             <label className={labelClass} htmlFor="state">
               State *
             </label>
-            <select id="state" className={inputClass} value={form.state} onChange={setField('state')} disabled={!canEdit}>
-              <option value="">Select state</option>
-              {INDIAN_STATES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+            <input
+              id="state"
+              autoComplete="off"
+              className={inputClass}
+              value={form.state}
+              onFocus={() => setShowStateSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowStateSuggestions(false), 200)}
+              onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
+              disabled={!canEdit}
+            />
+            {showStateSuggestions && canEdit && (
+              <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5 custom-scrollbar">
+                {INDIAN_STATES.filter(s => s.toLowerCase().includes(form.state.toLowerCase())).length > 0 ? (
+                  INDIAN_STATES.filter(s => s.toLowerCase().includes(form.state.toLowerCase())).map((s, i) => (
+                    <li
+                      key={i}
+                      className="cursor-pointer px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        setForm(prev => ({ ...prev, state: s }))
+                        setShowStateSuggestions(false)
+                      }}
+                    >
+                      {s}
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-3 text-sm text-slate-400">No matching states found.</li>
+                )}
+              </ul>
+            )}
           </div>
           <div>
             <label className={labelClass} htmlFor="pincode">

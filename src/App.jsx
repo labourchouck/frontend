@@ -97,11 +97,11 @@ function App() {
           <Route
             path="/vendor"
             element={
-              // <ProtectedRoute roles={VENDOR_ROLES}>
-              <ErrorBoundary>
-                <VendorAppShell />
-              </ErrorBoundary>
-              // </ProtectedRoute>
+              <ProtectedRoute roles={VENDOR_ROLES}>
+                <ErrorBoundary>
+                  <VendorAppShell />
+                </ErrorBoundary>
+              </ProtectedRoute>
             }
           >
             {vendorChildRoutes}

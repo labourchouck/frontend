@@ -71,6 +71,16 @@ export const vendorApi = {
 
   // 8. Banners
   getBanners: () => apiRequest('/vendor/banners', { method: 'GET' }),
+  
+  // Crew Labour Endpoints
+  requestCrewOtp: (phone) => apiRequest('/vendor/crew-labour/request-otp', { method: 'POST', body: { phone } }),
+  verifyCrewOtp: (data) => apiRequest('/vendor/crew-labour/verify-otp', { method: 'POST', body: data }),
+  createCrewLabour: (data) => apiRequest('/vendor/crew-labour', { method: 'POST', body: data }),
+  getCrewLabour: () => apiRequest('/vendor/crew-labour', { method: 'GET' }),
+  getCrewLabourById: (id) => apiRequest(`/vendor/crew-labour/${id}`, { method: 'GET' }),
+  updateCrewLabour: (id, data) => apiRequest(`/vendor/crew-labour/${id}`, { method: 'PUT', body: data }),
+  patchCrewLabour: (id, data) => apiRequest(`/vendor/crew-labour/${id}`, { method: 'PATCH', body: data }),
+  deleteCrewLabour: (id) => apiRequest(`/vendor/crew-labour/${id}`, { method: 'DELETE' }),
 
   // 9. Subscriptions
   getSubscriptionPlans: () => apiRequest('/vendor/subscriptions/plans', { method: 'GET' }),
