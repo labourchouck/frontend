@@ -35,6 +35,7 @@ export function VendorJobsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState(false)
   const [accepting, setAccepting] = useState(false)
+  const [rejecting, setRejecting] = useState(false)
 
   const fetchJobs = async () => {
     try {
@@ -61,9 +62,21 @@ export function VendorJobsPage() {
       await vendorApi.acceptJob(id)
       await fetchJobs()
     } catch {
-      alert('Failed to accept job')
+      alert('Failed to accept request')
     } finally {
       setAccepting(false)
+    }
+  }
+
+  const handleReject = async (id) => {
+    setRejecting(true)
+    try {
+      await vendorApi.rejectJob(id)
+      await fetchJobs()
+    } catch {
+      alert('Failed to reject request')
+    } finally {
+      setRejecting(false)
     }
   }
 
@@ -102,6 +115,12 @@ export function VendorJobsPage() {
           {allocations.map((a) => {
             const req = a.requestId
             const pending = !a.vendorAcceptedAt
+            const clientName = req?.clientId?.corporateProfile?.companyName || req?.clientId?.fullName || 'Corporate Client'
+
+            // Calculate total vendor price if crew selected
+            const hasCrew = req?.preferredCrewIds?.length > 0
+            const totalVendorPrice = hasCrew ? req.preferredCrewIds.reduce((sum, w) => sum + (w.services?.[0]?.price || 0), 0) : 0
+
             return (
               <li key={a._id}>
                 <VendorCard className="space-y-3">
@@ -109,7 +128,7 @@ export function VendorJobsPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-slate-900">{req?.reference}</p>
-                        <p className="truncate text-xs text-slate-500">{req?.clientName}</p>
+                        <p className="truncate text-xs font-bold text-brand">{clientName}</p>
                         <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">{req?.locationText}</p>
                         <p className="mt-1 text-[10px] font-semibold text-slate-400">
                           {formatDate(req?.startDate)}
@@ -119,11 +138,42 @@ export function VendorJobsPage() {
                       <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300" aria-hidden />
                     </div>
                   </Link>
-                  <PipelineTimeline status={req?.status} title="Status" compact />
+
+                  {/* Chosen Labourers */}
+                  {pending && hasCrew && (
+                    <div className="rounded-lg bg-slate-50 p-3 mt-3 border border-slate-100">
+                      <p className="text-xs font-bold text-slate-700 mb-2">Requested Crew Members:</p>
+                      <div className="space-y-2">
+                        {req.preferredCrewIds.map(worker => (
+                          <div key={worker._id} className="flex justify-between items-center text-xs">
+                            <span className="font-medium text-slate-600">{worker.fullName} ({worker.category})</span>
+                            <span className="font-bold text-slate-800">₹{worker.services?.[0]?.price || 0}/day</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
+                        <span className="text-slate-700">Total Vendor Earning:</span>
+                        <span className="text-emerald-600">₹{totalVendorPrice}/day</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {!pending && <PipelineTimeline status={req?.status} title="Status" compact />}
+                  
                   {pending ? (
-                    <AppPrimaryButton type="button" className="w-full" loading={accepting} onClick={() => void handleAccept(a._id)}>
-                      Accept allocation
-                    </AppPrimaryButton>
+                    <div className="flex gap-2 w-full mt-2">
+                      <AppPrimaryButton type="button" className="flex-1 bg-emerald-600 hover:bg-emerald-700" loading={accepting} onClick={() => void handleAccept(a._id)}>
+                        Accept
+                      </AppPrimaryButton>
+                      <button 
+                        type="button" 
+                        disabled={rejecting}
+                        className="flex-1 rounded-xl border border-rose-200 text-sm font-bold text-rose-600 hover:bg-rose-50 disabled:opacity-50 transition" 
+                        onClick={() => void handleReject(a._id)}
+                      >
+                        {rejecting ? '...' : 'Reject'}
+                      </button>
+                    </div>
                   ) : (
                     <AppBadge variant="emerald" uppercase={false}>
                       Accepted

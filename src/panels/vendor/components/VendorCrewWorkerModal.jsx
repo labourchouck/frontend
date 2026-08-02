@@ -4,6 +4,9 @@ import { X, Plus, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { vendorApi } from '../../../api/vendorApi.js'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
+import { AppSearchableSelect } from '../../../components/app-ui/inputs/AppSearchableSelect.jsx'
+import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
+import { useMemo } from 'react'
 
 const inputClass =
   'w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand/35'
@@ -24,6 +27,35 @@ export function VendorCrewWorkerModal({ isOpen, onClose, workerId, mode: initial
     status: 'active'
   })
   const [services, setServices] = useState([])
+  const [adminCategories, setAdminCategories] = useState([])
+
+  useEffect(() => {
+    fetchLabourCategoriesGrouped()
+      .then(res => setAdminCategories(res.data?.groups || []))
+      .catch(err => console.error('Failed to fetch categories', err))
+  }, [])
+
+  const availableServices = useMemo(() => {
+    if (!formData.category || !adminCategories.length) return []
+    for (const group of adminCategories) {
+      const cat = group.categories?.find(c => c.name === formData.category)
+      if (cat) return cat.services || []
+    }
+    return []
+  }, [formData.category, adminCategories])
+
+  const categoryOptions = useMemo(() => {
+    const opts = []
+    adminCategories.forEach(group => {
+      (group.categories || []).forEach(cat => {
+        opts.push({
+          value: cat.name,
+          label: `${group.name} — ${cat.name}`
+        })
+      })
+    })
+    return opts
+  }, [adminCategories])
 
   useEffect(() => {
     if (isOpen && workerId) {
@@ -192,14 +224,25 @@ export function VendorCrewWorkerModal({ isOpen, onClose, workerId, mode: initial
 
                 <div>
                   <label className="mb-1.5 block text-[11px] font-bold uppercase text-slate-500">Category</label>
-                  <input
-                    type="text"
-                    name="category"
-                    className={inputClass}
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    readOnly={isReadOnly}
-                  />
+                  {isReadOnly ? (
+                    <input
+                      type="text"
+                      name="category"
+                      className={inputClass}
+                      value={formData.category}
+                      readOnly
+                    />
+                  ) : (
+                    <AppSearchableSelect
+                      value={formData.category}
+                      onChange={(val) => {
+                        setFormData(prev => ({ ...prev, category: val }))
+                        setServices([{ name: '', price: '' }]) // Reset services
+                      }}
+                      options={categoryOptions}
+                      placeholder="Select Category"
+                    />
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-slate-100">
@@ -220,14 +263,23 @@ export function VendorCrewWorkerModal({ isOpen, onClose, workerId, mode: initial
                     {services.map((service, index) => (
                       <div key={index} className="flex gap-2 items-start">
                         <div className="flex-1">
-                          <input
-                            type="text"
-                            className={inputClass}
-                            placeholder="Service name"
-                            value={service.name}
-                            onChange={(e) => handleServiceChange(index, 'name', e.target.value)}
-                            readOnly={isReadOnly}
-                          />
+                          {isReadOnly ? (
+                            <input
+                              type="text"
+                              className={inputClass}
+                              placeholder="Service name"
+                              value={service.name}
+                              readOnly
+                            />
+                          ) : (
+                            <AppSearchableSelect
+                              value={service.name}
+                              onChange={(val) => handleServiceChange(index, 'name', val)}
+                              options={availableServices.map(s => ({ value: s.name, label: s.name }))}
+                              placeholder={formData.category ? 'Select Service' : 'Select Category First'}
+                              disabled={!formData.category}
+                            />
+                          )}
                         </div>
                         <div className="w-1/3">
                           <input

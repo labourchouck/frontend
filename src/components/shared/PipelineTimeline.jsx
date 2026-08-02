@@ -2,6 +2,7 @@ import { AppSurface } from '../app-ui/cards/AppSurface.jsx'
 
 const STATUS_LABELS = {
   pending_review: 'Submitted',
+  broadcasted: 'Submitted',
   confirmed: 'Confirmed',
   allocating: 'Allocating',
   assigned: 'Assigned',
@@ -14,7 +15,8 @@ const STATUS_LABELS = {
 
 export function PipelineTimeline({ status, title = 'Status', compact = false }) {
   const steps = ['pending_review', 'confirmed', 'allocating', 'assigned', 'in_progress', 'attendance_tracking', 'billing', 'completed']
-  const idx = steps.indexOf(status)
+  const normalizedStatus = status === 'broadcasted' ? 'pending_review' : status
+  const idx = steps.indexOf(normalizedStatus)
   return (
     <AppSurface className={`border-slate-200/90 ${compact ? 'p-3' : 'p-4'}`}>
       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{title}</p>

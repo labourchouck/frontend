@@ -10,6 +10,8 @@ import {
   useGetCorporateProjectsQuery,
   useSearchVendorsMutation,
 } from '../../../store/api/workforceApi.js'
+import { CorporateRequestCheckout } from '../components/CorporateRequestCheckout.jsx'
+import { CorporateRequestLabourSelection } from '../components/CorporateRequestLabourSelection.jsx'
 
 const inputClass =
   'w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand/35'
@@ -40,6 +42,7 @@ export function CorporateRequestNewPage() {
   const [locationText, setLocationText] = useState('')
   const [latitude, setLatitude] = useState(null)
   const [longitude, setLongitude] = useState(null)
+  const [platformFeeConfig, setPlatformFeeConfig] = useState(null)
   const [isFetchingLocation, setIsFetchingLocation] = useState(false)
   const locationInputRef = useRef(null)
   
@@ -133,6 +136,9 @@ export function CorporateRequestNewPage() {
   const [categories, setCategories] = useState([])
   const [error, setError] = useState('')
   const [searchResults, setSearchResults] = useState(null)
+  const [selectedVendorId, setSelectedVendorId] = useState(null)
+  const [selectedCrew, setSelectedCrew] = useState([])
+  const [step, setStep] = useState(1)
   
   const [searchVendors, { isLoading: isSearching }] = useSearchVendorsMutation()
 
@@ -161,6 +167,7 @@ export function CorporateRequestNewPage() {
     e.preventDefault()
     setError('')
     setSearchResults(null)
+    setSelectedVendorId(null)
     const validLines = lines.filter((l) => l.categoryId)
     if (!validLines.length) {
       setError('Add at least one skill line')
@@ -183,6 +190,7 @@ export function CorporateRequestNewPage() {
         ...(latitude && longitude ? { lat: latitude, lng: longitude } : {}),
       }).unwrap()
       setSearchResults(res.vendors || [])
+      setPlatformFeeConfig(res.platformFeeConfig || null)
     } catch (err) {
       setError(err?.data?.message || err?.message || 'Could not search vendors')
     }
@@ -206,6 +214,8 @@ export function CorporateRequestNewPage() {
         locationText: locationText.trim() || undefined,
         ...(latitude && longitude ? { lat: latitude, lng: longitude } : {}),
         notes: notes.trim() || undefined,
+        preferredVendorId: selectedVendorId || undefined,
+        selectedCrewIds: selectedCrew.map(c => c._id),
         lines: validLines.map((l) => ({
           categoryId: l.categoryId,
           serviceId: l.serviceId || undefined,
@@ -216,6 +226,47 @@ export function CorporateRequestNewPage() {
     } catch (err) {
       setError(err?.data?.message || err?.message || 'Could not create request')
     }
+  }
+
+  if (step === 2 && selectedVendorId) {
+    const selectedVendor = searchResults?.find(v => v._id === selectedVendorId)
+    return (
+      <div className="space-y-4 pb-8">
+        <Link to="/corporate/requests" className="inline-flex items-center gap-2 text-sm font-bold text-brand">
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Back to requests
+        </Link>
+        <CorporateRequestLabourSelection 
+          vendor={selectedVendor} 
+          requestedLines={lines.filter((l) => l.categoryId)}
+          onBack={() => setStep(1)} 
+          onProceed={(crew) => {
+            setSelectedCrew(crew)
+            setStep(3)
+          }} 
+        />
+      </div>
+    )
+  }
+
+  if (step === 3 && selectedVendorId) {
+    const selectedVendor = searchResults?.find(v => v._id === selectedVendorId)
+    return (
+      <div className="space-y-4 pb-8">
+        <Link to="/corporate/requests" className="inline-flex items-center gap-2 text-sm font-bold text-brand">
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Back to requests
+        </Link>
+        <CorporateRequestCheckout 
+          vendor={selectedVendor} 
+          selectedCrew={selectedCrew}
+          platformFeeConfig={platformFeeConfig}
+          onBack={() => setStep(2)} 
+          onSubmit={handleFinalSubmit} 
+          isSubmitting={isLoading} 
+        />
+      </div>
+    )
   }
 
   return (
@@ -255,22 +306,29 @@ export function CorporateRequestNewPage() {
             </div>
             <ul className="space-y-4">
               {lines.map((line, idx) => {
-                const selectedCategory = categories.find(c => c._id === line.categoryId || c.id === line.categoryId)
-                let availableServices = []
-
-                if (selectedCategory) {
-                  const subcats = selectedCategory.categories || []
-                  subcats.forEach(sc => {
-                    if (sc.services) availableServices.push(...sc.services)
-                  })
-                } else {
-                  // If no category selected, show all services from all categories
-                  categories.forEach(c => {
-                    const subcats = c.categories || []
-                    subcats.forEach(sc => {
-                      if (sc.services) availableServices.push(...sc.services)
+                const categoryOptions = []
+                categories.forEach(group => {
+                  (group.categories || []).forEach(cat => {
+                    categoryOptions.push({
+                      value: cat._id || cat.id,
+                      label: `${group.name} — ${cat.name}`
                     })
                   })
+                })
+
+                let availableServices = []
+                let selectedCategory = null
+                
+                for (const group of categories) {
+                  const cat = (group.categories || []).find(c => c._id === line.categoryId || c.id === line.categoryId)
+                  if (cat) {
+                    selectedCategory = cat
+                    break
+                  }
+                }
+                
+                if (selectedCategory) {
+                  availableServices = selectedCategory.services || []
                 }
 
                 return (
@@ -280,7 +338,7 @@ export function CorporateRequestNewPage() {
                       <AppSearchableSelect
                         value={line.categoryId}
                         onChange={(val) => updateLine(idx, { categoryId: val, serviceId: '' })}
-                        options={categories.map(c => ({ value: c._id || c.id, label: c.name }))}
+                        options={categoryOptions}
                         placeholder="Select category"
                       />
                     </div>
@@ -288,23 +346,10 @@ export function CorporateRequestNewPage() {
                       <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Service</label>
                       <AppSearchableSelect
                         value={line.serviceId}
-                        onChange={(val) => {
-                          let patch = { serviceId: val };
-                          if (val && !line.categoryId) {
-                            for (const c of categories) {
-                              for (const sc of (c.categories || [])) {
-                                if ((sc.services || []).some(s => s._id === val)) {
-                                  patch.categoryId = c._id || c.id;
-                                  break;
-                                }
-                              }
-                              if (patch.categoryId) break;
-                            }
-                          }
-                          updateLine(idx, patch);
-                        }}
+                        onChange={(val) => updateLine(idx, { serviceId: val })}
                         options={availableServices.map(s => ({ value: s._id, label: s.name }))}
-                        placeholder="Select service (optional)"
+                        placeholder={line.categoryId ? 'Select service (optional)' : 'Select category first'}
+                        disabled={!line.categoryId}
                       />
                     </div>
                     <div className="w-full sm:w-24 shrink-0">
@@ -441,40 +486,44 @@ export function CorporateRequestNewPage() {
             ) : (
               <div className="space-y-3">
                 {searchResults.map((vendor) => (
-                  <div key={vendor._id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div 
+                    key={vendor._id} 
+                    onClick={() => setSelectedVendorId(vendor._id)}
+                    className={`flex items-center justify-between rounded-xl border p-4 shadow-sm cursor-pointer transition-colors ${
+                      selectedVendorId === vendor._id 
+                        ? 'border-brand bg-brand/5 ring-1 ring-brand' 
+                        : 'border-slate-200 bg-white hover:border-brand/30'
+                    }`}
+                  >
                     <div>
                       <h4 className="font-bold text-slate-800">{vendor.businessName}</h4>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {vendor.fullName} • ⭐ {vendor.rating?.toFixed(1) || '0.0'}
-                        {vendor.distance !== undefined && ` • ${vendor.distance.toFixed(1)} km away`}
-                      </p>
+                      <div className="mt-1 flex flex-col gap-0.5 text-xs text-slate-500">
+                        <span>{vendor.fullName}</span>
+                        <span>⭐ {vendor.rating?.toFixed(1) || '0.0'}</span>
+                        {vendor.distance !== undefined && (
+                          <span>{vendor.distance.toFixed(1)} km away</span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-bold text-brand">{vendor.availableCrewSize || vendor.matchingCrewSize || 0} matching crew</div>
-                      {vendor.priceDetails && (
-                        <div className="mt-1 text-xs font-semibold text-slate-700">
-                          Est. Total: ₹{vendor.priceDetails.estimatedTotal}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="mt-8">
-              <AppPrimaryButton 
-                type="button" 
-                className="w-full bg-slate-800 hover:bg-slate-900" 
-                loading={isLoading}
-                onClick={handleFinalSubmit}
-              >
-                Submit Request to LabourChowck
-              </AppPrimaryButton>
-              <p className="mt-2 text-center text-xs text-slate-500">
-                We will notify matching vendors on your behalf
-              </p>
-            </div>
+            {selectedVendorId && (
+              <div className="mt-8">
+                <AppPrimaryButton 
+                  type="button" 
+                  className="w-full bg-slate-800 hover:bg-slate-900" 
+                  onClick={() => setStep(2)}
+                >
+                  Next Step
+                </AppPrimaryButton>
+              </div>
+            )}
           </div>
         )}
       </AppSurface>

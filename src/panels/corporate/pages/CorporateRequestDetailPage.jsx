@@ -20,6 +20,23 @@ export function CorporateRequestDetailPage() {
 
   const request = data?.request
   const assignments = data?.assignments ?? []
+  const platformFeeConfig = data?.platformFeeConfig
+
+  const days = request ? Math.ceil((new Date(request.endDate || request.startDate) - new Date(request.startDate)) / (1000 * 60 * 60 * 24)) + 1 : 1
+  const basePriceTotal = (request?.lines || []).reduce((sum, line) => {
+    const p = line.categoryId?.adminPrice || 0
+    return sum + (p * line.quantity * days)
+  }, 0)
+
+  let platformFee = 0
+  if (platformFeeConfig?.isActive) {
+    if (platformFeeConfig.type === 'fixed') {
+      platformFee = platformFeeConfig.value
+    } else {
+      platformFee = (basePriceTotal * platformFeeConfig.value) / 100
+    }
+  }
+  const estimatedTotal = basePriceTotal + platformFee
 
   const handleRate = async (assignmentId) => {
     try {
@@ -65,6 +82,11 @@ export function CorporateRequestDetailPage() {
       <AppSurface>
         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Reference</p>
         <h2 className="mt-1 text-lg font-extrabold text-slate-900">{request.reference}</h2>
+        {request.preferredVendorId && (
+          <div className="mt-1 text-sm font-bold text-brand">
+            Sent to: {request.preferredVendorId.contractorProfile?.businessName || request.preferredVendorId.fullName}
+          </div>
+        )}
         <p className="mt-2 text-sm text-slate-600">
           {formatDate(request.startDate)}
           {request.endDate ? ` – ${formatDate(request.endDate)}` : ''}
@@ -78,12 +100,27 @@ export function CorporateRequestDetailPage() {
         <p className="text-sm font-extrabold text-slate-900">Skill lines</p>
         <ul className="mt-3 space-y-2">
           {(request.lines ?? []).map((line, i) => (
-            <li key={i} className="flex justify-between text-sm">
-              <span className="text-slate-600">Category</span>
-              <span className="font-bold text-slate-900">× {line.quantity}</span>
+            <li key={i} className="flex justify-between text-sm py-1 border-b border-slate-100 last:border-0">
+              <div>
+                <span className="font-bold text-slate-800">{line.categoryId?.name || 'Category'}</span>
+                <span className="text-slate-500 ml-2">× {line.quantity}</span>
+              </div>
+              <span className="font-medium text-slate-900">
+                ₹{((line.categoryId?.adminPrice || 0) * line.quantity * days).toLocaleString('en-IN')}
+              </span>
             </li>
           ))}
         </ul>
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <div className="flex justify-between text-sm mb-2 text-slate-600">
+            <span>Platform Fee</span>
+            <span>₹{Math.round(platformFee).toLocaleString('en-IN')}</span>
+          </div>
+          <div className="flex justify-between font-extrabold text-slate-900 text-base">
+            <span>Estimated Total</span>
+            <span>₹{Math.round(estimatedTotal).toLocaleString('en-IN')}</span>
+          </div>
+        </div>
       </AppSurface>
 
       <AppSurface>
@@ -92,7 +129,27 @@ export function CorporateRequestDetailPage() {
           <p className="text-sm font-extrabold text-slate-900">Assigned roster</p>
         </div>
         {assignments.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">No workers assigned yet.</p>
+          <div>
+            <p className="mt-3 text-sm text-slate-500">No workers assigned yet.</p>
+            {request.preferredCrewIds?.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-xs font-bold text-slate-600 uppercase mb-3">Requested Labours</p>
+                <ul className="space-y-2">
+                  {request.preferredCrewIds.map((crew) => (
+                    <li key={crew._id} className="flex items-center justify-between py-1">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">{crew.fullName}</p>
+                        <p className="text-xs text-slate-500">{crew.phone}</p>
+                      </div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                        Requested
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         ) : (
           <ul className="mt-3 divide-y divide-slate-100">
             {assignments.map((a) => (

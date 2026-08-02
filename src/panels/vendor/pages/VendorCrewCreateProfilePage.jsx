@@ -324,7 +324,7 @@ export function VendorCrewCreateProfilePage() {
           
           <div className="pt-4">
             <AppPrimaryButton type="submit" className="w-full" loading={loading}>
-              Save Profile
+              Send Request
             </AppPrimaryButton>
           </div>
         </form>

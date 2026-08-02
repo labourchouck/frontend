@@ -57,11 +57,21 @@ export function CorporateRequestsPage() {
               <AppSurface className="space-y-3 transition hover:border-brand/30">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-bold text-slate-900">{r.reference || 'Request'}</p>
-                    <p className="text-xs text-slate-500">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-slate-900">{r.reference || 'Request'}</p>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                        {r.status?.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
                       {formatDate(r.startDate)}
                       {r.endDate ? ` – ${formatDate(r.endDate)}` : ''} · {(r.lines?.length ?? 0)} skill line(s)
                     </p>
+                    {r.preferredVendorId && (
+                      <div className="mt-2 text-xs font-medium text-brand">
+                        Sent to: {r.preferredVendorId.contractorProfile?.businessName || r.preferredVendorId.fullName}
+                      </div>
+                    )}
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />
                 </div>
