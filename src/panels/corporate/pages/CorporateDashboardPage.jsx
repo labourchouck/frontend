@@ -47,12 +47,21 @@ export function CorporateDashboardPage() {
 
 
         {/* Content Wrapper */}
-        <div className="relative z-10 p-4 sm:p-5 flex items-end min-h-[140px]">
+        <div className="relative z-10 p-4 sm:p-5 flex flex-wrap items-end gap-2 min-h-[140px]">
           <Link to="/corporate/requests/new" className="inline-block mt-auto">
             <AppPrimaryButton type="button" size="sm" className="bg-brand text-white border-none shadow-sm hover:bg-brand-600">
               <Plus className="h-3.5 w-3.5" />
               New workforce request
             </AppPrimaryButton>
+          </Link>
+          <Link to="/corporate/attendance" className="inline-block mt-auto">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md px-3.5 py-2 text-xs font-bold text-white transition-all shadow-xs"
+            >
+              <Clock className="h-3.5 w-3.5 text-emerald-300" />
+              Daily Attendance
+            </button>
           </Link>
         </div>
       </AppSurface>

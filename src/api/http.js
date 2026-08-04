@@ -2,7 +2,7 @@ import axios from 'axios'
 import { clearSession } from '../store/slices/authSlice.js'
 import { store } from '../store/index.js'
 
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'
+const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005/api/v1'
 
 export class ApiError extends Error {
   constructor(message, { status, code, errors } = {}) {

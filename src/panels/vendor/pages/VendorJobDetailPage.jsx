@@ -8,6 +8,7 @@ import { PipelineTimeline } from '../../../components/shared/PipelineTimeline.js
 import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
 import { getVendorDummyAllocation, VENDOR_DUMMY_CREW } from '../../../lib/vendorDummyData.js'
 import { vendorApi } from '../../../api/vendorApi.js'
+import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -22,6 +23,7 @@ export function VendorJobDetailPage() {
   const [loading, setLoading] = useState(true)
   const [accepting, setAccepting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
+  const [selectedAttendanceReqId, setSelectedAttendanceReqId] = useState(null)
 
   const fetchJob = async () => {
     try {
@@ -41,7 +43,22 @@ export function VendorJobDetailPage() {
   const accepted = Boolean(allocation?.vendorAcceptedAt)
   const rejected = Boolean(allocation?.vendorRejectedAt)
   const req = allocation?.requestId
-  const deployedCrew = [] // To be fetched if API supports getting assigned crew, leaving empty for now as it's not in docs
+  const deployedCrew = allocation?.assignments || []
+
+  const days = (() => {
+    if (!req?.startDate) return 1
+    const start = new Date(req.startDate)
+    const end = req.endDate ? new Date(req.endDate) : start
+    const diffTime = Math.abs(end.getTime() - start.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    return Math.max(1, diffDays)
+  })()
+
+  const hasCrew = req?.preferredCrewIds?.length > 0
+  const totalVendorPricePerDay = hasCrew
+    ? req.preferredCrewIds.reduce((sum, w) => sum + (w.services?.[0]?.price || w.price || 0), 0)
+    : 0
+  const totalVendorEarning = totalVendorPricePerDay * days
 
   const handleAccept = async () => {
     setAccepting(true)
@@ -109,12 +126,64 @@ export function VendorJobDetailPage() {
           <p className="text-xs text-slate-500">
             {formatDate(req?.startDate)}
             {req?.endDate ? ` – ${formatDate(req.endDate)}` : ''}
+            <span className="ml-1.5 font-bold text-slate-700">
+              ({days} {days === 1 ? 'day' : 'days'})
+            </span>
           </p>
           <p className="flex items-center gap-2 text-sm font-bold text-slate-800">
             <Users className="h-4 w-4 shrink-0 text-brand" />
             {allocation.workersAssigned ?? 0} / {allocation.workersRequired} workers
           </p>
         </VendorCard>
+
+        {hasCrew && (
+          <VendorCard>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-extrabold text-slate-900">Requested Crew & Earnings</p>
+              <span className="text-xs font-bold text-brand bg-brand/10 px-2 py-0.5 rounded-full">
+                {days} {days === 1 ? 'day' : 'days'}
+              </span>
+            </div>
+            <div className="space-y-2.5">
+              {req.preferredCrewIds.map((worker) => {
+                const serviceName = worker.services?.[0]?.name || worker.serviceName || worker.category || 'Specialist Labour'
+                const dailyPrice = worker.services?.[0]?.price || worker.price || 0
+                const workerTotal = dailyPrice * days
+                return (
+                  <div key={worker._id} className="flex justify-between items-center text-sm">
+                    <div>
+                      <p className="font-semibold text-slate-800">{worker.fullName}</p>
+                      <p className="text-xs text-slate-500">{serviceName}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-slate-900">
+                        ₹{workerTotal.toLocaleString('en-IN')}
+                      </span>
+                      {days > 1 ? (
+                        <span className="block text-[11px] text-slate-400">
+                          ₹{dailyPrice.toLocaleString('en-IN')}/day × {days}d
+                        </span>
+                      ) : (
+                        <span className="block text-[11px] text-slate-400">/day</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="mt-3.5 pt-3 border-t border-slate-200 flex justify-between items-center">
+              <div>
+                <span className="text-sm font-bold text-slate-800 block">Total Vendor Earning:</span>
+                <span className="text-xs text-slate-500">
+                  ₹{totalVendorPricePerDay.toLocaleString('en-IN')}/day for {days} {days === 1 ? 'day' : 'days'}
+                </span>
+              </div>
+              <span className="text-lg font-black text-emerald-600">
+                ₹{totalVendorEarning.toLocaleString('en-IN')}
+              </span>
+            </div>
+          </VendorCard>
+        )}
 
         {req?.lines?.length ? (
           <VendorCard>
@@ -132,33 +201,57 @@ export function VendorJobDetailPage() {
 
         <PipelineTimeline status={req?.status} compact />
 
-        <VendorCard>
-          <p className="text-sm font-extrabold text-slate-900">Deployment notes</p>
-          <p className="mt-2 break-words text-sm leading-relaxed text-slate-600">
-            {allocation.notes || 'No deployment notes.'}
-          </p>
-        </VendorCard>
+
 
         {accepted && deployedCrew.length > 0 ? (
           <VendorCard>
-            <p className="text-sm font-extrabold text-slate-900">Crew on site</p>
-            <ul className="mt-2 space-y-1.5 text-sm">
-              {deployedCrew.map((w) => (
-                <li key={w._id} className="flex justify-between gap-2">
-                  <span className="min-w-0 truncate font-semibold">{w.fullName}</span>
-                  <span className="shrink-0 text-slate-500">{w.skills?.[0]}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-extrabold text-slate-900">Crew on site</p>
+              <button 
+                onClick={() => setSelectedAttendanceReqId(req._id)}
+                className="text-[10px] font-bold text-brand hover:text-white hover:bg-brand bg-brand/10 px-2.5 py-1 rounded-full transition-all duration-300"
+              >
+                View Attendance
+              </button>
+            </div>
+            <div className="space-y-3">
+              {deployedCrew.map((w) => {
+                const worker = w.labourId || {}
+                const serviceName = worker.services?.[0]?.name || worker.category || 'Worker'
+                const dailyPrice = worker.services?.[0]?.price || 0
+                return (
+                  <div key={w._id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center text-sm">
+                    <div>
+                      <span className="block font-bold text-slate-800">{worker.fullName || 'Pending'}</span>
+                      <span className="block text-xs text-slate-500 mt-0.5">{serviceName}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider">{w.status?.replace('_', ' ')}</span>
+                      {dailyPrice > 0 && <span className="block text-xs text-brand font-semibold mt-0.5">₹{dailyPrice.toLocaleString('en-IN')}/day</span>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </VendorCard>
         ) : null}
 
         {accepted ? (
-          <Link to="/vendor/crew">
-            <AppPrimaryButton type="button" className="w-full bg-emerald-600 hover:bg-emerald-700">
-              Manage workforce
-            </AppPrimaryButton>
-          </Link>
+          <div className="flex flex-col gap-2.5">
+            <Link to={`/vendor/attendance?date=${req?.startDate ? new Date(req.startDate).toISOString().split('T')[0] : ''}`}>
+              <AppPrimaryButton type="button" className="w-full bg-amber-600 hover:bg-amber-700">
+                Daily Attendance & Dispatch
+              </AppPrimaryButton>
+            </Link>
+            <Link to="/vendor/crew">
+              <button
+                type="button"
+                className="w-full rounded-xl border border-slate-200 bg-white py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-xs"
+              >
+                Manage workforce
+              </button>
+            </Link>
+          </div>
         ) : rejected ? (
           <VendorCard className="bg-rose-50 border-rose-200">
             <p className="text-sm font-bold text-rose-800">You have declined this job.</p>
@@ -185,6 +278,11 @@ export function VendorJobDetailPage() {
           </div>
         )}
       </VendorPageLayout>
+
+      <SharedAttendanceDrawer
+        requestId={selectedAttendanceReqId}
+        onClose={() => setSelectedAttendanceReqId(null)}
+      />
     </motion.div>
   )
 }

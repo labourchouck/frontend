@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ChevronRight, ClipboardList } from 'lucide-react'
+import { ChevronRight, ClipboardList, Clock } from 'lucide-react'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { AppEmptyState } from '../../../components/app/AppEmptyState.jsx'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
@@ -117,9 +117,22 @@ export function VendorJobsPage() {
             const pending = !a.vendorAcceptedAt
             const clientName = req?.clientId?.corporateProfile?.companyName || req?.clientId?.fullName || 'Corporate Client'
 
+            // Calculate total duration in days
+            const days = (() => {
+              if (!req?.startDate) return 1
+              const start = new Date(req.startDate)
+              const end = req.endDate ? new Date(req.endDate) : start
+              const diffTime = Math.abs(end.getTime() - start.getTime())
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+              return Math.max(1, diffDays)
+            })()
+
             // Calculate total vendor price if crew selected
             const hasCrew = req?.preferredCrewIds?.length > 0
-            const totalVendorPrice = hasCrew ? req.preferredCrewIds.reduce((sum, w) => sum + (w.services?.[0]?.price || 0), 0) : 0
+            const totalVendorPricePerDay = hasCrew
+              ? req.preferredCrewIds.reduce((sum, w) => sum + (w.services?.[0]?.price || w.price || 0), 0)
+              : 0
+            const totalVendorEarning = totalVendorPricePerDay * days
 
             return (
               <li key={a._id}>
@@ -133,6 +146,9 @@ export function VendorJobsPage() {
                         <p className="mt-1 text-[10px] font-semibold text-slate-400">
                           {formatDate(req?.startDate)}
                           {req?.endDate ? ` – ${formatDate(req.endDate)}` : ''}
+                          <span className="ml-1.5 font-bold text-slate-500">
+                            ({days} {days === 1 ? 'day' : 'days'})
+                          </span>
                         </p>
                       </div>
                       <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300" aria-hidden />
@@ -140,20 +156,50 @@ export function VendorJobsPage() {
                   </Link>
 
                   {/* Chosen Labourers */}
-                  {pending && hasCrew && (
-                    <div className="rounded-lg bg-slate-50 p-3 mt-3 border border-slate-100">
-                      <p className="text-xs font-bold text-slate-700 mb-2">Requested Crew Members:</p>
-                      <div className="space-y-2">
-                        {req.preferredCrewIds.map(worker => (
-                          <div key={worker._id} className="flex justify-between items-center text-xs">
-                            <span className="font-medium text-slate-600">{worker.fullName} ({worker.category})</span>
-                            <span className="font-bold text-slate-800">₹{worker.services?.[0]?.price || 0}/day</span>
-                          </div>
-                        ))}
+                  {hasCrew && (
+                    <div className="rounded-xl bg-slate-50 p-3.5 mt-3 border border-slate-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-slate-700">Requested Crew Members:</p>
+                        <span className="text-[11px] font-bold text-brand bg-brand/10 px-2 py-0.5 rounded-full">
+                          {days} {days === 1 ? 'day' : 'days'}
+                        </span>
                       </div>
-                      <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
-                        <span className="text-slate-700">Total Vendor Earning:</span>
-                        <span className="text-emerald-600">₹{totalVendorPrice}/day</span>
+                      <div className="space-y-2">
+                        {req.preferredCrewIds.map((worker) => {
+                          const serviceName = worker.services?.[0]?.name || worker.serviceName || worker.category || 'Specialist Labour'
+                          const dailyPrice = worker.services?.[0]?.price || worker.price || 0
+                          const workerTotal = dailyPrice * days
+                          return (
+                            <div key={worker._id} className="flex justify-between items-center text-xs">
+                              <span className="font-medium text-slate-600">
+                                {worker.fullName} ({serviceName})
+                              </span>
+                              <div className="text-right">
+                                <span className="font-bold text-slate-800">
+                                  ₹{workerTotal.toLocaleString('en-IN')}
+                                </span>
+                                {days > 1 ? (
+                                  <span className="block text-[10px] text-slate-400">
+                                    ₹{dailyPrice.toLocaleString('en-IN')}/day × {days}d
+                                  </span>
+                                ) : (
+                                  <span className="block text-[10px] text-slate-400">/day</span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <div className="mt-3 pt-2.5 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
+                        <div>
+                          <span className="text-slate-700 block">Total Vendor Earning:</span>
+                          <span className="text-[11px] font-normal text-slate-500">
+                            (₹{totalVendorPricePerDay.toLocaleString('en-IN')}/day for {days} {days === 1 ? 'day' : 'days'})
+                          </span>
+                        </div>
+                        <span className="text-emerald-600 text-base font-black">
+                          ₹{totalVendorEarning.toLocaleString('en-IN')}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -175,9 +221,18 @@ export function VendorJobsPage() {
                       </button>
                     </div>
                   ) : (
-                    <AppBadge variant="emerald" uppercase={false}>
-                      Accepted
-                    </AppBadge>
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <AppBadge variant="emerald" uppercase={false}>
+                          Accepted
+                        </AppBadge>
+                        <Link
+                          to={`/vendor/attendance?date=${req?.startDate ? new Date(req.startDate).toISOString().split('T')[0] : ''}`}
+                          className="inline-flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors shadow-xs"
+                        >
+                          <Clock className="h-3.5 w-3.5 text-amber-700" />
+                          Attendance / Dispatch
+                        </Link>
+                      </div>
                   )}
                 </VendorCard>
               </li>

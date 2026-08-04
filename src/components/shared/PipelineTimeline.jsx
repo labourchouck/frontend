@@ -11,6 +11,7 @@ const STATUS_LABELS = {
   billing: 'Billing',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  rejected: 'Rejected',
 }
 
 export function PipelineTimeline({ status, title = 'Status', compact = false }) {

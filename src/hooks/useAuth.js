@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { buildGuestUser, clearBootRole, readBootRole, writeBootRole } from '../lib/bootPersona.js'
 import { clearSession, setCredentials } from '../store/slices/authSlice.js'
+import { baseApi } from '../store/api/baseApi.js'
 import { apiRequest } from '../api/http.js'
 
 export function useAuth() {
@@ -35,6 +36,11 @@ export function useAuth() {
     clearBootRole()
     setBootRoleState(null)
     dispatch(clearSession())
+    try {
+      dispatch(baseApi.util.resetApiState())
+    } catch (err) {
+      // Ignore if store is not ready
+    }
   }, [dispatch])
 
   const applySession = useCallback(

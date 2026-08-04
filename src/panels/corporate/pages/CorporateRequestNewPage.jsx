@@ -10,18 +10,14 @@ import {
   useGetCorporateProjectsQuery,
   useSearchVendorsMutation,
 } from '../../../store/api/workforceApi.js'
+import { useAuth } from '../../../hooks/useAuth.js'
 import { CorporateRequestCheckout } from '../components/CorporateRequestCheckout.jsx'
 import { CorporateRequestLabourSelection } from '../components/CorporateRequestLabourSelection.jsx'
 
 const inputClass =
   'w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand/35'
 
-const SCHEDULE_OPTIONS = [
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'long_term', label: 'Long term' },
-]
+
 
 function emptyLine() {
   return { categoryId: '', serviceId: '', quantity: 1 }
@@ -29,19 +25,34 @@ function emptyLine() {
 
 export function CorporateRequestNewPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { data: projectsData } = useGetCorporateProjectsQuery()
   const [createRequest, { isLoading }] = useCreateRequestMutation()
   const projects = projectsData?.projects ?? []
 
   const [projectName, setProjectName] = useState('')
-  const [scheduleType, setScheduleType] = useState('daily')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [shiftStart, setShiftStart] = useState('08:00')
   const [shiftEnd, setShiftEnd] = useState('18:00')
-  const [locationText, setLocationText] = useState('')
-  const [latitude, setLatitude] = useState(null)
-  const [longitude, setLongitude] = useState(null)
+  const [locationText, setLocationText] = useState(
+    user?.corporateProfile?.registeredAddress ||
+      user?.corporateProfile?.city ||
+      user?.savedAddress?.text ||
+      ''
+  )
+  const [latitude, setLatitude] = useState(
+    user?.corporateProfile?.currentLatitude ||
+      user?.corporateProfile?.latitude ||
+      user?.savedAddress?.lat ||
+      null
+  )
+  const [longitude, setLongitude] = useState(
+    user?.corporateProfile?.currentLongitude ||
+      user?.corporateProfile?.longitude ||
+      user?.savedAddress?.lng ||
+      null
+  )
   const [platformFeeConfig, setPlatformFeeConfig] = useState(null)
   const [isFetchingLocation, setIsFetchingLocation] = useState(false)
   const locationInputRef = useRef(null)
@@ -142,6 +153,15 @@ export function CorporateRequestNewPage() {
   
   const [searchVendors, { isLoading: isSearching }] = useSearchVendorsMutation()
 
+  const now = new Date()
+  const todayString = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+  const currentTimeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+  const minStartDate = todayString
+  const minEndDate = startDate || todayString
+  const minShiftStart = startDate === todayString ? currentTimeString : undefined
+  const minShiftEnd = (!endDate || endDate === startDate) ? shiftStart : (endDate === todayString ? currentTimeString : undefined)
+
   useEffect(() => {
     let cancelled = false
       ; (async () => {
@@ -177,6 +197,22 @@ export function CorporateRequestNewPage() {
       setError('Please select both start date and end date to estimate pricing')
       return
     }
+    if (startDate < todayString) {
+      setError('Start date cannot be in the past')
+      return
+    }
+    if (endDate < startDate) {
+      setError('End date cannot be before start date')
+      return
+    }
+    if (startDate === todayString && shiftStart < currentTimeString) {
+      setError('Shift start time cannot be in the past for today')
+      return
+    }
+    if ((!endDate || endDate === startDate) && shiftEnd <= shiftStart) {
+      setError('Shift end time must be after shift start time')
+      return
+    }
 
     try {
       const res = await searchVendors({
@@ -188,6 +224,7 @@ export function CorporateRequestNewPage() {
         startDate,
         endDate,
         ...(latitude && longitude ? { lat: latitude, lng: longitude } : {}),
+        locationText: locationText || undefined,
       }).unwrap()
       setSearchResults(res.vendors || [])
       setPlatformFeeConfig(res.platformFeeConfig || null)
@@ -204,9 +241,32 @@ export function CorporateRequestNewPage() {
       return
     }
     try {
+      // Map category and service names
+      const enrichedLines = validLines.map(l => {
+        let catName = ''
+        let servName = ''
+        for (const group of categories) {
+          const cat = (group.categories || []).find(c => (c._id || c.id) === l.categoryId)
+          if (cat) {
+            catName = cat.name
+            if (l.serviceId) {
+              const serv = (cat.services || []).find(s => (s._id || s.id) === l.serviceId)
+              if (serv) servName = serv.name
+            }
+            break
+          }
+        }
+        return {
+          categoryId: l.categoryId,
+          categoryName: catName || undefined,
+          serviceId: l.serviceId || undefined,
+          serviceName: servName || undefined,
+          quantity: Number(l.quantity) || 1,
+        }
+      })
+
       await createRequest({
         projectName: projectName.trim() || undefined,
-        scheduleType,
         startDate,
         endDate: endDate || undefined,
         shiftStart,
@@ -216,11 +276,7 @@ export function CorporateRequestNewPage() {
         notes: notes.trim() || undefined,
         preferredVendorId: selectedVendorId || undefined,
         selectedCrewIds: selectedCrew.map(c => c._id),
-        lines: validLines.map((l) => ({
-          categoryId: l.categoryId,
-          serviceId: l.serviceId || undefined,
-          quantity: Number(l.quantity) || 1,
-        })),
+        lines: enrichedLines,
       }).unwrap()
       navigate('/corporate/requests')
     } catch (err) {
@@ -378,18 +434,7 @@ export function CorporateRequestNewPage() {
             </ul>
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
-              Schedule
-            </label>
-            <AppSearchableSelect
-              value={scheduleType}
-              onChange={setScheduleType}
-              options={SCHEDULE_OPTIONS}
-              hideSearch={true}
-              placeholder="Select schedule"
-            />
-          </div>
+
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -400,6 +445,7 @@ export function CorporateRequestNewPage() {
                 type="date"
                 className={inputClass}
                 value={startDate}
+                min={minStartDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 required
               />
@@ -408,7 +454,14 @@ export function CorporateRequestNewPage() {
               <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
                 End date
               </label>
-              <input type="date" className={inputClass} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <input 
+                type="date" 
+                className={inputClass} 
+                value={endDate} 
+                min={minEndDate}
+                onChange={(e) => setEndDate(e.target.value)} 
+                required
+              />
             </div>
           </div>
 
@@ -421,7 +474,9 @@ export function CorporateRequestNewPage() {
                 type="time"
                 className={inputClass}
                 value={shiftStart}
+                min={minShiftStart}
                 onChange={(e) => setShiftStart(e.target.value)}
+                required
               />
             </div>
             <div>
@@ -432,7 +487,9 @@ export function CorporateRequestNewPage() {
                 type="time"
                 className={inputClass}
                 value={shiftEnd}
+                min={minShiftEnd}
                 onChange={(e) => setShiftEnd(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -498,10 +555,16 @@ export function CorporateRequestNewPage() {
                     <div>
                       <h4 className="font-bold text-slate-800">{vendor.businessName}</h4>
                       <div className="mt-1 flex flex-col gap-0.5 text-xs text-slate-500">
-                        <span>{vendor.fullName}</span>
-                        <span>⭐ {vendor.rating?.toFixed(1) || '0.0'}</span>
-                        {vendor.distance !== undefined && (
-                          <span>{vendor.distance.toFixed(1)} km away</span>
+                        <span className="font-medium text-slate-700">{vendor.fullName}</span>
+                        <div className="flex items-center gap-1 font-semibold text-amber-500">
+                          <span>⭐</span>
+                          <span>{Number(vendor.rating || 0).toFixed(1)}</span>
+                        </div>
+                        {vendor.distance !== undefined && vendor.distance !== null && (
+                          <div className="mt-0.5 flex items-center gap-1 font-semibold text-slate-600">
+                            <MapPin className="h-3.5 w-3.5 text-brand shrink-0" />
+                            <span>{Number(vendor.distance).toFixed(1)} km away</span>
+                          </div>
                         )}
                       </div>
                     </div>

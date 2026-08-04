@@ -46,7 +46,7 @@ export function getCategoryImageUrl(category) {
   }
   if (url.startsWith('/')) {
     try {
-      const origin = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').origin
+      const origin = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5005/api/v1').origin
       return `${origin}${url}`
     } catch (e) {
       // ignore
@@ -64,7 +64,7 @@ export function getGroupImageUrl(group) {
   }
   if (groupUrl.startsWith('/')) {
     try {
-      const origin = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').origin
+      const origin = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5005/api/v1').origin
       return `${origin}${groupUrl}`
     } catch (e) {
       // ignore

@@ -1,11 +1,15 @@
-import { useState } from 'react'
-import { ClipboardList, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react'
+import React, { useState } from 'react'
+import { ClipboardList, Trash2, Edit2, CheckCircle, XCircle, Eye, Calendar } from 'lucide-react'
+import { AdminCorporateRequestViewModal } from './components/AdminCorporateRequestViewModal.jsx'
+import { AdminLabourDetailsModal } from './components/AdminLabourDetailsModal.jsx'
+import { SharedAttendanceDrawer } from '../../components/shared/SharedAttendanceDrawer.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { PipelineTimeline } from '../../components/shared/PipelineTimeline.jsx'
 import {
   useGetAdminRequestsQuery,
   usePatchRequestStatusMutation,
+  useDeleteAdminRequestMutation,
 } from '../../store/api/workforceApi.js'
 import {
   useGetAdminBookingsQuery,
@@ -33,11 +37,19 @@ const BOOKING_STATUS_FILTERS = [
   { value: 'CANCELLED', label: 'Cancelled' },
 ]
 
-const QUICK_ACTIONS = [
-  { status: 'confirmed', label: 'Confirm' },
-  { status: 'allocating', label: 'Allocate' },
-  { status: 'cancelled', label: 'Cancel' },
-]
+const getStatusBadgeStyle = (status) => {
+  switch (status) {
+    case 'pending_review': return 'bg-amber-100 text-amber-700'
+    case 'confirmed': return 'bg-emerald-100 text-emerald-700'
+    case 'allocating': return 'bg-blue-100 text-blue-700'
+    case 'assigned': return 'bg-indigo-100 text-indigo-700'
+    case 'in_progress': return 'bg-purple-100 text-purple-700'
+    case 'completed': return 'bg-emerald-100 text-emerald-800'
+    case 'cancelled': return 'bg-slate-100 text-slate-600'
+    case 'rejected': return 'bg-rose-100 text-rose-700'
+    default: return 'bg-slate-100 text-slate-600'
+  }
+}
 
 function CorporateRequestsTab() {
   const [statusFilter, setStatusFilter] = useState('')
@@ -45,7 +57,13 @@ function CorporateRequestsTab() {
     statusFilter ? { status: statusFilter } : undefined,
   )
   const [patchStatus, { isLoading: patching }] = usePatchRequestStatusMutation()
+  const [deleteRequest] = useDeleteAdminRequestMutation()
   const requests = data?.requests ?? []
+
+  const [expandedRows, setExpandedRows] = useState({})
+  const [selectedLabour, setSelectedLabour] = useState(null)
+  const [selectedViewRequest, setSelectedViewRequest] = useState(null)
+  const [selectedAttendanceReqId, setSelectedAttendanceReqId] = useState(null)
 
   const handleStatus = async (id, status) => {
     try {
@@ -53,6 +71,21 @@ function CorporateRequestsTab() {
     } catch {
       /* handle later */
     }
+  }
+
+  const handleDeleteRequest = async (id) => {
+    if (window.confirm('Are you sure you want to permanently delete this corporate request?')) {
+      try {
+        await deleteRequest(id).unwrap()
+      } catch (err) {
+        console.error('Failed to delete request:', err)
+        alert('Failed to delete request.')
+      }
+    }
+  }
+
+  const toggleRow = (id) => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
   return (
@@ -93,40 +126,367 @@ function CorporateRequestsTab() {
         </GlassPanel>
       ) : null}
 
-      <ul className="space-y-4">
-        {requests.map((r) => (
-          <li key={r._id}>
-            <GlassPanel className="space-y-4 p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-slate-900">{r.reference}</p>
-                  <p className="text-xs text-slate-500">
-                    {r.sourceType} ·{' '}
-                    {r.clientId?.corporateProfile?.companyName || r.clientId?.fullName || 'Client'}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {r.locationText || 'No location'} · {(r.lines?.length ?? 0)} line(s)
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {QUICK_ACTIONS.map((a) => (
-                    <button
-                      key={a.status}
-                      type="button"
-                      disabled={patching || r.status === a.status}
-                      onClick={() => handleStatus(r._id, a.status)}
-                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:border-brand/30 disabled:opacity-50"
-                    >
-                      {a.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <PipelineTimeline status={r.status} title="Request pipeline" />
-            </GlassPanel>
-          </li>
-        ))}
-      </ul>
+      {!isLoading && !isError && requests.length > 0 ? (
+        <>
+          {/* DESKTOP VIEW: TABLE */}
+          <div className="hidden lg:block overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap min-w-[800px]">
+              <thead className="bg-slate-50/80 text-[11px] font-extrabold uppercase tracking-widest text-slate-400 border-b border-slate-200">
+                <tr>
+                  <th className="p-5">Request ID & Status</th>
+                  <th className="p-5">Corporate Info</th>
+                  <th className="p-5">Vendor Details</th>
+                  <th className="p-5">Assigned Crew</th>
+                  <th className="p-5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {requests.map((r) => {
+                  const assignments = r.assignments || []
+                  const hasAssignments = assignments.length > 0
+                  const requestedCrew = r.preferredCrewIds || []
+                  const hasRequestedCrew = requestedCrew.length > 0
+                  const isExpanded = expandedRows[r._id]
+
+                  const assignedVendor = r.preferredVendorId || (assignments.length > 0 ? assignments[0].vendorId : null);
+
+                  return (
+                    <React.Fragment key={r._id}>
+                      <tr className="group hover:bg-slate-50/50 transition-colors duration-200">
+                        <td className="p-5 align-top">
+                          <p className="font-extrabold text-slate-900 group-hover:text-brand transition-colors">{r.reference}</p>
+                          <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeStyle(r.status)}`}>
+                            {r.status?.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="p-4 align-top">
+                          <p className="font-semibold text-slate-800">
+                            {r.clientId?.corporateProfile?.companyName || r.clientId?.fullName || 'Client'}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {r.clientId?.phone}
+                          </p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {new Date(r.startDate).toLocaleDateString()} 
+                            {r.endDate && ` - ${new Date(r.endDate).toLocaleDateString()}`}
+                          </p>
+                        </td>
+                        <td className="p-4 align-top">
+                          {assignedVendor ? (
+                            <div>
+                              <p className="font-semibold text-slate-800">
+                                {assignedVendor.contractorProfile?.businessName || assignedVendor.fullName}
+                              </p>
+                              <p className="text-xs text-slate-500 mt-0.5">{assignedVendor.phone}</p>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Unassigned Vendor
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 align-top">
+                          {(hasAssignments || hasRequestedCrew) ? (
+                            <button 
+                              onClick={() => toggleRow(r._id)}
+                              className="text-brand font-bold text-xs hover:underline flex items-center gap-1"
+                            >
+                              {hasAssignments ? `${assignments.length} Worker${assignments.length > 1 ? 's' : ''}` : 'View Requested Crew'}
+                              <span className="text-[10px] ml-1">{isExpanded ? '▼' : '▶'}</span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span> No Crew Yet
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-5 align-top text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedViewRequest(r)}
+                              className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-600 hover:border-brand/40 hover:bg-brand/5 hover:text-brand transition shadow-sm"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAttendanceReqId(r._id)}
+                              className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-600 hover:border-brand/40 hover:bg-brand/5 hover:text-brand transition shadow-sm"
+                              title="View Attendance"
+                            >
+                              <Calendar className="h-4 w-4" />
+                            </button>
+                            
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteRequest(r._id)}
+                              className="flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-600 hover:border-rose-300 hover:bg-rose-100 transition shadow-sm"
+                              title="Delete permanently"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {/* Expandable Crew Row */}
+                      {isExpanded && (hasAssignments || hasRequestedCrew) && (
+                        <tr className="bg-slate-50/30">
+                          <td colSpan={5} className="p-6 border-l-4 border-brand/40 shadow-inner">
+                            
+                            <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Crew Details</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {hasRequestedCrew ? (
+                                requestedCrew.map(c => {
+                                  const vendorFee = c.services?.[0]?.price || 0;
+                                  const adminFee = c.services?.[0]?.adminPrice || c.adminPrice || 0;
+                                  return (
+                                    <div 
+                                      key={c._id}
+                                      className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"
+                                    >
+                                      <p className="text-sm font-extrabold text-slate-900">{c.fullName || 'Worker'}</p>
+                                      <p className="text-[11px] font-medium text-slate-500 mt-1">{c.phone || 'No phone number'}</p>
+                                      <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{c.services?.[0]?.name || c.serviceName || c.category || 'Specialist Labour'}</p>
+                                      <div className="mt-3 flex justify-between items-center border-t border-slate-50 pt-3">
+                                        <div className="flex flex-col gap-1 text-[11px]">
+                                          <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                        </div>
+                                        <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-md uppercase tracking-wider">Client Chosen</span>
+                                      </div>
+                                    </div>
+                                  )
+                                })
+                              ) : (
+                                assignments.map(a => {
+                                  const vendorFee = a.labourId?.services?.[0]?.price || 0;
+                                  const adminFee = a.labourId?.services?.[0]?.adminPrice || 0;
+                                  return (
+                                    <div 
+                                      key={a._id}
+                                      onClick={() => setSelectedLabour({ assignment: a, request: r })}
+                                      className="bg-white p-4 rounded-xl border border-slate-200 hover:border-brand/40 hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-300 group/card"
+                                    >
+                                      <p className="text-sm font-extrabold text-slate-900 group-hover/card:text-brand transition-colors">{a.labourId?.fullName || 'Pending Linking'}</p>
+                                      <p className="text-[11px] font-medium text-slate-500 mt-1">{a.labourId?.phone || 'Awaiting vendor to assign worker'}</p>
+                                      <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{a.labourId?.services?.[0]?.name || a.labourId?.category || 'Worker'}</p>
+                                      <div className="mt-3 flex justify-between items-end border-t border-slate-50 pt-3">
+                                        <div className="flex flex-col gap-1 text-[11px]">
+                                          <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                          <span className="text-[9px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md uppercase tracking-wider">{a.status?.replace('_', ' ')}</span>
+                                          <span className="text-brand text-[10px] font-bold group-hover/card:underline">View Details &rarr;</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                })
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* MOBILE VIEW: CARDS */}
+          <ul className="lg:hidden space-y-4">
+            {requests.map((r) => {
+              const assignments = r.assignments || []
+              const hasAssignments = assignments.length > 0
+              const requestedCrew = r.preferredCrewIds || []
+              const hasRequestedCrew = requestedCrew.length > 0
+              const isExpanded = expandedRows[r._id]
+
+              const assignedVendor = r.preferredVendorId || (assignments.length > 0 ? assignments[0].vendorId : null);
+
+              return (
+                <li key={r._id}>
+                  <GlassPanel className="p-5">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                      
+                      {/* ID & Status */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <p className="font-extrabold text-slate-900 text-lg">{r.reference}</p>
+                          <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeStyle(r.status)}`}>
+                            {r.status?.replace('_', ' ')}
+                          </span>
+                        </div>
+                        
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {/* Corporate Info */}
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Corporate Info</p>
+                            <p className="font-semibold text-slate-800">
+                              {r.clientId?.corporateProfile?.companyName || r.clientId?.fullName || 'Client'}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {r.clientId?.phone}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              {new Date(r.startDate).toLocaleDateString()} 
+                              {r.endDate && ` - ${new Date(r.endDate).toLocaleDateString()}`}
+                            </p>
+                          </div>
+                          
+                          {/* Vendor Details */}
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Vendor Details</p>
+                            {assignedVendor ? (
+                              <div>
+                                <p className="font-semibold text-slate-800">
+                                  {assignedVendor.contractorProfile?.businessName || assignedVendor.fullName}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{assignedVendor.phone}</p>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Unassigned
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Assigned Crew Toggle */}
+                          <div className="sm:col-span-2 md:col-span-1">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Crew</p>
+                            {(hasAssignments || hasRequestedCrew) ? (
+                              <button 
+                                onClick={() => toggleRow(r._id)}
+                                className="text-brand font-bold text-sm hover:underline flex items-center gap-1"
+                              >
+                                {hasAssignments ? `${assignments.length} Worker${assignments.length > 1 ? 's' : ''}` : 'View Requested Crew'}
+                                <span className="text-xs ml-1">{isExpanded ? '▼' : '▶'}</span>
+                              </button>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span> No Crew Yet
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-end gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100 mt-4 lg:mt-0">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedViewRequest(r)}
+                          className="flex flex-1 lg:flex-none items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-slate-600 hover:border-brand/40 hover:bg-brand/5 hover:text-brand transition shadow-sm"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAttendanceReqId(r._id)}
+                          className="flex flex-1 lg:flex-none items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-slate-600 hover:border-brand/40 hover:bg-brand/5 hover:text-brand transition shadow-sm"
+                          title="View Attendance"
+                        >
+                          <Calendar className="h-4 w-4" />
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRequest(r._id)}
+                          className="flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-600 hover:border-rose-300 hover:bg-rose-100 transition shadow-sm"
+                          title="Delete permanently"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expandable Crew Section */}
+                    {isExpanded && (hasAssignments || hasRequestedCrew) && (
+                      <div className="mt-6 pt-5 border-t border-slate-100">
+                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-4">Crew Details</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {hasRequestedCrew ? (
+                            requestedCrew.map(c => {
+                              const vendorFee = c.services?.[0]?.price || 0;
+                              const adminFee = c.services?.[0]?.adminPrice || c.adminPrice || 0;
+                              return (
+                                <div 
+                                  key={c._id}
+                                  className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm"
+                                >
+                                  <p className="text-sm font-extrabold text-slate-900">{c.fullName || 'Worker'}</p>
+                                  <p className="text-[11px] font-medium text-slate-500 mt-1">{c.phone || 'No phone number'}</p>
+                                  <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{c.services?.[0]?.name || c.serviceName || c.category || 'Specialist Labour'}</p>
+                                  <div className="mt-3 flex justify-between items-center border-t border-slate-200/60 pt-3">
+                                    <div className="flex flex-col gap-1 text-[11px]">
+                                      <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                    </div>
+                                    <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-md uppercase tracking-wider">Client Chosen</span>
+                                  </div>
+                                </div>
+                              )
+                            })
+                          ) : (
+                            assignments.map(a => {
+                              const vendorFee = a.labourId?.services?.[0]?.price || 0;
+                              const adminFee = a.labourId?.services?.[0]?.adminPrice || 0;
+                              return (
+                                <div 
+                                  key={a._id}
+                                  onClick={() => setSelectedLabour({ assignment: a, request: r })}
+                                  className="bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-brand/40 hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-300 group/card"
+                                >
+                                  <p className="text-sm font-extrabold text-slate-900 group-hover/card:text-brand transition-colors">{a.labourId?.fullName || 'Pending Linking'}</p>
+                                  <p className="text-[11px] font-medium text-slate-500 mt-1">{a.labourId?.phone || 'Awaiting vendor to assign worker'}</p>
+                                  <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{a.labourId?.services?.[0]?.name || a.labourId?.category || 'Worker'}</p>
+                                  <div className="mt-3 flex justify-between items-end border-t border-slate-200/60 pt-3">
+                                    <div className="flex flex-col gap-1 text-[11px]">
+                                      <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                      <span className="text-[9px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md uppercase tracking-wider">{a.status?.replace('_', ' ')}</span>
+                                      <span className="text-brand text-[10px] font-bold group-hover/card:underline">View Details &rarr;</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </GlassPanel>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+      ) : null}
+
+      <AdminCorporateRequestViewModal
+        request={selectedViewRequest}
+        onClose={() => setSelectedViewRequest(null)}
+      />
+
+      <AdminLabourDetailsModal 
+        data={selectedLabour} 
+        onClose={() => setSelectedLabour(null)} 
+      />
+      
+      <SharedAttendanceDrawer
+        requestId={selectedAttendanceReqId} 
+        onClose={() => setSelectedAttendanceReqId(null)} 
+      />
     </div>
   )
 }
@@ -261,8 +621,20 @@ function IndividualBookingsTab() {
   const { data, isLoading, isError } = useGetAdminBookingsQuery(
     { status: statusFilter },
   )
+  const [deleteAdminBooking] = useDeleteAdminBookingMutation()
 
   const bookings = data?.bookings ?? []
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to permanently delete this booking?')) {
+      try {
+        await deleteAdminBooking(id).unwrap()
+      } catch (err) {
+        console.error('Failed to delete booking:', err)
+        alert('Failed to delete booking.')
+      }
+    }
+  }
 
   return (
     <div className="space-y-6 mt-6">
@@ -324,6 +696,14 @@ function IndividualBookingsTab() {
                 <div className="flex flex-wrap gap-2 items-center">
                   <button
                     type="button"
+                    onClick={() => handleDelete(b._id)}
+                    className="flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 p-1.5 text-rose-600 hover:border-rose-300 hover:bg-rose-100 transition shadow-sm"
+                    title="Delete permanently"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setSelectedBooking(b)}
                     className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] font-bold text-brand hover:border-brand/30 hover:bg-brand/5 transition"
                   >
@@ -350,7 +730,7 @@ export function AdminBookingsPage() {
   const [activeTab, setActiveTab] = useState('corporate')
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 md:px-6">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900">Bookings & requests</h1>
         <p className="mt-2 text-sm text-slate-600">

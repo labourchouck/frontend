@@ -59,13 +59,13 @@ export function CorporateRequestsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold text-slate-900">{r.reference || 'Request'}</p>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${r.status === 'rejected' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
                         {r.status?.replace('_', ' ')}
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       {formatDate(r.startDate)}
-                      {r.endDate ? ` – ${formatDate(r.endDate)}` : ''} · {(r.lines?.length ?? 0)} skill line(s)
+                      {r.endDate ? ` – ${formatDate(r.endDate)}` : ''}
                     </p>
                     {r.preferredVendorId && (
                       <div className="mt-2 text-xs font-medium text-brand">

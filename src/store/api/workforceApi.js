@@ -26,8 +26,14 @@ export const workforceApi = baseApi.injectEndpoints({
       transformResponse: unwrap,
     }),
     getCorporateVendorAttendance: build.query({
-      query: (params) => ({ url: '/corporate/vendor-attendance', params }),
+      query: (params) => ({ url: '/corporate/attendance', params }),
       transformResponse: unwrap,
+      providesTags: ['Attendance', 'CorporateVendorAttendance'],
+    }),
+    toggleCorporateAttendance: build.mutation({
+      query: (body) => ({ url: '/corporate/attendance/toggle', method: 'POST', body }),
+      transformResponse: unwrap,
+      invalidatesTags: ['Attendance', 'CorporateVendorAttendance', 'CorporateDashboard'],
     }),
     getCorporateTransactions: build.query({
       query: () => '/corporate/transactions',
@@ -145,10 +151,20 @@ export const workforceApi = baseApi.injectEndpoints({
       transformResponse: unwrap,
       providesTags: ['VendorJobs'],
     }),
+    getVendorAttendance: build.query({
+      query: (params) => ({ url: '/vendor/attendance', params }),
+      transformResponse: unwrap,
+      providesTags: ['VendorAttendance', 'Attendance'],
+    }),
+    toggleVendorAttendance: build.mutation({
+      query: (body) => ({ url: '/vendor/attendance/toggle', method: 'POST', body }),
+      transformResponse: unwrap,
+      invalidatesTags: ['VendorAttendance', 'Attendance', 'VendorJobs', 'VendorDashboard'],
+    }),
     acceptVendorJob: build.mutation({
       query: (requestId) => ({ url: `/vendor/jobs/${requestId}/accept`, method: 'POST' }),
       transformResponse: unwrap,
-      invalidatesTags: ['VendorJobs', 'VendorDashboard', 'Crew'],
+      invalidatesTags: ['VendorJobs', 'VendorDashboard', 'Crew', 'VendorAttendance', 'Attendance'],
     }),
     getVendorDirectRequests: build.query({
       query: () => '/vendor/direct-requests',
@@ -218,6 +234,14 @@ export const workforceApi = baseApi.injectEndpoints({
         url: `/admin/workforce/requests/${id}/status`,
         method: 'PATCH',
         body,
+      }),
+      transformResponse: unwrap,
+      invalidatesTags: ['AdminRequests', 'Requests'],
+    }),
+    deleteAdminRequest: build.mutation({
+      query: (id) => ({
+        url: `/admin/workforce/requests/${id}`,
+        method: 'DELETE',
       }),
       transformResponse: unwrap,
       invalidatesTags: ['AdminRequests', 'Requests'],
@@ -293,6 +317,7 @@ export const {
   useGetCorporateBannersQuery,
   useGetCorporateAnalyticsQuery,
   useGetCorporateVendorAttendanceQuery,
+  useToggleCorporateAttendanceMutation,
   useGetCorporateTransactionsQuery,
   useCreateCorporateComplaintMutation,
   useGetCorporateComplaintsQuery,
@@ -316,6 +341,8 @@ export const {
   useGetVendorCrewQuery,
   useLinkVendorCrewMutation,
   useGetVendorJobsQuery,
+  useGetVendorAttendanceQuery,
+  useToggleVendorAttendanceMutation,
   useAcceptVendorJobMutation,
   useGetVendorSettlementsQuery,
   usePatchVendorMeMutation,
@@ -333,6 +360,7 @@ export const {
   useGetAttendanceQuery,
   useGetAdminRequestsQuery,
   usePatchRequestStatusMutation,
+  useDeleteAdminRequestMutation,
   useCreateAllocationMutation,
   useReviewCorporateMutation,
   useReviewVendorMutation,

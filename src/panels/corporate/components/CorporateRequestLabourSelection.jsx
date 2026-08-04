@@ -118,7 +118,10 @@ export function CorporateRequestLabourSelection({
                             {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h5 className="font-semibold text-sm text-slate-800 truncate">{worker.fullName}</h5>
+                            <h5 className="font-bold text-sm text-slate-800 truncate">{worker.fullName}</h5>
+                            <p className="text-xs font-semibold text-brand mt-0.5 truncate">
+                              {worker.serviceName || worker.services?.[0]?.name || worker.category}
+                            </p>
                             <p className="text-xs text-slate-500 font-medium mt-0.5">₹{worker.adminPrice} / day</p>
                           </div>
                         </div>

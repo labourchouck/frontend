@@ -72,15 +72,9 @@ export function VendorMartPage() {
       })
   }, [])
 
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }}
-      className="h-[100dvh] overflow-y-auto overscroll-none buildmart-gradient-soft pb-20"
-    >
-      <VendorPageLayout>
-        <div className="relative -mx-4 -mt-4 overflow-hidden rounded-b-[2rem] bg-gradient-to-b from-[#7a280e] to-[#c45c26] px-4 pb-8 pt-8 text-white shadow-xl">
-          <div className="mb-6 flex items-center gap-3">
+  const hero = (
+    <div className="relative overflow-hidden rounded-b-[2rem] bg-gradient-to-b from-[#7a280e] to-[#c45c26] px-4 pb-8 pt-8 text-white shadow-xl">
+      <div className="mb-6 flex items-center gap-3">
             <Link to="/vendor" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30">
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -110,10 +104,17 @@ export function VendorMartPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
-          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        </div>
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+    </div>
+  )
 
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-full buildmart-gradient-soft pb-20"
+    >
+      <VendorPageLayout hero={hero}>
         <section className="pb-8 pt-4">
           {loading ? (
             <div className="flex h-40 items-center justify-center text-sm font-bold text-slate-400">

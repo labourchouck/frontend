@@ -14,6 +14,7 @@ export const corporateNavigation = {
   bottomNav: [
     { id: 'home', to: '/corporate', label: 'Home', icon: Home, end: true },
     { id: 'projects', to: '/corporate/projects', label: 'Projects', icon: Building2 },
+    { id: 'attendance', to: '/corporate/attendance', label: 'Attendance', icon: Clock },
     { id: 'requests', to: '/corporate/requests', label: 'Requests', icon: ClipboardList },
     { id: 'profile', to: '/corporate/profile', label: 'Profile', icon: UserRound },
   ],

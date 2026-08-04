@@ -16,11 +16,13 @@ export function CorporateRequestCheckout({
   // Dynamically calculate breakdown based on explicitly selected crew
   const breakdownGroups = {}
   selectedCrew.forEach(worker => {
-    if (!breakdownGroups[worker.category]) {
-      breakdownGroups[worker.category] = { categoryName: worker.category, quantity: 0, adminPriceTotal: 0 }
+    const serviceName = worker.serviceName || worker.services?.[0]?.name || worker.category || 'Specialist Labour'
+    const categoryName = worker.category || 'General'
+    if (!breakdownGroups[serviceName]) {
+      breakdownGroups[serviceName] = { serviceName, categoryName, quantity: 0, adminPriceTotal: 0 }
     }
-    breakdownGroups[worker.category].quantity += 1
-    breakdownGroups[worker.category].adminPriceTotal += (worker.adminPrice || 0)
+    breakdownGroups[serviceName].quantity += 1
+    breakdownGroups[serviceName].adminPriceTotal += (worker.adminPrice || worker.services?.[0]?.adminPrice || worker.services?.[0]?.price || 0)
   })
 
   const breakdown = Object.values(breakdownGroups)
@@ -59,13 +61,18 @@ export function CorporateRequestCheckout({
 
       {/* Billing Breakdown */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h4 className="mb-4 font-bold text-slate-800">Billing Breakdown</h4>
+        <h4 className="mb-4 font-bold text-slate-800">Booked Services & Billing Breakdown</h4>
         
         <div className="space-y-3">
           {breakdown.map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between text-sm text-slate-600">
-              <span>{item.quantity} × {item.categoryName}</span>
-              <span className="font-medium text-slate-800">₹{Math.round(item.adminPriceTotal)} / day</span>
+            <div key={idx} className="flex items-center justify-between text-sm py-1 border-b border-slate-100 last:border-0">
+              <div>
+                <span className="font-bold text-slate-800">{item.quantity} × {item.serviceName}</span>
+                {item.categoryName && item.categoryName !== item.serviceName && (
+                  <span className="block text-xs text-slate-400">{item.categoryName}</span>
+                )}
+              </div>
+              <span className="font-semibold text-slate-900">₹{Math.round(item.adminPriceTotal).toLocaleString('en-IN')} / day</span>
             </div>
           ))}
         </div>

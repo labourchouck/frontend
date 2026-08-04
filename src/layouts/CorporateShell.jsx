@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { CORPORATE_STATUS } from '../constants/userRoles.js'
 import { corporateNavigation, getCorporateTitle } from '../config/corporateNavigation.js'
 import { PanelShell } from './PanelShell.jsx'
+import { CorporateNotificationListener } from '../panels/corporate/components/CorporateNotificationListener.jsx'
 
 export function CorporateShell() {
   const { user } = useAuth()
@@ -17,15 +18,18 @@ export function CorporateShell() {
   }, [user])
 
   return (
-    <PanelShell
-      panelId="corporate"
-      brandLabel="Corporate"
-      headerTagline={headerTagline}
-      bottomNav={bottomNav}
-      drawerNav={drawerNav}
-      getTitle={getCorporateTitle}
-      headerBadge={headerBadge}
-      accentClass="[--panel-accent:var(--color-brand)]"
-    />
+    <>
+      <CorporateNotificationListener />
+      <PanelShell
+        panelId="corporate"
+        brandLabel="Corporate"
+        headerTagline={headerTagline}
+        bottomNav={bottomNav}
+        drawerNav={drawerNav}
+        getTitle={getCorporateTitle}
+        headerBadge={headerBadge}
+        accentClass="[--panel-accent:var(--color-brand)]"
+      />
+    </>
   )
 }

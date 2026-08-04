@@ -4,7 +4,7 @@ import { io } from 'socket.io-client'
 
 const SocketContext = createContext(null)
 
-const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '')
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5005/api/v1').replace('/api/v1', '')
 
 export function SocketProvider({ children }) {
   const token = useSelector((s) => s.auth.token)

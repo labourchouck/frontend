@@ -17,7 +17,7 @@ export function CorporateProjectsPage() {
   const { user } = useAuth()
   const approved = user?.corporateProfile?.status === CORPORATE_STATUS.APPROVED
   const { data, isLoading, isError } = useGetCorporateProjectsQuery(undefined, { skip: !approved })
-  const projects = data?.projects ?? []
+  const projects = []
 
   if (!approved) {
     return (

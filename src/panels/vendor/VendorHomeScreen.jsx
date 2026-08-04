@@ -296,9 +296,14 @@ export function VendorHomeScreen({ user }) {
                   </p>
                 </div>
               </div>
-              <Link to="/vendor/mart/subscription" className="flex items-center justify-center gap-1.5 rounded-xl bg-[#7a280e] py-2 text-xs font-bold text-white transition hover:bg-[#c45c26]">
-                Upgrade Plan
-              </Link>
+              <div className="flex gap-2 mt-2">
+                <Link to="/vendor/mart" className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#7a280e] py-2 text-xs font-bold text-white transition hover:bg-[#c45c26] shadow-sm">
+                  Go to App Mart
+                </Link>
+                <Link to="/vendor/mart/subscription" className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-[#7a280e]/30 bg-white/50 text-[#7a280e] py-2 text-xs font-bold transition hover:bg-white shadow-sm">
+                  Upgrade Plan
+                </Link>
+              </div>
             </div>
           ) : (
             <Link to="/vendor/mart/subscription" className="block">

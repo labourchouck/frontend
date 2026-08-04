@@ -241,12 +241,12 @@ export function getVendorDummyAllocation(id) {
 }
 
 export function filterVendorJobs(allocations, tab) {
-  const list = allocations ?? []
+  const list = (allocations ?? []).filter((a) => !a.vendorRejectedAt)
   if (tab === 'pending') return list.filter((a) => !a.vendorAcceptedAt)
   if (tab === 'active') {
     return list.filter((a) => {
       const s = a.requestId?.status
-      return a.vendorAcceptedAt && ['assigned', 'in_progress', 'attendance_tracking', 'allocating'].includes(s)
+      return a.vendorAcceptedAt && ['assigned', 'confirmed', 'in_progress', 'attendance_tracking', 'allocating'].includes(s)
     })
   }
   if (tab === 'completed') {
