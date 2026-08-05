@@ -1215,6 +1215,36 @@ export function IndividualBookingFlowPage() {
               </div>
             </div>
 
+            <div className="lc-booking-flow-card space-y-3">
+              <p className="lc-booking-flow-label font-bold text-slate-800">Payment Method</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => syncDraft({ paymentMethod: 'CASH' })}
+                  className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 font-bold transition-all ${
+                    (draft.paymentMethod || 'CASH') === 'CASH'
+                      ? 'border-brand bg-brand/5 text-brand'
+                      : 'border-slate-200 text-slate-500 hover:border-brand/30 hover:bg-slate-50'
+                  }`}
+                >
+                  <IndianRupee className="h-5 w-5" />
+                  Cash
+                </button>
+                <button
+                  type="button"
+                  onClick={() => syncDraft({ paymentMethod: 'ONLINE' })}
+                  className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 font-bold transition-all ${
+                    draft.paymentMethod === 'ONLINE'
+                      ? 'border-brand bg-brand/5 text-brand'
+                      : 'border-slate-200 text-slate-500 hover:border-brand/30 hover:bg-slate-50'
+                  }`}
+                >
+                  <Zap className="h-5 w-5" />
+                  Online
+                </button>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <button type="button" className="lc-booking-btn-secondary flex-1" onClick={() => goStep('details')}>
                 Edit details

@@ -43,7 +43,9 @@ import { AdminPlatformFeePage } from './pages/admin/AdminPlatformFeePage.jsx'
 import { AdminCommissionFeePage } from './pages/admin/AdminCommissionFeePage.jsx'
 import { AdminLabourWalletPage } from './pages/admin/AdminLabourWalletPage.jsx'
 import { AdminVendorWalletPage } from './pages/admin/AdminVendorWalletPage.jsx'
+import { AdminCashManagementPage } from './pages/admin/AdminCashManagementPage.jsx'
 import { AdminVendorsPage } from './pages/admin/AdminVendorsPage.jsx'
+import { AdminReviewsRatingsPage } from './pages/admin/AdminReviewsRatingsPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
@@ -150,6 +152,8 @@ function App() {
             <Route path="commission-fee" element={<AdminCommissionFeePage />} />
             <Route path="labour-wallet" element={<AdminLabourWalletPage />} />
             <Route path="vendor-wallet" element={<AdminVendorWalletPage />} />
+            <Route path="cash-management" element={<AdminCashManagementPage />} />
+            <Route path="reviews" element={<AdminReviewsRatingsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

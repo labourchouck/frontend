@@ -14,6 +14,7 @@ import {
   Clock,
   Camera,
   Upload,
+  Wallet,
 } from 'lucide-react'
 import { bookingsApi } from '../../api/bookingsApi.js'
 import { ApiError } from '../../api/http.js'
@@ -60,9 +61,13 @@ export function ActiveJob() {
   const [error, setError] = useState('')
   const [updating, setUpdating] = useState(false)
   const [updateError, setUpdateError] = useState('')
+  
   const [otp, setOtp] = useState('')
   const [jobImage, setJobImage] = useState(null)
   const [uploadingImage, setUploadingImage] = useState(false)
+
+  const [showCashConfirm, setShowCashConfirm] = useState(false)
+  const [pendingCashSubmit, setPendingCashSubmit] = useState(null)
 
   // Fetch booking
   useEffect(() => {
@@ -96,13 +101,19 @@ export function ActiveJob() {
     return () => { socket.off('BOOKING_STATUS_UPDATE', handleStatusUpdate) }
   }, [socket, bookingId])
 
-  const handleStatusUpdate = useCallback(async (nextStatus, requireOtp = false) => {
+  const handleStatusUpdate = useCallback(async (nextStatus, requireOtp = false, bypassCashCheck = false) => {
     if (requireOtp && !otp) {
       setUpdateError('OTP is required.')
       return
     }
     if (requireOtp && !jobImage) {
       setUpdateError(nextStatus === 'STARTED' ? 'Before Work image is required.' : 'After Work image is required.')
+      return
+    }
+
+    if (nextStatus === 'COMPLETED' && booking?.paymentMethod === 'CASH' && !bypassCashCheck) {
+      setShowCashConfirm(true)
+      setPendingCashSubmit({ nextStatus, requireOtp })
       return
     }
 
@@ -467,6 +478,47 @@ export function ActiveJob() {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* Cash Payment Confirmation Popup */}
+      {showCashConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl"
+          >
+            <div className="mb-4 flex items-center justify-center gap-3 text-brand">
+              <Wallet className="h-10 w-10" />
+            </div>
+            <h3 className="text-center text-xl font-extrabold text-slate-900">Take Cash Payment?</h3>
+            <p className="mt-2 text-center text-sm font-medium text-slate-600">
+              The customer has selected cash. Are you sure you want to continue to take payment in cash?
+            </p>
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCashConfirm(false)
+                  setPendingCashSubmit(null)
+                }}
+                className="flex-1 rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-200"
+              >
+                No
+              </button>
+              <button
+                onClick={() => {
+                  setShowCashConfirm(false)
+                  if (pendingCashSubmit) {
+                    handleStatusUpdate(pendingCashSubmit.nextStatus, pendingCashSubmit.requireOtp, true)
+                  }
+                }}
+                className="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white transition hover:bg-brand/90"
+              >
+                Yes, Continue
+              </button>
+            </div>
+          </motion.div>
         </div>
       )}
     </div>

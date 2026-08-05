@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Loader2, Star, X } from 'lucide-react'
 import { reviewsApi } from '../../api/reviewsApi.js'
@@ -39,7 +40,7 @@ export function ReviewModal({ open, bookingId, onClose }) {
 
   const displayRating = hoverRating || rating
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {open && (
         <>
@@ -99,48 +100,42 @@ export function ReviewModal({ open, bookingId, onClose }) {
                       className="transition hover:scale-110 active:scale-95"
                     >
                       <Star
-                        className={`h-10 w-10 transition ${
-                          star <= displayRating
-                            ? 'fill-amber-400 text-amber-400'
-                            : 'fill-slate-100 text-slate-200'
+                        className={`h-10 w-10 transition-colors ${
+                          star <= displayRating ? 'fill-amber-400 text-amber-400' : 'fill-slate-100 text-slate-200'
                         }`}
                       />
                     </button>
                   ))}
                 </div>
-                <p className="mt-2 text-center text-xs font-semibold text-slate-500">
-                  {displayRating === 0 && 'Tap a star'}
-                  {displayRating === 1 && 'Poor'}
-                  {displayRating === 2 && 'Fair'}
-                  {displayRating === 3 && 'Good'}
-                  {displayRating === 4 && 'Very Good'}
-                  {displayRating === 5 && 'Excellent!'}
-                </p>
 
-                {/* Comment */}
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={3}
-                  placeholder="Share your experience (optional)..."
-                  className="mt-4 w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
-                />
+                <div className="mt-6">
+                  <label htmlFor="review-comment" className="sr-only">
+                    Comment
+                  </label>
+                  <textarea
+                    id="review-comment"
+                    rows={3}
+                    placeholder="Any feedback? (optional)"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm outline-none transition focus:border-brand focus:bg-white focus:ring-1 focus:ring-brand"
+                  />
+                </div>
 
-                {error && (
-                  <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>
-                )}
+                {error && <p className="mt-3 text-center text-sm font-semibold text-rose-600">{error}</p>}
 
                 <button
                   type="button"
-                  disabled={submitting || rating === 0}
                   onClick={handleSubmit}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-brand/25 transition hover:bg-brand/90 active:scale-[0.98] disabled:opacity-50"
+                  disabled={submitting || rating === 0}
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-sm font-bold text-white shadow-lg shadow-brand/20 transition disabled:opacity-50"
                 >
                   {submitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    'Submit Review'
+                    <Star className="h-5 w-5 fill-white" />
                   )}
+                  {submitting ? 'Submitting...' : 'Submit Review'}
                 </button>
               </>
             )}
@@ -149,4 +144,6 @@ export function ReviewModal({ open, bookingId, onClose }) {
       )}
     </AnimatePresence>
   )
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Star, Send, X, CheckCircle2 } from 'lucide-react'
 import { reviewsApi } from '../../../api/reviewsApi.js'
@@ -67,14 +68,14 @@ export function BookingReviewModal({ open, bookingId, workerName, onClose, onSub
     onClose?.()
   }
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {open ? (
         <>
           {/* Backdrop */}
           <motion.div
             key="review-backdrop"
-            className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] bg-slate-950/50 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -84,7 +85,7 @@ export function BookingReviewModal({ open, bookingId, workerName, onClose, onSub
           {/* Sheet */}
           <motion.div
             key="review-sheet"
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl bg-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-5 shadow-[0_-16px_48px_-8px_rgba(15,23,42,0.18)]"
+            className="fixed inset-x-0 bottom-0 z-[201] mx-auto max-w-lg rounded-t-3xl bg-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-5 shadow-[0_-16px_48px_-8px_rgba(15,23,42,0.18)]"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -193,4 +194,6 @@ export function BookingReviewModal({ open, bookingId, workerName, onClose, onSub
       ) : null}
     </AnimatePresence>
   )
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent
 }

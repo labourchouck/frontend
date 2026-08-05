@@ -227,7 +227,13 @@ export const workforceApi = baseApi.injectEndpoints({
     getAdminRequests: build.query({
       query: (params) => ({ url: '/admin/workforce/requests', params }),
       transformResponse: unwrap,
-      providesTags: ['AdminRequests'],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.requests.map(({ _id }) => ({ type: 'AdminRequests', id: _id })),
+              { type: 'AdminRequests', id: 'LIST' },
+            ]
+          : [{ type: 'AdminRequests', id: 'LIST' }],
     }),
     patchRequestStatus: build.mutation({
       query: ({ id, ...body }) => ({

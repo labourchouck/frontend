@@ -30,6 +30,20 @@ export const adminSettingsApi = {
     })
   },
 
+  updateLabourCashLimit: (payload) => {
+    return apiRequest('/admin/settings/labour-cash-limit', {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
+
+  updateVendorCashLimit: (payload) => {
+    return apiRequest('/admin/settings/vendor-cash-limit', {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
+
   updateGstPercentage: (payload) => {
     return apiRequest('/admin/settings/gst', {
       method: 'PATCH',

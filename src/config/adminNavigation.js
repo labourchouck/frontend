@@ -23,6 +23,7 @@ import {
   Map,
   HandCoins,
   ClipboardCheck,
+  Star,
 } from 'lucide-react'
 
 /**
@@ -101,6 +102,7 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/commission-fee', label: 'Commission Fee', icon: HandCoins },
       { to: '/admin/labour-wallet', label: 'Labour Wallet', icon: Wallet },
       { to: '/admin/vendor-wallet', label: 'Vendor Wallet', icon: Wallet },
+      { to: '/admin/cash-management', label: 'Cash Management', icon: Wallet },
     ],
   },
   {
@@ -120,6 +122,7 @@ export const ADMIN_NAV_SECTIONS = [
     items: [
       { to: '/admin/profile', label: 'Profile', icon: UserCog },
       { to: '/admin/settings', label: 'Settings', icon: Settings },
+      { to: '/admin/reviews', label: 'Reviews & Ratings', icon: Star },
     ],
   },
 ]
@@ -137,7 +140,9 @@ const ROUTE_TITLES = [
   { prefix: '/admin/commission-fee', title: 'Commission Fee' },
   { prefix: '/admin/labour-wallet', title: 'Labour Wallet' },
   { prefix: '/admin/vendor-wallet', title: 'Vendor Wallet' },
+  { prefix: '/admin/cash-management', title: 'Cash Management' },
   { prefix: '/admin/billing', title: 'Payments & billing' },
+  { prefix: '/admin/reviews', title: 'Reviews & Ratings' },
   { prefix: '/admin/attendance', title: 'Attendance' },
   { prefix: '/admin/allocations', title: 'Workforce allocation' },
   { prefix: '/admin/mart/enquiries', title: 'Quote Leads' },

@@ -41,5 +41,13 @@ export const adminBookingsApi = {
       method: 'PATCH',
       body: { laborId },
     })
+  },
+
+  /**
+   * Delete booking by ID
+   * @param {string} id - Booking ID
+   */
+  deleteBooking: (id) => {
+    return apiRequest(`/admin/bookings/${id}`, { method: 'DELETE' })
   }
 }

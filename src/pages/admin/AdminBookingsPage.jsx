@@ -35,6 +35,8 @@ const BOOKING_STATUS_FILTERS = [
   { value: 'STARTED', label: 'Started' },
   { value: 'COMPLETED', label: 'Completed' },
   { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'FAILED', label: 'Failed' },
+  { value: 'REFUNDED', label: 'Refunded' },
 ]
 
 const getStatusBadgeStyle = (status) => {
@@ -53,7 +55,7 @@ const getStatusBadgeStyle = (status) => {
 
 function CorporateRequestsTab() {
   const [statusFilter, setStatusFilter] = useState('')
-  const { data, isLoading, isError } = useGetAdminRequestsQuery(
+  const { data, isLoading, isError, refetch } = useGetAdminRequestsQuery(
     statusFilter ? { status: statusFilter } : undefined,
   )
   const [patchStatus, { isLoading: patching }] = usePatchRequestStatusMutation()
@@ -77,6 +79,7 @@ function CorporateRequestsTab() {
     if (window.confirm('Are you sure you want to permanently delete this corporate request?')) {
       try {
         await deleteRequest(id).unwrap()
+        refetch()
       } catch (err) {
         console.error('Failed to delete request:', err)
         alert('Failed to delete request.')
@@ -621,22 +624,28 @@ function BookingDetailsModal({ booking, onClose }) {
 function IndividualBookingsTab() {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [selectedBooking, setSelectedBooking] = useState(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const { data, isLoading, isError } = useGetAdminBookingsQuery(
+  const { data, isLoading, isError, refetch } = useGetAdminBookingsQuery(
     { status: statusFilter },
   )
   const [deleteAdminBooking] = useDeleteAdminBookingMutation()
 
   const bookings = data?.bookings ?? []
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to permanently delete this booking?')) {
-      try {
-        await deleteAdminBooking(id).unwrap()
-      } catch (err) {
-        console.error('Failed to delete booking:', err)
-        alert('Failed to delete booking.')
-      }
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return
+    setIsDeleting(true)
+    try {
+      await deleteAdminBooking(deleteConfirmId).unwrap()
+      refetch()
+    } catch (err) {
+      console.error('Failed to delete booking:', err)
+      alert('Failed to delete booking.')
+    } finally {
+      setIsDeleting(false)
+      setDeleteConfirmId(null)
     }
   }
 
@@ -693,6 +702,9 @@ function IndividualBookingsTab() {
                   <p className="mt-1 text-xs text-slate-500">
                     Location: {b.address?.locationText || 'No location'}
                   </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Date: {new Date(b.createdAt).toLocaleDateString()}
+                  </p>
                   <p className="mt-1 text-xs font-bold text-slate-700">
                     Status: {b.status}
                   </p>
@@ -700,7 +712,7 @@ function IndividualBookingsTab() {
                 <div className="flex flex-wrap gap-2 items-center">
                   <button
                     type="button"
-                    onClick={() => handleDelete(b._id)}
+                    onClick={() => setDeleteConfirmId(b._id)}
                     className="flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 p-1.5 text-rose-600 hover:border-rose-300 hover:bg-rose-100 transition shadow-sm"
                     title="Delete permanently"
                   >
@@ -725,6 +737,33 @@ function IndividualBookingsTab() {
           booking={selectedBooking} 
           onClose={() => setSelectedBooking(null)} 
         />
+      )}
+
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-900/5">
+            <h3 className="text-lg font-bold text-slate-900">Confirm Deletion</h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Are you sure you want to permanently delete this booking? This action cannot be undone.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                disabled={isDeleting}
+                className="rounded-lg px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-rose-700 focus:ring-2 focus:ring-rose-500/30 transition flex items-center gap-2 disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Booking'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

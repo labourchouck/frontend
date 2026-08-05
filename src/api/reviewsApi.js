@@ -11,4 +11,8 @@ export const reviewsApi = {
   getUserReviews: (userId) => {
     return apiRequest(`/reviews/user/${userId}`, { method: 'GET' })
   },
+  
+  getAllReviews: () => {
+    return apiRequest('/reviews', { method: 'GET' })
+  },
 }

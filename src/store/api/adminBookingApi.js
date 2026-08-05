@@ -9,7 +9,13 @@ export const adminBookingApi = baseApi.injectEndpoints({
     getAdminBookings: build.query({
       query: (params) => ({ url: '/admin/bookings', params }),
       transformResponse: unwrap,
-      providesTags: ['AdminBookings'],
+      providesTags: (result) =>
+        result?.bookings
+          ? [
+              ...result.bookings.map(({ _id }) => ({ type: 'AdminBookings', id: _id })),
+              { type: 'AdminBookings', id: 'LIST' },
+            ]
+          : [{ type: 'AdminBookings', id: 'LIST' }],
     }),
     getAdminBookingById: build.query({
       query: (id) => `/admin/bookings/${id}`,
@@ -19,7 +25,7 @@ export const adminBookingApi = baseApi.injectEndpoints({
     createAdminBooking: build.mutation({
       query: (body) => ({ url: '/admin/bookings', method: 'POST', body }),
       transformResponse: unwrap,
-      invalidatesTags: ['AdminBookings'],
+      invalidatesTags: [{ type: 'AdminBookings', id: 'LIST' }],
     }),
     updateAdminBooking: build.mutation({
       query: ({ id, ...body }) => ({
@@ -54,7 +60,27 @@ export const adminBookingApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
       transformResponse: unwrap,
-      invalidatesTags: ['AdminBookings'],
+      invalidatesTags: (result, error, id) => [{ type: 'AdminBookings', id }, { type: 'AdminBookings', id: 'LIST' }],
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        // Optimistic update for ALL possible status filters
+        const statuses = ['ALL', 'CREATED', 'ASSIGNED', 'STARTED', 'COMPLETED', 'CANCELLED', 'FAILED', '']
+        
+        const patchResults = statuses.map((status) =>
+          dispatch(
+            adminBookingApi.util.updateQueryData('getAdminBookings', { status }, (draft) => {
+              if (draft?.bookings) {
+                draft.bookings = draft.bookings.filter((b) => b._id !== id)
+              }
+            })
+          )
+        )
+
+        try {
+          await queryFulfilled
+        } catch {
+          patchResults.forEach((patch) => patch.undo())
+        }
+      },
     }),
   }),
 })

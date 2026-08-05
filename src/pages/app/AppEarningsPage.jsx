@@ -12,10 +12,12 @@ import { formatInrFromPaise } from '../../lib/labourEarningsFlow.js'
 
 export function AppEarningsPage() {
   const [totalEarnings, setTotalEarnings] = useState(0)
+  const [totalCashEarnings, setTotalCashEarnings] = useState(0)
   const [totalPaid, setTotalPaid] = useState(0)
   const [dueAmount, setDueAmount] = useState(0)
   const [maxWithdrawable, setMaxWithdrawable] = useState(0)
   const [withdrawals, setWithdrawals] = useState([])
+  const [adminDues, setAdminDues] = useState(0)
   const [loading, setLoading] = useState(true)
 
   // Form State
@@ -38,14 +40,20 @@ export function AppEarningsPage() {
       const bookingsRes = await bookingsApi.getMyBookings().catch(() => null)
       
       const allBookings = bookingsRes?.data?.bookings || bookingsRes?.bookings || bookingsRes || []
-      let sum = 0
+      let onlineSum = 0
+      let cashSum = 0
       allBookings.forEach(b => {
         if (b.status === 'COMPLETED' || b.status === 'ACCEPTED' || b.status === 'ASSIGNED' || b.status === 'STARTED') {
           const share = b.laborShare || b.basePrice || 0
-          sum += share * 100 
+          if (b.paymentMethod === 'CASH') {
+            cashSum += share * 100
+          } else {
+            onlineSum += share * 100 
+          }
         }
       })
-      setTotalEarnings(sum)
+      setTotalEarnings(onlineSum)
+      setTotalCashEarnings(cashSum)
 
       // Fetch withdrawal history
       const withdrawalsRes = await withdrawalsApi.getWithdrawals().catch(() => null)
@@ -62,15 +70,34 @@ export function AppEarningsPage() {
         
       setTotalPaid(paid)
       
-      const totalEarnedInr = Math.floor(sum / 100)
+      const totalEarnedInr = Math.floor(onlineSum / 100)
       const calculatedDue = totalEarnedInr - paid
       setDueAmount(calculatedDue)
       
       // Prevent overdrawing if there are pending requests
       setMaxWithdrawable(Math.max(0, calculatedDue - pending))
+      // Fetch wallet for admin dues
+      const walletRes = await walletsApi.getMyWallet().catch(() => null)
+      setAdminDues(walletRes?.data?.wallet?.adminBalance || 0)
+
     } catch (err) {
       console.error('Failed to load wallet data:', err)
     } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePayAdmin = async () => {
+    if (adminDues <= 0) return
+    const confirmed = window.confirm(`Pay ₹${adminDues} to Admin to clear your dues?`)
+    if (!confirmed) return
+    
+    setLoading(true)
+    try {
+      await walletsApi.clearAdminDues({ amount: adminDues })
+      await fetchEarnings()
+    } catch (err) {
+      alert('Failed to clear dues: ' + (err.message || 'Unknown error'))
       setLoading(false)
     }
   }
@@ -195,7 +222,7 @@ export function AppEarningsPage() {
 
             <div className="mt-8 grid grid-cols-3 gap-3 divide-x divide-white/20 rounded-2xl bg-black/20 p-4 backdrop-blur-md border border-white/10">
               <div className="flex flex-col items-center">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Total Earning</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Online Earning</p>
                 {loading ? (
                   <div className="mt-1 h-6 w-16 animate-pulse rounded bg-white/10"></div>
                 ) : (
@@ -226,6 +253,47 @@ export function AppEarningsPage() {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Cash Earnings Section */}
+            <div className="mt-4 rounded-2xl bg-black/20 p-4 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-200">Total Cash Booking Earning</p>
+                  {loading ? (
+                    <div className="mt-1 h-6 w-16 animate-pulse rounded bg-white/10"></div>
+                  ) : (
+                    <p className="mt-1 font-mono text-xl font-black tracking-tight text-amber-400">
+                      {formatInrFromPaise(totalCashEarnings)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {(adminDues > 0 || !loading) && (
+                <div className="flex items-center justify-between gap-4 rounded-xl bg-linear-to-br from-rose-500/10 to-rose-900/20 p-5 border border-rose-500/20 shadow-inner mt-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-extrabold uppercase tracking-widest text-rose-300 truncate">
+                      Admin Dues (Cash)
+                    </p>
+                    <p className="mt-1 text-[10px] font-medium text-rose-300/60 truncate">
+                      Remaining amount to be paid
+                    </p>
+                    <p className="mt-2 font-mono text-2xl font-black tracking-tight text-rose-400 drop-shadow-sm">
+                      ₹{adminDues.toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                  {adminDues > 0 && (
+                    <button 
+                      onClick={handlePayAdmin}
+                      disabled={loading}
+                      className="shrink-0 rounded-xl bg-linear-to-b from-rose-500 to-rose-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-rose-500/20 ring-1 ring-white/10 transition-all hover:scale-105 hover:shadow-rose-500/40 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      Pay Admin
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
