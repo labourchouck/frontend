@@ -42,6 +42,7 @@ import { AdminZonesPage } from './pages/admin/AdminZonesPage.jsx'
 import { AdminPlatformFeePage } from './pages/admin/AdminPlatformFeePage.jsx'
 import { AdminCommissionFeePage } from './pages/admin/AdminCommissionFeePage.jsx'
 import { AdminLabourWalletPage } from './pages/admin/AdminLabourWalletPage.jsx'
+import { AdminVendorWalletPage } from './pages/admin/AdminVendorWalletPage.jsx'
 import { AdminVendorsPage } from './pages/admin/AdminVendorsPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
@@ -148,6 +149,7 @@ function App() {
             <Route path="platform-fee" element={<AdminPlatformFeePage />} />
             <Route path="commission-fee" element={<AdminCommissionFeePage />} />
             <Route path="labour-wallet" element={<AdminLabourWalletPage />} />
+            <Route path="vendor-wallet" element={<AdminVendorWalletPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

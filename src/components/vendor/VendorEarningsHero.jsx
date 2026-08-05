@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, IndianRupee, Wallet } from 'lucide-react'
 import { formatVendorInr } from '../../lib/vendorUiHelpers.js'
 
-export function VendorEarningsHero({ availableBalance, pendingPayout, monthEarnings }) {
+export function VendorEarningsHero({ totalBookingAmount, totalPaid, dueAmount }) {
   const reduce = useReducedMotion()
 
   return (
@@ -37,17 +37,17 @@ export function VendorEarningsHero({ availableBalance, pendingPayout, monthEarni
             </div>
           </div>
 
-          <p className="mt-4 font-mono text-3xl font-black tabular-nums">{formatVendorInr(availableBalance)}</p>
-          <p className="mt-1 text-xs text-white/70">Available for withdrawal</p>
+          <p className="mt-4 font-mono text-3xl font-black tabular-nums">{formatVendorInr(totalBookingAmount || 0)}</p>
+          <p className="mt-1 text-xs text-white/70">Total Earnings (Booking Amount)</p>
 
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <div className="rounded-2xl border border-amber-400/30 bg-amber-500/15 px-3 py-2.5">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-amber-100/90">Pending</p>
-              <p className="mt-0.5 font-mono text-lg font-black tabular-nums">{formatVendorInr(pendingPayout)}</p>
+            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-3 py-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-100/90">Total Paid</p>
+              <p className="mt-0.5 font-mono text-lg font-black tabular-nums">{formatVendorInr(totalPaid || 0)}</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/8 px-3 py-2.5">
-              <p className="text-[9px] font-bold uppercase tracking-wider text-white/55">This month</p>
-              <p className="mt-0.5 font-mono text-lg font-black tabular-nums">{formatVendorInr(monthEarnings)}</p>
+            <div className="rounded-2xl border border-amber-400/30 bg-amber-500/15 px-3 py-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-amber-100/90">Due Amount</p>
+              <p className="mt-0.5 font-mono text-lg font-black tabular-nums">{formatVendorInr(dueAmount || 0)}</p>
             </div>
           </div>
 

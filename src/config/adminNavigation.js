@@ -100,6 +100,7 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/platform-fee', label: 'Platform Fee', icon: HandCoins },
       { to: '/admin/commission-fee', label: 'Commission Fee', icon: HandCoins },
       { to: '/admin/labour-wallet', label: 'Labour Wallet', icon: Wallet },
+      { to: '/admin/vendor-wallet', label: 'Vendor Wallet', icon: Wallet },
     ],
   },
   {
@@ -135,6 +136,7 @@ const ROUTE_TITLES = [
   { prefix: '/admin/platform-fee', title: 'Platform Fee' },
   { prefix: '/admin/commission-fee', title: 'Commission Fee' },
   { prefix: '/admin/labour-wallet', title: 'Labour Wallet' },
+  { prefix: '/admin/vendor-wallet', title: 'Vendor Wallet' },
   { prefix: '/admin/billing', title: 'Payments & billing' },
   { prefix: '/admin/attendance', title: 'Attendance' },
   { prefix: '/admin/allocations', title: 'Workforce allocation' },

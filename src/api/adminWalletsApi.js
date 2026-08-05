@@ -8,6 +8,14 @@ export const adminWalletsApi = {
     return apiRequest('/admin/wallets/withdrawals', { method: 'GET' })
   },
 
+  getVendorWithdrawals: () => {
+    return apiRequest('/admin/wallets/vendor-withdrawals', { method: 'GET' })
+  },
+
+  getVendorWalletStats: () => {
+    return apiRequest('/admin/wallets/vendor-stats', { method: 'GET' })
+  },
+
   /**
    * Update withdrawal status (e.g. APPROVED or REJECTED)
    * @param {string} id - Withdrawal Request ID

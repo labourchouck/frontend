@@ -253,8 +253,9 @@ function CorporateRequestsTab() {
                                       <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{c.services?.[0]?.name || c.serviceName || c.category || 'Specialist Labour'}</p>
                                       <div className="mt-3 flex justify-between items-center border-t border-slate-50 pt-3">
                                         <div className="flex flex-col gap-1 text-[11px]">
-                                          <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
-                                          <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Vendor Price: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Price Diff: <span className="font-bold text-emerald-600">₹{(adminFee > vendorFee ? adminFee - vendorFee : 0).toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Total Admin Price: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
                                         </div>
                                         <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-md uppercase tracking-wider">Client Chosen</span>
                                       </div>
@@ -276,8 +277,9 @@ function CorporateRequestsTab() {
                                       <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{a.labourId?.services?.[0]?.name || a.labourId?.category || 'Worker'}</p>
                                       <div className="mt-3 flex justify-between items-end border-t border-slate-50 pt-3">
                                         <div className="flex flex-col gap-1 text-[11px]">
-                                          <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
-                                          <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Vendor Price: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Price Diff: <span className="font-bold text-emerald-600">₹{(adminFee > vendorFee ? adminFee - vendorFee : 0).toLocaleString('en-IN')}</span></span>
+                                          <span className="font-semibold text-slate-600">Total Admin Price: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
                                           <span className="text-[9px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md uppercase tracking-wider">{a.status?.replace('_', ' ')}</span>
@@ -427,8 +429,9 @@ function CorporateRequestsTab() {
                                   <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{c.services?.[0]?.name || c.serviceName || c.category || 'Specialist Labour'}</p>
                                   <div className="mt-3 flex justify-between items-center border-t border-slate-200/60 pt-3">
                                     <div className="flex flex-col gap-1 text-[11px]">
-                                      <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
-                                      <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Vendor Price: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Price Diff: <span className="font-bold text-emerald-600">₹{(adminFee > vendorFee ? adminFee - vendorFee : 0).toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Total Admin Price: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
                                     </div>
                                     <span className="text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-md uppercase tracking-wider">Client Chosen</span>
                                   </div>
@@ -450,8 +453,9 @@ function CorporateRequestsTab() {
                                   <p className="text-xs font-bold text-brand mt-1 bg-brand/5 inline-block px-2 py-0.5 rounded-md">{a.labourId?.services?.[0]?.name || a.labourId?.category || 'Worker'}</p>
                                   <div className="mt-3 flex justify-between items-end border-t border-slate-200/60 pt-3">
                                     <div className="flex flex-col gap-1 text-[11px]">
-                                      <span className="font-semibold text-slate-600">Vendor Fee: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
-                                      <span className="font-semibold text-slate-600">Admin Fee: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Vendor Price: <span className="font-bold text-slate-800">₹{vendorFee.toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Price Diff: <span className="font-bold text-emerald-600">₹{(adminFee > vendorFee ? adminFee - vendorFee : 0).toLocaleString('en-IN')}</span></span>
+                                      <span className="font-semibold text-slate-600">Total Admin Price: <span className="font-bold text-brand">₹{adminFee.toLocaleString('en-IN')}</span></span>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
                                       <span className="text-[9px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md uppercase tracking-wider">{a.status?.replace('_', ' ')}</span>

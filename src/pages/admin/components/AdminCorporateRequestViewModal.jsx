@@ -10,6 +10,27 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
 
   const corporate = request.clientId
 
+  let sumVendorPrice = 0
+  let sumPriceDiff = 0
+  let sumAdminPrice = 0
+  
+  const activeList = requestedCrew.length > 0 ? requestedCrew : assignments
+  activeList.forEach(item => {
+    let vFee = 0
+    let aFee = 0
+    if (requestedCrew.length > 0) {
+      vFee = item.services?.[0]?.price || 0
+      aFee = item.services?.[0]?.adminPrice || item.adminPrice || 0
+    } else {
+      vFee = item.labourId?.services?.[0]?.price || 0
+      aFee = item.labourId?.services?.[0]?.adminPrice || 0
+    }
+    const pDiff = aFee > vFee ? aFee - vFee : 0
+    sumVendorPrice += vFee
+    sumPriceDiff += pDiff
+    sumAdminPrice += aFee
+  })
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
       <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-8 shadow-xl relative">
@@ -110,8 +131,8 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
                   <th className="p-4 font-bold">Worker</th>
                   <th className="p-4 font-bold">Service</th>
                   <th className="p-4 font-bold text-right">Vendor Price/Day</th>
-                  <th className="p-4 font-bold text-right">Admin Fee/Day</th>
-                  <th className="p-4 font-bold text-right bg-brand/5">Total Client Price</th>
+                  <th className="p-4 font-bold text-right">Price Difference</th>
+                  <th className="p-4 font-bold text-right bg-brand/5">Total Admin Price</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -119,7 +140,7 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
                   requestedCrew.map(c => {
                     const vendorFee = c.services?.[0]?.price || 0;
                     const adminFee = c.services?.[0]?.adminPrice || c.adminPrice || 0;
-                    const totalFee = vendorFee + adminFee;
+                    const priceDiff = adminFee > vendorFee ? adminFee - vendorFee : 0;
                     return (
                       <tr key={c._id} className="hover:bg-slate-50/50">
                         <td className="p-4">
@@ -132,8 +153,8 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
                           </span>
                         </td>
                         <td className="p-4 text-right font-semibold text-slate-700">₹{vendorFee.toLocaleString('en-IN')}</td>
-                        <td className="p-4 text-right font-semibold text-brand">₹{adminFee.toLocaleString('en-IN')}</td>
-                        <td className="p-4 text-right font-extrabold text-slate-900 bg-brand/5">₹{totalFee.toLocaleString('en-IN')}</td>
+                        <td className="p-4 text-right font-semibold text-brand">₹{priceDiff.toLocaleString('en-IN')}</td>
+                        <td className="p-4 text-right font-extrabold text-slate-900 bg-brand/5">₹{adminFee.toLocaleString('en-IN')}</td>
                       </tr>
                     )
                   })
@@ -141,7 +162,7 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
                   assignments.map(a => {
                     const vendorFee = a.labourId?.services?.[0]?.price || 0;
                     const adminFee = a.labourId?.services?.[0]?.adminPrice || 0;
-                    const totalFee = vendorFee + adminFee;
+                    const priceDiff = adminFee > vendorFee ? adminFee - vendorFee : 0;
                     return (
                       <tr key={a._id} className="hover:bg-slate-50/50">
                         <td className="p-4">
@@ -154,8 +175,8 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
                           </span>
                         </td>
                         <td className="p-4 text-right font-semibold text-slate-700">₹{vendorFee.toLocaleString('en-IN')}</td>
-                        <td className="p-4 text-right font-semibold text-brand">₹{adminFee.toLocaleString('en-IN')}</td>
-                        <td className="p-4 text-right font-extrabold text-slate-900 bg-brand/5">₹{totalFee.toLocaleString('en-IN')}</td>
+                        <td className="p-4 text-right font-semibold text-brand">₹{priceDiff.toLocaleString('en-IN')}</td>
+                        <td className="p-4 text-right font-extrabold text-slate-900 bg-brand/5">₹{adminFee.toLocaleString('en-IN')}</td>
                       </tr>
                     )
                   })
@@ -167,6 +188,18 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
                   </tr>
                 )}
               </tbody>
+              {(requestedCrew.length > 0 || assignments.length > 0) && (
+                <tfoot className="bg-slate-50/80 border-t-2 border-slate-200">
+                  <tr>
+                    <td colSpan={2} className="p-4 text-right font-extrabold text-slate-800 uppercase tracking-wider text-xs">
+                      Totals
+                    </td>
+                    <td className="p-4 text-right font-extrabold text-slate-800">₹{sumVendorPrice.toLocaleString('en-IN')}</td>
+                    <td className="p-4 text-right font-extrabold text-brand">₹{sumPriceDiff.toLocaleString('en-IN')}</td>
+                    <td className="p-4 text-right font-black text-slate-900 bg-brand/10">₹{sumAdminPrice.toLocaleString('en-IN')}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </div>

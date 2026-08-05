@@ -8,6 +8,7 @@ import { CorporateRequestNewPage } from '../panels/corporate/pages/CorporateRequ
 import { CorporateRequestDetailPage } from '../panels/corporate/pages/CorporateRequestDetailPage.jsx'
 import { CorporateAttendancePage } from '../panels/corporate/pages/CorporateAttendancePage.jsx'
 import { CorporateBillingPage } from '../panels/corporate/pages/CorporateBillingPage.jsx'
+import { CorporateInvoicePage } from '../panels/corporate/pages/CorporateInvoicePage.jsx'
 import { CorporateAnalyticsPage } from '../panels/corporate/pages/CorporateAnalyticsPage.jsx'
 import { CorporateProfilePage } from '../panels/corporate/pages/CorporateProfilePage.jsx'
 import { CorporateSupportPage } from '../panels/corporate/pages/CorporateSupportPage.jsx'
@@ -24,6 +25,7 @@ export const corporateChildRoutes = (
     <Route path="requests/:id" element={<CorporateRequestDetailPage />} />
     <Route path="attendance" element={<CorporateAttendancePage />} />
     <Route path="billing" element={<CorporateBillingPage />} />
+    <Route path="billing/invoice/:id" element={<CorporateInvoicePage />} />
     <Route path="analytics" element={<CorporateAnalyticsPage />} />
     <Route path="profile" element={<CorporateProfilePage />} />
     <Route path="support" element={<CorporateSupportPage />} />

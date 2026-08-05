@@ -108,9 +108,9 @@ export function CorporateRequestDetailPage() {
               {formatDate(request.startDate)}
               {request.endDate ? ` – ${formatDate(request.endDate)}` : ''} · <span className="font-semibold">{days} {days === 1 ? 'day' : 'days'}</span>
             </p>
-            {(request.shiftStart || request.shiftEnd) && (
+            {request.shiftStart && (
               <p className="mt-1 text-xs text-slate-500 font-medium">
-                Time: {request.shiftStart || 'N/A'} - {request.shiftEnd || 'N/A'}
+                Time: {request.shiftStart}
               </p>
             )}
             {request.locationText ? <p className="mt-1 text-xs text-slate-500">{request.locationText}</p> : null}

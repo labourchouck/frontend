@@ -34,7 +34,6 @@ export function CorporateRequestNewPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [shiftStart, setShiftStart] = useState('08:00')
-  const [shiftEnd, setShiftEnd] = useState('18:00')
   const [locationText, setLocationText] = useState(
     user?.corporateProfile?.registeredAddress ||
       user?.corporateProfile?.city ||
@@ -160,8 +159,6 @@ export function CorporateRequestNewPage() {
   const minStartDate = todayString
   const minEndDate = startDate || todayString
   const minShiftStart = startDate === todayString ? currentTimeString : undefined
-  const minShiftEnd = (!endDate || endDate === startDate) ? shiftStart : (endDate === todayString ? currentTimeString : undefined)
-
   useEffect(() => {
     let cancelled = false
       ; (async () => {
@@ -207,10 +204,6 @@ export function CorporateRequestNewPage() {
     }
     if (startDate === todayString && shiftStart < currentTimeString) {
       setError('Shift start time cannot be in the past for today')
-      return
-    }
-    if ((!endDate || endDate === startDate) && shiftEnd <= shiftStart) {
-      setError('Shift end time must be after shift start time')
       return
     }
 
@@ -270,7 +263,6 @@ export function CorporateRequestNewPage() {
         startDate,
         endDate: endDate || undefined,
         shiftStart,
-        shiftEnd,
         locationText: locationText.trim() || undefined,
         ...(latitude && longitude ? { lat: latitude, lng: longitude } : {}),
         notes: notes.trim() || undefined,
@@ -476,19 +468,6 @@ export function CorporateRequestNewPage() {
                 value={shiftStart}
                 min={minShiftStart}
                 onChange={(e) => setShiftStart(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                Shift end
-              </label>
-              <input
-                type="time"
-                className={inputClass}
-                value={shiftEnd}
-                min={minShiftEnd}
-                onChange={(e) => setShiftEnd(e.target.value)}
                 required
               />
             </div>

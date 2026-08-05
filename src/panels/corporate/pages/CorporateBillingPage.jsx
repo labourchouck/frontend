@@ -1,4 +1,5 @@
 import { FileText, Loader2, CreditCard, CheckCircle2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { AppEmptyState } from '../../../components/app/AppEmptyState.jsx'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
@@ -15,6 +16,7 @@ function formatMoney(n) {
 }
 
 export function CorporateBillingPage() {
+  const navigate = useNavigate()
   const { data: invoicesData, isLoading: invLoading, isError: invError } = useGetCorporateInvoicesQuery()
   const { data: txData, isLoading: txLoading } = useGetCorporateTransactionsQuery()
   
@@ -112,15 +114,10 @@ export function CorporateBillingPage() {
                   
                   {inv.status !== 'PAID' && (
                     <AppPrimaryButton 
-                      onClick={() => handlePay(inv)} 
-                      disabled={isPaying}
+                      onClick={() => navigate(`/corporate/billing/invoice/${inv._id}`)} 
                       className="!py-1.5 !px-4 !text-xs whitespace-nowrap"
                     >
-                      {isPaying ? (
-                        <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Processing</>
-                      ) : (
-                        'Pay Now'
-                      )}
+                      View Invoice
                     </AppPrimaryButton>
                   )}
                 </div>
