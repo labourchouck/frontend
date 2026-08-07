@@ -13,14 +13,12 @@ export const corporateNavigation = {
   headerTagline: 'Bulk workforce, billing & projects',
   bottomNav: [
     { id: 'home', to: '/corporate', label: 'Home', icon: Home, end: true },
-    { id: 'projects', to: '/corporate/projects', label: 'Projects', icon: Building2 },
     { id: 'attendance', to: '/corporate/attendance', label: 'Attendance', icon: Clock },
     { id: 'requests', to: '/corporate/requests', label: 'Requests', icon: ClipboardList },
     { id: 'profile', to: '/corporate/profile', label: 'Profile', icon: UserRound },
   ],
   drawerNav: [
     { id: 'home', to: '/corporate', label: 'Dashboard', icon: Home, end: true },
-    { id: 'projects', to: '/corporate/projects', label: 'Projects & sites', icon: Building2 },
     { id: 'requests', to: '/corporate/requests', label: 'Workforce requests', icon: ClipboardList },
     { id: 'attendance', to: '/corporate/attendance', label: 'Attendance', icon: Clock },
     { id: 'billing', to: '/corporate/billing', label: 'Billing & invoices', icon: FileText },
@@ -31,9 +29,6 @@ export const corporateNavigation = {
 }
 
 export function getCorporateTitle(pathname) {
-  if (pathname.startsWith('/corporate/projects/new')) return 'New project'
-  if (pathname.match(/\/corporate\/projects\/[^/]+$/)) return 'Project'
-  if (pathname.startsWith('/corporate/projects')) return 'Projects'
   if (pathname.startsWith('/corporate/requests/new')) return 'New request'
   if (pathname.match(/\/corporate\/requests\/[^/]+$/)) return 'Request'
   if (pathname.startsWith('/corporate/requests')) return 'Requests'

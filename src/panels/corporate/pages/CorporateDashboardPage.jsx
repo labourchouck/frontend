@@ -67,7 +67,6 @@ export function CorporateDashboardPage() {
       </AppSurface>
 
       <div className="grid grid-cols-2 gap-3">
-        <OpsStatCard label="Active projects" value={isLoading ? '—' : stats.activeProjects ?? 0} icon={Building2} tone="brand" />
         <OpsStatCard label="Open requests" value={isLoading ? '—' : stats.openRequests ?? 0} icon={ClipboardList} />
         <OpsStatCard label="Workers deployed" value={isLoading ? '—' : stats.activeWorkers ?? 0} icon={Clock} />
         <OpsStatCard label="Invoices due" value={isLoading ? '—' : stats.invoicesDue ?? 0} icon={FileText} tone="warn" />

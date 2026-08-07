@@ -38,7 +38,8 @@ export function PanelShell({
     /\/projects\/[^/]+$/.test(pathname) ||
     /\/requests\/[^/]+$/.test(pathname) ||
     /\/jobs\/[^/]+$/.test(pathname) ||
-    /\/crew\/[^/]+$/.test(pathname)
+    /\/crew\/[^/]+$/.test(pathname) ||
+    pathname.includes('/invoice')
 
   useEffect(() => {
     queueMicrotask(() => setDrawerOpen(false))
@@ -146,7 +147,7 @@ export function PanelShell({
         ) : null}
       </AnimatePresence>
 
-      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-lg flex-col">
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-lg flex-col print:min-h-0 print:block">
         {!hideShellHeader ? (
           <header className="sticky top-0 z-30 px-3 pt-3">
             <GlassPanel className="flex items-center gap-3 px-3 py-2.5">
@@ -170,8 +171,8 @@ export function PanelShell({
         ) : null}
 
         <main
-          className={`relative z-10 flex-1 px-4 pb-32 ${
-            hideShellHeader ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]' : 'pt-4'
+          className={`relative z-10 flex-1 px-4 pb-32 print:p-0 ${
+            hideShellHeader ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))] print:pt-0' : 'pt-4'
           }`}
         >
           <AppPageTransition />

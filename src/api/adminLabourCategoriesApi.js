@@ -20,6 +20,10 @@ export function putAdminLabourCategory(id, payload) {
   return apiRequest(`/admin/labour-categories/${id}`, { method: 'PUT', body: payload })
 }
 
+export function updateAdminLabourCategoryGst(id, payload) {
+  return apiRequest(`/admin/labour-categories/${id}/gst`, { method: 'PUT', body: payload })
+}
+
 export function createAdminLabourCategoryGroup(payload) {
   return apiRequest('/admin/labour-category-groups', { method: 'POST', body: payload })
 }

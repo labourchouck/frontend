@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Users, Star, Loader2, Clock, CheckCircle2 } from 'lucide-react'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
+import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
 import { PipelineTimeline } from '../../../components/shared/PipelineTimeline.jsx'
 import { useGetRequestQuery, useRateCorporateAssignmentMutation, useInitPaymentMutation, useVerifyPaymentMutation } from '../../../store/api/workforceApi.js'
 import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
@@ -186,10 +187,14 @@ export function CorporateRequestDetailPage() {
 
   return (
     <div className="space-y-4 pb-8">
-      <Link to="/corporate/requests" className="inline-flex items-center gap-2 text-sm font-bold text-brand">
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Requests
-      </Link>
+      <header className="sticky top-0 z-30 pt-3 mb-2">
+        <GlassPanel className="flex items-center justify-between px-3 py-2.5">
+          <Link to="/corporate/requests" className="inline-flex items-center gap-2 text-sm font-bold text-brand hover:text-brand/80 transition-colors">
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Back to Requests
+          </Link>
+        </GlassPanel>
+      </header>
 
       <AppSurface>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -239,38 +244,54 @@ export function CorporateRequestDetailPage() {
           <span className="text-xs font-semibold text-slate-500">{days} {days === 1 ? 'day' : 'days'} duration</span>
         </div>
 
-        <ul className="mt-3 space-y-3">
-          {serviceBreakdown.map((item, i) => (
-            <li key={i} className="flex items-start justify-between text-sm py-2 border-b border-slate-100 last:border-0">
-              <div className="min-w-0 pr-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-slate-900 text-sm">{item.serviceName}</span>
-                  <span className="rounded-md bg-brand/10 text-brand px-1.5 py-0.5 text-xs font-bold">
-                    × {item.quantity}
-                  </span>
+        <div className="mt-3 space-y-4">
+          {serviceBreakdown.map((item, idx) => (
+            <div key={idx} className="flex flex-col text-sm border border-slate-100 bg-slate-50/30 rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-slate-100/50 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
+                <div>
+                  <span className="font-bold text-slate-800">{item.serviceName}</span>
+                  {item.categoryName && item.categoryName !== item.serviceName && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wider text-slate-400">{item.categoryName}</span>
+                  )}
                 </div>
-                {item.categoryName && item.categoryName !== item.serviceName && (
-                  <p className="text-xs text-slate-400 mt-0.5">{item.categoryName}</p>
-                )}
-                <p className="text-xs text-slate-500 font-medium mt-1">
-                  Rate: ₹{item.adminPricePerDay.toLocaleString('en-IN')} / day
-                  {item.quantity > 1 ? ` · (₹${item.totalPricePerDay.toLocaleString('en-IN')} / day total)` : ''}
-                </p>
+                <span className="text-xs font-semibold text-slate-500">{item.labourers?.length || item.quantity} Labour(s)</span>
               </div>
-              <div className="text-right shrink-0">
-                <span className="font-bold text-slate-900 text-sm">
-                  ₹{(item.totalPriceForDuration || (item.totalPricePerDay * days)).toLocaleString('en-IN')}
-                </span>
-                <span className="block text-[11px] text-slate-400">for {days} {days === 1 ? 'day' : 'days'}</span>
+              
+              <div className="px-4 py-2 space-y-2">
+                {(item.labourers || []).map((labour, lIdx) => (
+                  <div key={lIdx} className="flex justify-between items-center text-xs text-slate-600">
+                    <span>{labour.labourName}</span>
+                    <span className="font-medium">₹{Math.round(labour.adminPrice).toLocaleString('en-IN')}/day</span>
+                  </div>
+                ))}
               </div>
-            </li>
+
+              <div className="bg-slate-50 px-4 py-3 border-t border-slate-100 flex flex-col gap-1.5 text-xs">
+                <div className="flex justify-between text-slate-600">
+                  <span>Category Subtotal:</span>
+                  <span className="font-medium">₹{Math.round(item.totalPricePerDay).toLocaleString('en-IN')}/day</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>GST ({item.gstPercentage || 0}%):</span>
+                  <span className="font-medium">+ ₹{Math.round(item.gstAmount || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-slate-800 pt-1.5 border-t border-slate-200/50 mt-0.5">
+                  <span>Category Total (for {days} days):</span>
+                  <span className="text-brand">₹{Math.round((item.totalPriceForDuration || (item.totalPricePerDay * days)) + (item.gstAmount || 0)).toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
 
         <div className="mt-4 pt-4 border-t border-slate-200 space-y-2">
           <div className="flex justify-between text-sm text-slate-600">
             <span>Base Service Total ({days} {days === 1 ? 'day' : 'days'})</span>
             <span className="font-medium text-slate-800">₹{basePriceTotal.toLocaleString('en-IN')}</span>
+          </div>
+          <div className="flex justify-between text-sm text-slate-600">
+            <span>Total Taxes (GST)</span>
+            <span className="font-medium text-slate-800">₹{Math.round(data?.pricingSummary?.taxAmount || 0).toLocaleString('en-IN')}</span>
           </div>
           <div className="flex justify-between text-sm text-slate-600">
             <span>Platform Fee</span>

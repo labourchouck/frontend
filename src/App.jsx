@@ -87,11 +87,11 @@ function App() {
           <Route
             path="/corporate"
             element={
-              // <ProtectedRoute roles={CORPORATE_ROLES}>
-              <ErrorBoundary>
-                <CorporateShell />
-              </ErrorBoundary>
-              // </ProtectedRoute>
+              <ProtectedRoute roles={CORPORATE_ROLES}>
+                <ErrorBoundary>
+                  <CorporateShell />
+                </ErrorBoundary>
+              </ProtectedRoute>
             }
           >
             {corporateChildRoutes}

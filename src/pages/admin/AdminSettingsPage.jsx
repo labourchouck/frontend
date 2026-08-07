@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Settings, Percent, IndianRupee, Wallet, Receipt, AlertTriangle, CheckCircle2, Loader2, Clock } from 'lucide-react'
 import { adminSettingsApi } from '../../api/adminSettingsApi.js'
+import { fetchAdminLabourCategoryTree, updateAdminLabourCategoryGst } from '../../api/adminLabourCategoriesApi.js'
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
@@ -104,12 +105,16 @@ export function AdminSettingsPage() {
   // GST
   const [gstPercentage, setGstPercentage] = useState('')
 
+  // Categories for GST
+  const [categories, setCategories] = useState([])
+  const [selectedGstCategory, setSelectedGstCategory] = useState('')
+  const [isGstActive, setIsGstActive] = useState(true)
+
+
   // Cancellation Penalty
   const [cancellationPenalty, setCancellationPenalty] = useState('')
 
-  // Time Slots
-  const [timeSlots, setTimeSlots] = useState([])
-  const [newTimeSlot, setNewTimeSlot] = useState('')
+
 
   const showToast = useCallback((message, variant = 'success') => {
     setToast({ message, variant })
@@ -128,18 +133,19 @@ export function AdminSettingsPage() {
         if (s.walletLimit != null) {
           setWalletLimit(String(s.walletLimit))
         }
-        // GST
-        if (s.gstPercentage != null) {
-          setGstPercentage(String(s.gstPercentage))
-        }
+        
+        // GST Categories
+        fetchAdminLabourCategoryTree().then(res => {
+          if (!cancelled && res.data?.categories) {
+            setCategories(res.data.categories)
+          }
+        }).catch(console.error)
+
         // Cancellation Penalty
         if (s.cancellationPenalty != null) {
           setCancellationPenalty(String(s.cancellationPenalty))
         }
-        // Time Slots
-        if (s.timeSlots && Array.isArray(s.timeSlots)) {
-          setTimeSlots(s.timeSlots)
-        }
+
       })
       .catch((err) => {
         if (!cancelled) showToast(err instanceof ApiError ? err.message : 'Failed to load settings', 'error')
@@ -326,9 +332,33 @@ export function AdminSettingsPage() {
         {/* GST */}
         <SettingsSection
           icon={Receipt}
-          title="GST Percentage"
-          description="Tax applied on (basePrice + platformFee)"
+          title="Category GST"
+          description="Tax applied on booking based on service category"
         >
+          <div>
+            <label className={labelClass}>Select Category</label>
+            <select
+              className={inputClass + ' mt-1.5'}
+              value={selectedGstCategory}
+              onChange={(e) => {
+                 const val = e.target.value
+                 setSelectedGstCategory(val)
+                 const cat = categories.find(c => c._id === val)
+                 if (cat) {
+                   setGstPercentage(String(cat.gstPercentage || 0))
+                   setIsGstActive(cat.isGstActive !== false)
+                 } else {
+                   setGstPercentage('')
+                   setIsGstActive(true)
+                 }
+              }}
+            >
+              <option value="">-- Choose Category --</option>
+              {categories.map(cat => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className={labelClass}>GST (%)</label>
             <input
@@ -339,14 +369,33 @@ export function AdminSettingsPage() {
               placeholder="e.g. 18"
               value={gstPercentage}
               onChange={(e) => setGstPercentage(e.target.value)}
+              disabled={!selectedGstCategory}
             />
+          </div>
+          <div className="flex items-center gap-3 mt-1.5">
+            <input
+              type="checkbox"
+              id="gst-active"
+              checked={isGstActive}
+              onChange={(e) => setIsGstActive(e.target.checked)}
+              disabled={!selectedGstCategory}
+              className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+            />
+            <label htmlFor="gst-active" className="text-sm font-medium text-slate-700">Active</label>
           </div>
           <AppPrimaryButton
             type="button"
             loading={saving === 'GST'}
-            onClick={() => handleSave('GST', adminSettingsApi.updateGstPercentage, {
-              gstPercentage: Number(gstPercentage),
-            })}
+            disabled={!selectedGstCategory}
+            onClick={() => {
+              handleSave('GST', (payload) => updateAdminLabourCategoryGst(selectedGstCategory, payload), {
+                gstPercentage: Number(gstPercentage),
+                isGstActive: isGstActive,
+              }).then(() => {
+                // Update local state so it stays correctly configured when switching
+                setCategories(prev => prev.map(c => c._id === selectedGstCategory ? { ...c, gstPercentage: Number(gstPercentage), isGstActive } : c))
+              })
+            }}
           >
             Save GST
           </AppPrimaryButton>
@@ -381,74 +430,6 @@ export function AdminSettingsPage() {
           </AppPrimaryButton>
         </SettingsSection>
 
-        {/* Time Slots */}
-        <SettingsSection
-          icon={Clock}
-          title="Time Slots"
-          description="Available time slots for scheduled bookings"
-          accent="indigo-600"
-        >
-          <div>
-            <label className={labelClass}>Current Slots</label>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {timeSlots.map((slot, index) => (
-                <div key={index} className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700">
-                  {slot}
-                  <button
-                    type="button"
-                    onClick={() => setTimeSlots(prev => prev.filter((_, i) => i !== index))}
-                    className="text-slate-400 hover:text-rose-500 transition px-1"
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
-              {timeSlots.length === 0 && <span className="text-xs text-slate-400">No time slots configured.</span>}
-            </div>
-          </div>
-          <div>
-            <label className={labelClass}>Add New Slot</label>
-            <div className="mt-1.5 flex gap-2">
-              <input
-                className={inputClass + ' flex-1'}
-                type="text"
-                placeholder="e.g. 08:00 AM"
-                value={newTimeSlot}
-                onChange={(e) => setNewTimeSlot(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    if (newTimeSlot.trim()) {
-                      setTimeSlots(prev => [...prev, newTimeSlot.trim()])
-                      setNewTimeSlot('')
-                    }
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (newTimeSlot.trim()) {
-                    setTimeSlots(prev => [...prev, newTimeSlot.trim()])
-                    setNewTimeSlot('')
-                  }
-                }}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800 transition"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-          <AppPrimaryButton
-            type="button"
-            loading={saving === 'Time Slots'}
-            onClick={() => handleSave('Time Slots', adminSettingsApi.updateTimeSlots, {
-              timeSlots,
-            })}
-          >
-            Save Time Slots
-          </AppPrimaryButton>
-        </SettingsSection>
       </div>
     </div>
   )

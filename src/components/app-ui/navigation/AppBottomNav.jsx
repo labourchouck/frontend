@@ -10,8 +10,8 @@ export function AppBottomNav({ items }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/90 bg-white"
-      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/90 bg-white print:hidden"
+      style={{ paddingBottom: 'max(0.5rem, env(safe-area-bottom))' }}
       aria-label="Bottom navigation"
     >
       <div className="mx-auto flex w-full max-w-lg items-stretch justify-around px-1 pt-1.5">

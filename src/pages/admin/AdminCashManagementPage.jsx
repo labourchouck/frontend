@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Landmark, AlertCircle, CheckCircle2, Wallet } from 'lucide-react'
+import { Landmark, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { adminSettingsApi } from '../../api/adminSettingsApi.js'
 
 export function AdminCashManagementPage() {
-  const [activeTab, setActiveTab] = useState('labour')
   const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(true)
   
   const [labourLimit, setLabourLimit] = useState('')
-  const [vendorLimit, setVendorLimit] = useState('')
   
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -24,7 +22,6 @@ export function AdminCashManagementPage() {
       if (data) {
         setSettings(data)
         setLabourLimit(data.labourCashLimit?.toString() || '500')
-        setVendorLimit(data.vendorCashLimit?.toString() || '5000')
       }
     } catch (err) {
       console.error(err)
@@ -44,11 +41,7 @@ export function AdminCashManagementPage() {
     setSuccessMsg('')
     setSaving(true)
     try {
-      if (activeTab === 'labour') {
-        await adminSettingsApi.updateLabourCashLimit({ labourCashLimit: Number(labourLimit) })
-      } else {
-        await adminSettingsApi.updateVendorCashLimit({ vendorCashLimit: Number(vendorLimit) })
-      }
+      await adminSettingsApi.updateLabourCashLimit({ labourCashLimit: Number(labourLimit) })
       setSuccessMsg('Limit updated successfully!')
       fetchSettings()
       setTimeout(() => setSuccessMsg(''), 3000)
@@ -60,43 +53,15 @@ export function AdminCashManagementPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="max-w-4xl mx-auto space-y-6 pb-20">
+      <div className="flex items-center gap-3 mb-6">
+        <span className="flex items-center justify-center h-10 w-10 bg-brand/10 text-brand rounded-xl">
+          <Landmark className="h-5 w-5" />
+        </span>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Cash Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Set maximum cash limits for Labours and Vendors</p>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Cash Management</h1>
+          <p className="text-sm text-slate-500 font-medium">Control limits for offline cash collection</p>
         </div>
-      </div>
-
-      <div className="flex border-b border-slate-200">
-        <button
-          onClick={() => {
-            setActiveTab('labour')
-            setErrorMsg('')
-            setSuccessMsg('')
-          }}
-          className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'labour' 
-              ? 'border-brand text-brand bg-brand/5' 
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          Labour Limits
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('vendor')
-            setErrorMsg('')
-            setSuccessMsg('')
-          }}
-          className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${
-            activeTab === 'vendor' 
-              ? 'border-brand text-brand bg-brand/5' 
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          Vendor Limits
-        </button>
       </div>
 
       {loading ? (
@@ -106,11 +71,9 @@ export function AdminCashManagementPage() {
       ) : (
         <div className="max-w-2xl">
           <GlassPanel className="p-6">
-            <h2 className="text-lg font-bold text-slate-800 mb-4">
-              {activeTab === 'labour' ? 'Labour Cash Collection Limit' : 'Vendor Cash Collection Limit'}
-            </h2>
+            <h2 className="text-lg font-bold text-slate-800 mb-4">Labour Cash Collection Limit</h2>
             <p className="text-sm text-slate-600 mb-6">
-              When a {activeTab === 'labour' ? 'Labour' : 'Vendor'} collects cash directly from the customer, the admin commission and fees are added to their Admin Dues. 
+              When a Labour collects cash directly from the customer, the admin commission and fees are added to their Admin Dues. 
               If their total dues exceed this limit, they will be temporarily blocked from accepting new bookings until they clear their dues.
             </p>
 
@@ -130,26 +93,23 @@ export function AdminCashManagementPage() {
 
             <form onSubmit={handleSave} className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
-                  Maximum Limit (₹)
-                </label>
-                <div className="relative max-w-md">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Wallet className="h-5 w-5 text-slate-400" />
-                  </div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Max Outstanding Dues (₹)</label>
+                <div className="relative max-w-xs">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">₹</span>
                   <input
                     type="number"
-                    min="0"
                     required
-                    value={activeTab === 'labour' ? labourLimit : vendorLimit}
-                    onChange={(e) => activeTab === 'labour' ? setLabourLimit(e.target.value) : setVendorLimit(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-shadow"
-                    placeholder="e.g. 500"
+                    min="0"
+                    value={labourLimit}
+                    onChange={(e) => setLabourLimit(e.target.value)}
+                    className="w-full pl-9 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand font-semibold text-slate-800"
+                    placeholder="Enter limit"
                   />
                 </div>
+                <p className="mt-2 text-xs text-slate-500 font-medium">Labours cannot accept cash bookings if their dues exceed this amount.</p>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-4 border-t border-slate-100 flex justify-end">
                 <AppPrimaryButton type="submit" disabled={saving}>
                   {saving ? 'Saving...' : 'Save Limit'}
                 </AppPrimaryButton>

@@ -690,7 +690,9 @@ function IndividualBookingsTab() {
       ) : null}
 
       <ul className="space-y-4">
-        {bookings.map((b) => (
+        {bookings.map((b) => {
+          if (b.status === 'FAILED') return null;
+          return (
           <li key={b._id}>
             <GlassPanel className="space-y-4 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -729,7 +731,8 @@ function IndividualBookingsTab() {
               </div>
             </GlassPanel>
           </li>
-        ))}
+          )
+        })}
       </ul>
 
       {selectedBooking && (

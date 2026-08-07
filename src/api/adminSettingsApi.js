@@ -37,12 +37,7 @@ export const adminSettingsApi = {
     })
   },
 
-  updateVendorCashLimit: (payload) => {
-    return apiRequest('/admin/settings/vendor-cash-limit', {
-      method: 'PATCH',
-      body: payload,
-    })
-  },
+
 
   updateGstPercentage: (payload) => {
     return apiRequest('/admin/settings/gst', {
