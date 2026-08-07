@@ -54,6 +54,7 @@ export const vendorApi = {
   acceptJob: (id) => apiRequest(`/vendor/jobs/${id}/accept`, { method: 'POST' }),
   
   rejectJob: (id) => apiRequest(`/vendor/jobs/${id}/reject`, { method: 'POST' }),
+  collectCashPayment: (id) => apiRequest(`/vendor/jobs/${id}/collect-cash`, { method: 'POST' }),
 
   // 5. Analytics & Insights
   getAnalytics: (days = 30) => apiRequest(`/vendor/analytics?days=${days}`, { method: 'GET' }),

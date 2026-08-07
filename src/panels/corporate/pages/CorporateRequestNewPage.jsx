@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, MapPin } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, MapPin, CheckCircle2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { apiRequest } from '../../../api/http.js'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
@@ -149,6 +150,7 @@ export function CorporateRequestNewPage() {
   const [selectedVendorId, setSelectedVendorId] = useState(null)
   const [selectedCrew, setSelectedCrew] = useState([])
   const [step, setStep] = useState(1)
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   
   const [searchVendors, { isLoading: isSearching }] = useSearchVendorsMutation()
 
@@ -226,7 +228,7 @@ export function CorporateRequestNewPage() {
     }
   }
 
-  const handleFinalSubmit = async () => {
+  const handleFinalSubmit = async (paymentMethod = 'ONLINE') => {
     setError('')
     const validLines = lines.filter((l) => l.categoryId)
     if (!startDate) {
@@ -269,12 +271,57 @@ export function CorporateRequestNewPage() {
         preferredVendorId: selectedVendorId || undefined,
         selectedCrewIds: selectedCrew.map(c => c._id),
         lines: enrichedLines,
+        paymentMethod,
       }).unwrap()
-      navigate('/corporate/requests')
+      setShowSuccessPopup(true)
+      setTimeout(() => {
+        navigate('/corporate/requests')
+      }, 2500)
     } catch (err) {
       setError(err?.data?.message || err?.message || 'Could not create request')
     }
   }
+
+  const successPopupOverlay = (
+    <AnimatePresence>
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white p-8 text-center shadow-2xl"
+          >
+            <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', damping: 15 }}
+              >
+                <CheckCircle2 className="h-12 w-12" />
+              </motion.div>
+            </div>
+            
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">Request Sent!</h2>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              Your workforce request has been successfully submitted to the vendor. Redirecting you to your requests...
+            </p>
+
+            {/* Loader Bar */}
+            <div className="mt-8 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <motion.div
+                className="h-full bg-emerald-500"
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 2.5, ease: 'linear' }}
+              />
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  )
 
   if (step === 2 && selectedVendorId) {
     const selectedVendor = searchResults?.find(v => v._id === selectedVendorId)
@@ -313,6 +360,7 @@ export function CorporateRequestNewPage() {
           onSubmit={handleFinalSubmit} 
           isSubmitting={isLoading} 
         />
+        {successPopupOverlay}
       </div>
     )
   }
@@ -569,6 +617,8 @@ export function CorporateRequestNewPage() {
           </div>
         )}
       </AppSurface>
+
+      {successPopupOverlay}
     </div>
   )
 }

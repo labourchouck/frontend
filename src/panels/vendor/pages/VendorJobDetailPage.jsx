@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, MapPin, Users } from 'lucide-react'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
@@ -9,6 +9,7 @@ import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorP
 import { getVendorDummyAllocation, VENDOR_DUMMY_CREW } from '../../../lib/vendorDummyData.js'
 import { vendorApi } from '../../../api/vendorApi.js'
 import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
+import { useAcceptVendorJobMutation } from '../../../store/api/workforceApi.js'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -17,13 +18,17 @@ function formatDate(d) {
 
 export function VendorJobDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const reduce = useReducedMotion()
   
   const [allocation, setAllocation] = useState(null)
   const [loading, setLoading] = useState(true)
   const [accepting, setAccepting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
+  const [collecting, setCollecting] = useState(false)
   const [selectedAttendanceReqId, setSelectedAttendanceReqId] = useState(null)
+  
+  const [acceptVendorJob] = useAcceptVendorJobMutation()
 
   const fetchJob = async () => {
     try {
@@ -63,8 +68,9 @@ export function VendorJobDetailPage() {
   const handleAccept = async () => {
     setAccepting(true)
     try {
-      await vendorApi.acceptJob(id)
+      await acceptVendorJob(id).unwrap()
       await fetchJob()
+      navigate('/vendor/attendance')
     } catch (err) {
       alert('Failed to accept job')
     } finally {
@@ -135,6 +141,7 @@ export function VendorJobDetailPage() {
             {allocation.workersAssigned ?? 0} / {allocation.workersRequired} workers
           </p>
         </VendorCard>
+
 
         {hasCrew && (
           <VendorCard>

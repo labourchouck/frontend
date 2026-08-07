@@ -10,6 +10,7 @@ import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorP
 import { isVendorPanelUnlocked } from '../../../lib/vendorDemo.js'
 import { formatVendorInr } from '../../../lib/vendorUiHelpers.js'
 import { vendorApi } from '../../../api/vendorApi.js'
+import { walletsApi } from '../../../api/walletsApi.js'
 
 export function VendorEarningsPage() {
   const reduce = useReducedMotion()
@@ -20,6 +21,7 @@ export function VendorEarningsPage() {
   const [invoices, setInvoices] = useState([])
   const [withdrawals, setWithdrawals] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingPayAdmin, setLoadingPayAdmin] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -74,6 +76,24 @@ export function VendorEarningsPage() {
       await fetchData() // Refresh data
     } catch (err) {
       alert(err?.data?.message || err?.message || 'Withdrawal request failed')
+    }
+  }
+
+  const handlePayAdmin = async () => {
+    const adminDues = stats?.adminBalance || 0
+    if (adminDues <= 0) return
+    const confirmed = window.confirm(`Pay ₹${adminDues} to Admin to clear your dues?`)
+    if (!confirmed) return
+    
+    setLoadingPayAdmin(true)
+    try {
+      await walletsApi.clearAdminDues({ amount: adminDues })
+      await fetchData()
+      alert('Admin dues cleared successfully')
+    } catch (err) {
+      alert('Failed to clear dues: ' + (err.message || 'Unknown error'))
+    } finally {
+      setLoadingPayAdmin(false)
     }
   }
 

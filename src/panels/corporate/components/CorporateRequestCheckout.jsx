@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 
 export function CorporateRequestCheckout({ 
@@ -8,6 +9,8 @@ export function CorporateRequestCheckout({
   onSubmit, 
   isSubmitting 
 }) {
+  const [paymentMethod, setPaymentMethod] = useState('ONLINE')
+
   if (!vendor || !selectedCrew) return null
 
   const { priceDetails } = vendor
@@ -104,13 +107,15 @@ export function CorporateRequestCheckout({
         </div>
       </div>
 
+
+
       {/* Actions */}
       <div className="flex flex-col gap-3 pt-4">
         <AppPrimaryButton 
           type="button" 
           className="w-full bg-slate-800 hover:bg-slate-900" 
           loading={isSubmitting}
-          onClick={onSubmit}
+          onClick={() => onSubmit(paymentMethod)}
         >
           Send Request
         </AppPrimaryButton>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight, ClipboardList, Clock } from 'lucide-react'
 import { useAuth } from '../../../hooks/useAuth.js'
@@ -13,6 +13,7 @@ import { isVendorPanelUnlocked } from '../../../lib/vendorDemo.js'
 import { filterVendorJobs, VENDOR_DUMMY_ALLOCATIONS } from '../../../lib/vendorDummyData.js'
 import { useEffect } from 'react'
 import { vendorApi } from '../../../api/vendorApi.js'
+import { useAcceptVendorJobMutation } from '../../../store/api/workforceApi.js'
 
 const TABS = [
   { id: 'all', label: 'All' },
@@ -28,6 +29,7 @@ function formatDate(d) {
 
 export function VendorJobsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const reduce = useReducedMotion()
   const verified = isVendorPanelUnlocked(user)
   const [tab, setTab] = useState('all')
@@ -36,6 +38,7 @@ export function VendorJobsPage() {
   const [isError, setIsError] = useState(false)
   const [accepting, setAccepting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
+  const [acceptVendorJob] = useAcceptVendorJobMutation()
 
   const fetchJobs = async () => {
     try {
@@ -59,8 +62,9 @@ export function VendorJobsPage() {
   const handleAccept = async (id) => {
     setAccepting(true)
     try {
-      await vendorApi.acceptJob(id)
+      await acceptVendorJob(id).unwrap()
       await fetchJobs()
+      navigate('/vendor/attendance')
     } catch {
       alert('Failed to accept request')
     } finally {
@@ -115,6 +119,12 @@ export function VendorJobsPage() {
           {allocations.map((a) => {
             const req = a.requestId
             const pending = !a.vendorAcceptedAt
+            
+            // The user requested to delete (hide) the "Accepted" cards from this list permanently, except completed ones
+            if (!pending && req?.status !== 'completed' && req?.status !== 'billing') {
+              return null;
+            }
+
             const clientName = req?.clientId?.corporateProfile?.companyName || req?.clientId?.fullName || 'Corporate Client'
 
             // Calculate total duration in days
@@ -204,7 +214,7 @@ export function VendorJobsPage() {
                     </div>
                   )}
 
-                  {!pending && <PipelineTimeline status={req?.status} title="Status" compact />}
+                  {!pending && req?.status === 'completed' && <PipelineTimeline status={req?.status} title="Status" compact />}
                   
                   {pending ? (
                     <div className="flex gap-2 w-full mt-2">

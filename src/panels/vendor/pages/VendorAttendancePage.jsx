@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle,
@@ -48,6 +48,7 @@ function formatTime(d) {
 }
 
 export function VendorAttendancePage() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const urlDate = searchParams.get('date')
   const initialDate = urlDate || new Date().toISOString().split('T')[0]
@@ -57,16 +58,19 @@ export function VendorAttendancePage() {
   const [attendanceFilter, setAttendanceFilter] = useState('ALL')
 
   const toggleWorker = (workerId) => {
-    setExpandedWorkers(prev => ({ ...prev, [workerId]: !prev[workerId] }))
+    setExpandedWorkers(prev => prev[workerId] ? {} : { [workerId]: true })
   }
-
-  const { data, isLoading, isError, refetch } = useGetVendorAttendanceQuery({
-    date: selectedDate,
-  })
-  const [toggleAttendance, { isLoading: isToggling }] = useToggleVendorAttendanceMutation()
 
   const [togglingRecordId, setTogglingRecordId] = useState(null)
   const [feedbackMsg, setFeedbackMsg] = useState(null)
+  const [waitingForPaymentJobId, setWaitingForPaymentJobId] = useState(null)
+
+  const { data, isLoading, isError, refetch } = useGetVendorAttendanceQuery({
+    date: selectedDate,
+  }, {
+    pollingInterval: waitingForPaymentJobId ? 3000 : 0
+  })
+  const [toggleAttendance, { isLoading: isToggling }] = useToggleVendorAttendanceMutation()
 
   const jobs = data?.jobs ?? []
   const availableDates = data?.availableDates ?? [selectedDate]
@@ -128,11 +132,29 @@ export function VendorAttendancePage() {
         recordId: record._id,
         action: 'vendorCheckOut',
       }).unwrap()
-      setFeedbackMsg({
-        type: 'success',
-        text: `${record.labourName || 'Worker'} shift successfully closed!`,
-      })
-      setTimeout(() => setFeedbackMsg(null), 3000)
+
+      const job = jobs.find(j => j.requestId === record.requestId)
+      let isLastDay = false
+      let allOthersCheckedOut = false
+
+      if (job) {
+        const jobEndDate = job.endDate ? new Date(job.endDate).toISOString().split('T')[0] : new Date(job.startDate).toISOString().split('T')[0]
+        if (selectedDate === jobEndDate) {
+          isLastDay = true
+          const others = job.attendanceRecords.filter(r => r._id !== record._id)
+          allOthersCheckedOut = others.every(r => r.vendorCheckOut)
+        }
+      }
+
+      if (isLastDay && allOthersCheckedOut) {
+        setWaitingForPaymentJobId(job.requestId)
+      } else {
+        setFeedbackMsg({
+          type: 'success',
+          text: `${record.labourName || 'Worker'} shift successfully closed!`,
+        })
+        setTimeout(() => setFeedbackMsg(null), 3000)
+      }
     } catch (err) {
       setFeedbackMsg({
         type: 'error',
@@ -167,6 +189,14 @@ export function VendorAttendancePage() {
       return { ...job, filteredRecords: matchingRecords }
     }).filter(Boolean)
   }, [jobs, attendanceFilter])
+
+  const waitingJob = jobs.find(j => j.requestId === waitingForPaymentJobId)
+  const isPaymentDone = waitingJob?.paymentStatus === 'PAID'
+
+  const handleCollectMoney = () => {
+    // In a real app we might call an API here, but user just asked to navigate to earnings
+    navigate('/vendor/earnings')
+  }
 
   const hero = (
     <section className="px-4 pb-1">
@@ -326,7 +356,7 @@ export function VendorAttendancePage() {
             ) : filteredJobs.map((job) => (
               <VendorCard key={job.requestId} className="overflow-hidden p-0 border border-slate-200 shadow-sm">
                 {/* Job / Corporate Client Header */}
-                <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200/80 p-4 sm:p-5">
+                <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200/80 p-3 sm:p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -364,8 +394,8 @@ export function VendorAttendancePage() {
                 </div>
 
                 {/* Crew Member Daily Rows */}
-                <div className="p-4 sm:p-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
+                <div className="p-3 sm:p-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2">
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-800 font-bold shrink-0">
                         <Users className="h-4 w-4" />
@@ -399,7 +429,7 @@ export function VendorAttendancePage() {
                       </p>
                     </div>
                   ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {job.filteredRecords.map((r) => {
                       const isWorking = togglingRecordId === r._id
                       const isWorkerExpanded = expandedWorkers[r._id]
@@ -412,20 +442,20 @@ export function VendorAttendancePage() {
                       return (
                         <div
                           key={r._id}
-                          className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all"
+                          className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs transition-all"
                         >
                           <div 
                              className="flex items-start gap-3 cursor-pointer hover:opacity-80"
                              onClick={() => toggleWorker(r._id)}
                           >
-                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-50 font-black text-base text-amber-900 border border-amber-200 mt-0.5">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 font-black text-sm text-amber-900 border border-amber-200">
                               {r.labourName?.[0] || 'L'}
                             </span>
                             <div className="min-w-0 flex-1">
-                              <h4 className="font-extrabold text-base text-slate-900">
+                              <h4 className="font-extrabold text-sm text-slate-900">
                                 {r.labourName || 'Crew Member'}
                               </h4>
-                              <p className="text-sm font-medium text-amber-700">
+                              <p className="text-xs font-medium text-amber-700">
                                 {r.labourServiceName || r.labourCategory || 'Specialist Labour'}
                               </p>
                               
@@ -435,8 +465,8 @@ export function VendorAttendancePage() {
                                       {isShiftClosed ? 'Closed' : isDispatched ? 'Dispatched' : 'Pending'}
                                    </span>
                                 )}
-                                <button type="button" className="text-slate-400 p-0.5 hover:text-slate-600 transition-colors">
-                                  {isWorkerExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                <button type="button" className="text-slate-400 p-0 hover:text-slate-600 transition-colors">
+                                  {isWorkerExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                 </button>
                               </div>
                             </div>
@@ -495,7 +525,7 @@ export function VendorAttendancePage() {
                                  {/* Stage 1: Vendor Check-in Checkbox */}
                                  <div className="flex flex-col gap-1">
                                    <label
-                                     className={`flex items-center gap-2 rounded-xl border p-2.5 transition-all text-xs font-bold select-none cursor-pointer ${
+                                     className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 transition-all text-[11px] font-bold select-none cursor-pointer ${
                                        isDispatched
                                          ? 'bg-amber-600 text-white border-amber-700 shadow-xs'
                                          : !isToday
@@ -529,7 +559,7 @@ export function VendorAttendancePage() {
                                  {/* Stage 4: Vendor Check-out / Shift Close Checkbox */}
                                  <div className="flex flex-col gap-1">
                                    <label
-                                     className={`flex items-center gap-2 rounded-xl border p-2.5 transition-all text-xs font-bold select-none cursor-pointer ${
+                                     className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 transition-all text-[11px] font-bold select-none cursor-pointer ${
                                        isShiftClosed
                                          ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
                                          : !isClientCheckedOut || !isToday
@@ -575,6 +605,63 @@ export function VendorAttendancePage() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {waitingForPaymentJobId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center flex flex-col items-center"
+            >
+              {!isPaymentDone ? (
+                <>
+                  <div className="w-20 h-20 bg-brand/10 text-brand rounded-full flex items-center justify-center mb-6 relative">
+                    <Loader2 className="w-10 h-10 animate-spin absolute" />
+                    <Clock className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900 mb-2">Waiting for collect money...</h2>
+                  <p className="text-sm font-medium text-slate-500">
+                    The corporate client is currently processing the payment. Please hold on.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6"
+                  >
+                    <CheckCircle2 className="w-12 h-12" />
+                  </motion.div>
+                  <h2 className="text-2xl font-black text-slate-900 mb-2">Collect Money</h2>
+                  <p className="text-sm font-medium text-slate-500 mb-8">
+                    The client has successfully completed the payment.
+                  </p>
+                  
+                  <button
+                    onClick={handleCollectMoney}
+                    className="w-full bg-emerald-600 text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    Yes
+                  </button>
+                  
+                  <button className="mt-4 text-sm font-bold text-slate-400 hover:text-rose-500 transition-colors">
+                    Report Issue
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </VendorPageLayout>
   )
 }

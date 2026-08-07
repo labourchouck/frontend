@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Building2,
@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  ChevronUp,
+  ChevronDown,
   Filter,
   Info,
   MapPin,
@@ -47,10 +49,16 @@ function formatTime(d) {
 
 export function CorporateAttendancePage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const urlDate = searchParams.get('date')
   const initialDate = urlDate || new Date().toISOString().split('T')[0]
   const [selectedDate, setSelectedDate] = useState(initialDate)
-  const [activeTab, setActiveTab] = useState('all') // 'all', 'pending', 'present', 'completed'
+  const [attendanceFilter, setAttendanceFilter] = useState('ALL')
+  const [expandedWorkers, setExpandedWorkers] = useState({})
+
+  const toggleWorker = (workerId) => {
+    setExpandedWorkers(prev => prev[workerId] ? {} : { [workerId]: true })
+  }
 
   const { data, isLoading, isError, refetch } = useGetCorporateVendorAttendanceQuery({
     date: selectedDate,
@@ -132,6 +140,21 @@ export function CorporateAttendancePage() {
         type: 'success',
         text: `${record.labourName || 'Worker'} marked Work Completed (Checked Out)!`,
       })
+
+      const job = jobs.find(j => j.attendanceRecords?.some(r => r._id === record._id))
+      if (job) {
+        const isLastDay = job.bookedDates?.[job.bookedDates.length - 1] === selectedDate
+        const allOthersCheckedOut = job.attendanceRecords
+          .filter(r => r._id !== record._id)
+          .every(r => r.clientCheckOut)
+
+        if (isLastDay && allOthersCheckedOut) {
+          setTimeout(() => {
+            navigate(`/corporate/requests/${job.requestId}?payment=true`)
+          }, 1500)
+        }
+      }
+
       setTimeout(() => setFeedbackMsg(null), 3000)
     } catch (err) {
       setFeedbackMsg({
@@ -148,6 +171,26 @@ export function CorporateAttendancePage() {
   const totalCrewToday = jobs.reduce((acc, j) => acc + (j.attendanceRecords?.length || 0), 0)
   const presentToday = jobs.reduce((acc, j) => acc + (j.presentCount || 0), 0)
   const completedToday = jobs.reduce((acc, j) => acc + (j.completedCount || 0), 0)
+
+  const filteredJobs = useMemo(() => {
+    if (!jobs) return []
+    return jobs.map(job => {
+      const records = job.attendanceRecords || []
+      let matchingRecords = records
+
+      if (attendanceFilter === 'PENDING') {
+        matchingRecords = records.filter(r => r.vendorCheckIn && !r.clientCheckIn)
+      } else if (attendanceFilter === 'ACTIVE') {
+        matchingRecords = records.filter(r => r.clientCheckIn && !r.clientCheckOut)
+      } else if (attendanceFilter === 'COMPLETED') {
+        matchingRecords = records.filter(r => r.clientCheckOut)
+      }
+
+      if (matchingRecords.length === 0 && attendanceFilter !== 'ALL') return null
+
+      return { ...job, filteredRecords: matchingRecords }
+    }).filter(Boolean)
+  }, [jobs, attendanceFilter])
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto pb-12">
@@ -275,12 +318,32 @@ export function CorporateAttendancePage() {
           subtitle="Accepted vendor jobs and scheduled crew members for this date will appear here."
         />
       ) : (
-        /* Jobs List */
+        /* Jobs List and Filter */
         <div className="space-y-5">
-          {jobs.map((job) => (
+          {/* Top Level Filter */}
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <button onClick={() => setAttendanceFilter('ALL')} className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all ${attendanceFilter === 'ALL' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              All
+            </button>
+            <button onClick={() => setAttendanceFilter('PENDING')} className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all ${attendanceFilter === 'PENDING' ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-500/20' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              Pending Check-in
+            </button>
+            <button onClick={() => setAttendanceFilter('ACTIVE')} className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all ${attendanceFilter === 'ACTIVE' ? 'bg-blue-500 text-white shadow-sm ring-2 ring-blue-500/20' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              On Site
+            </button>
+            <button onClick={() => setAttendanceFilter('COMPLETED')} className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all ${attendanceFilter === 'COMPLETED' ? 'bg-indigo-500 text-white shadow-sm ring-2 ring-indigo-500/20' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+              Completed Work
+            </button>
+          </div>
+
+          {filteredJobs.length === 0 ? (
+            <div className="py-12 text-center text-sm font-medium text-slate-500 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm">
+              No crew members found for this filter.
+            </div>
+          ) : filteredJobs.map((job) => (
             <AppSurface key={job.requestId} className="overflow-hidden p-0 border border-slate-200/90 shadow-sm">
               {/* Job / Vendor Header */}
-              <div className="bg-gradient-to-r from-slate-50 to-slate-100/70 border-b border-slate-200/80 p-4 sm:p-5">
+              <div className="bg-gradient-to-r from-slate-50 to-slate-100/70 border-b border-slate-200/80 p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
@@ -309,7 +372,7 @@ export function CorporateAttendancePage() {
                   <div className="flex items-center gap-2">
                     {job.attendanceRecords?.length > 0 && job.attendanceRecords.every(r => r.vendorCheckOut) && (
                       <Link 
-                        to="/corporate/billing"
+                        to={`/corporate/requests/${job.requestId}?payment=true`}
                         className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 text-white px-3 py-1.5 text-xs font-bold shadow-sm hover:bg-emerald-700 transition-colors"
                       >
                         Make Payment
@@ -327,15 +390,15 @@ export function CorporateAttendancePage() {
               </div>
 
               {/* Crew Attendance Table / Cards */}
-              <div className="p-4 sm:p-5 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
+              <div className="p-3 sm:p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2.5">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand font-bold shrink-0">
                       <Users className="h-4 w-4" />
                     </span>
                     <div>
                       <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-                        Booked Labour Crew ({job.attendanceRecords?.length || 0})
+                        Booked Labour Crew ({job.filteredRecords?.length || 0})
                       </h3>
                       <p className="text-[11px] text-slate-500 font-medium">
                         Daily verification for {formatDisplayDate(selectedDate)}
@@ -351,7 +414,7 @@ export function CorporateAttendancePage() {
                   </div>
                 </div>
 
-                {job.attendanceRecords?.length === 0 ? (
+                {job.filteredRecords?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 py-6 px-4 text-center">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-400 mb-2">
                       <Users className="h-4 w-4" />
@@ -362,9 +425,10 @@ export function CorporateAttendancePage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {job.attendanceRecords.map((r) => {
+                  <div className="space-y-2">
+                    {job.filteredRecords.map((r) => {
                       const isWorking = togglingRecordId === r._id
+                      const isWorkerExpanded = expandedWorkers[r._id]
 
                       // Stage calculations
                       const isDispatched = r.vendorCheckIn
@@ -375,27 +439,47 @@ export function CorporateAttendancePage() {
                       return (
                         <div
                           key={r._id}
-                          className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs hover:border-brand/40 transition-all"
+                          className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs hover:border-brand/40 transition-all"
                         >
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            {/* Worker Info */}
+                          <div 
+                             className="flex items-start gap-3 cursor-pointer hover:opacity-80"
+                             onClick={() => toggleWorker(r._id)}
+                          >
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 font-black text-sm text-slate-700">
+                              {r.labourName?.[0] || 'L'}
+                            </span>
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-black text-xs text-slate-700">
-                                  {r.labourName?.[0] || 'L'}
-                                </span>
-                                <div>
-                                  <h4 className="font-extrabold text-sm text-slate-900">
-                                    {r.labourName || 'Booked Specialist'}
-                                  </h4>
-                                  <p className="text-xs font-medium text-brand">
-                                    {r.labourServiceName || r.labourCategory || 'Specialist Labour'}
-                                  </p>
-                                </div>
+                              <h4 className="font-extrabold text-sm text-slate-900">
+                                {r.labourName || 'Booked Specialist'}
+                              </h4>
+                              <p className="text-xs font-medium text-brand">
+                                {r.labourServiceName || r.labourCategory || 'Specialist Labour'}
+                              </p>
+                              
+                              <div className="flex items-center gap-2 mt-2.5">
+                                {!isWorkerExpanded && (
+                                   <span className={`text-xs font-bold px-3 py-1 rounded-xl border ${isShiftClosed ? 'bg-slate-100 text-slate-800 border-slate-300' : isClientCheckedOut ? 'bg-indigo-50 text-indigo-800 border-indigo-200' : isClientPresent ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : isDispatched ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-amber-50 text-amber-800 border-amber-200'}`}>
+                                      {isShiftClosed ? 'Closed' : isClientCheckedOut ? 'Completed' : isClientPresent ? 'On Site' : isDispatched ? 'Dispatched' : 'Pending'}
+                                   </span>
+                                )}
+                                <button type="button" className="text-slate-400 p-0 hover:text-slate-600 transition-colors">
+                                  {isWorkerExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </button>
                               </div>
+                            </div>
+                          </div>
 
-                              {/* Progress Status Badges */}
-                              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                          <AnimatePresence initial={false}>
+                            {isWorkerExpanded && (
+                               <motion.div
+                                 initial={{ height: 0, opacity: 0 }}
+                                 animate={{ height: 'auto', opacity: 1 }}
+                                 exit={{ height: 0, opacity: 0 }}
+                                 className="overflow-hidden"
+                               >
+                                 <div className="flex flex-col md:flex-row justify-between gap-4 border-t border-slate-100 pt-3 mt-3">
+                                   {/* Progress Status Badges */}
+                                   <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                                 {!isDispatched ? (
                                   <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800">
                                     <Clock className="h-3 w-3" />
@@ -429,79 +513,81 @@ export function CorporateAttendancePage() {
                                   </span>
                                 )}
                               </div>
-                            </div>
 
-                            {/* Action Tick Boxes */}
-                            <div className="flex flex-wrap items-center gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-                              {/* Stage 2: Client Check-In Checkbox */}
-                              <div className="flex flex-col gap-1">
-                                <label
-                                  className={`flex items-center gap-2 rounded-xl border p-2.5 transition-all text-xs font-bold select-none cursor-pointer ${
-                                    isClientPresent
-                                      ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
-                                      : !isDispatched || !isToday
-                                      ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
-                                      : 'bg-white hover:bg-emerald-50/70 text-slate-800 border-slate-300 hover:border-emerald-500'
-                                  }`}
-                                  onClick={() => {
-                                    if (!isClientPresent && isDispatched && !isWorking && isToday) {
-                                      handleCheckIn(r)
-                                    }
-                                  }}
-                                >
-                                  <div
-                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
+                              {/* Action Tick Boxes */}
+                              <div className="flex flex-wrap items-center gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                                {/* Stage 2: Client Check-In Checkbox */}
+                                <div className="flex flex-col gap-1">
+                                  <label
+                                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 transition-all text-[11px] font-bold select-none cursor-pointer ${
                                       isClientPresent
-                                        ? 'bg-white border-white text-emerald-600'
-                                        : 'border-slate-400 bg-white'
+                                        ? 'bg-emerald-500 text-white border-emerald-600 shadow-xs'
+                                        : !isDispatched || !isToday
+                                        ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                                        : 'bg-white hover:bg-emerald-50/70 text-slate-800 border-slate-300 hover:border-emerald-500'
                                     }`}
+                                    onClick={() => {
+                                      if (!isClientPresent && isDispatched && !isWorking && isToday) {
+                                        handleCheckIn(r)
+                                      }
+                                    }}
                                   >
-                                    {isClientPresent && <CheckCircle2 className="h-4 w-4" />}
-                                  </div>
-                                  <span>{isClientPresent ? 'Checked In (Present)' : 'Check In (On Site)'}</span>
-                                </label>
-                                {isClientPresent && r.clientCheckInAt && (
-                                  <span className="text-[10px] text-slate-500 text-center">
-                                    Arrived: {formatTime(r.clientCheckInAt)}
-                                  </span>
-                                )}
-                              </div>
+                                    <div
+                                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
+                                        isClientPresent
+                                          ? 'bg-white border-white text-emerald-600'
+                                          : 'border-slate-400 bg-white'
+                                      }`}
+                                    >
+                                      {isClientPresent && <CheckCircle2 className="h-4 w-4" />}
+                                    </div>
+                                    <span>{isClientPresent ? 'Checked In (Present)' : 'Check In (On Site)'}</span>
+                                  </label>
+                                  {isClientPresent && r.clientCheckInAt && (
+                                    <span className="text-[10px] text-slate-500 text-center">
+                                      Arrived: {formatTime(r.clientCheckInAt)}
+                                    </span>
+                                  )}
+                                </div>
 
-                              {/* Stage 3: Client Check-Out Checkbox */}
-                              <div className="flex flex-col gap-1">
-                                <label
-                                  className={`flex items-center gap-2 rounded-xl border p-2.5 transition-all text-xs font-bold select-none cursor-pointer ${
-                                    isClientCheckedOut
-                                      ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
-                                      : !isClientPresent || !isToday
-                                      ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
-                                      : 'bg-white hover:bg-indigo-50/70 text-slate-800 border-slate-300 hover:border-indigo-500'
-                                  }`}
-                                  onClick={() => {
-                                    if (!isClientCheckedOut && isClientPresent && !isWorking && isToday) {
-                                      handleCheckOut(r)
-                                    }
-                                  }}
-                                >
-                                  <div
-                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
+                                {/* Stage 3: Client Check-Out Checkbox */}
+                                <div className="flex flex-col gap-1">
+                                  <label
+                                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 transition-all text-[11px] font-bold select-none cursor-pointer ${
                                       isClientCheckedOut
-                                        ? 'bg-white border-white text-indigo-600'
-                                        : 'border-slate-400 bg-white'
+                                        ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
+                                        : !isClientPresent || !isToday
+                                        ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                                        : 'bg-white hover:bg-indigo-50/70 text-slate-800 border-slate-300 hover:border-indigo-500'
                                     }`}
+                                    onClick={() => {
+                                      if (!isClientCheckedOut && isClientPresent && !isWorking && isToday) {
+                                        handleCheckOut(r)
+                                      }
+                                    }}
                                   >
-                                    {isClientCheckedOut && <CheckCircle2 className="h-4 w-4" />}
-                                  </div>
-                                  <span>{isClientCheckedOut ? 'Checked Out (Done)' : 'Check Out (Work Done)'}</span>
-                                </label>
-                                {isClientCheckedOut && r.clientCheckOutAt && (
-                                  <span className="text-[10px] text-slate-500 text-center">
-                                    Completed: {formatTime(r.clientCheckOutAt)}
-                                  </span>
-                                )}
+                                    <div
+                                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
+                                        isClientCheckedOut
+                                          ? 'bg-white border-white text-indigo-600'
+                                          : 'border-slate-400 bg-white'
+                                      }`}
+                                    >
+                                      {isClientCheckedOut && <CheckCircle2 className="h-4 w-4" />}
+                                    </div>
+                                    <span>{isClientCheckedOut ? 'Checked Out (Done)' : 'Check Out (Work Done)'}</span>
+                                  </label>
+                                  {isClientCheckedOut && r.clientCheckOutAt && (
+                                    <span className="text-[10px] text-slate-500 text-center">
+                                      Completed: {formatTime(r.clientCheckOutAt)}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
+                               </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       )
                     })}

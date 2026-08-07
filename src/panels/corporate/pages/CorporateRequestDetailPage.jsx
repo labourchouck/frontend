@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Users, Star, Loader2, Clock } from 'lucide-react'
+import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, Users, Star, Loader2, Clock, CheckCircle2 } from 'lucide-react'
 import { AppSurface } from '../../../components/app-ui/cards/AppSurface.jsx'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { PipelineTimeline } from '../../../components/shared/PipelineTimeline.jsx'
-import { useGetRequestQuery, useRateCorporateAssignmentMutation } from '../../../store/api/workforceApi.js'
+import { useGetRequestQuery, useRateCorporateAssignmentMutation, useInitPaymentMutation, useVerifyPaymentMutation } from '../../../store/api/workforceApi.js'
 import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
 import { useAuth } from '../../../hooks/useAuth.js'
 
@@ -16,11 +17,107 @@ function formatDate(d) {
 export function CorporateRequestDetailPage() {
   const { user } = useAuth()
   const { id } = useParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const forcePayment = searchParams.get('payment') === 'true'
   const { data, isLoading, isError } = useGetRequestQuery(id, { skip: !id })
-  const [rateAssignment, { isLoading: isRating }] = useRateCorporateAssignmentMutation()
+  const [initPayment, { isLoading: isInit }] = useInitPaymentMutation()
+  const [verifyPayment, { isLoading: isVerifying }] = useVerifyPaymentMutation()
 
   const [ratingState, setRatingState] = useState({ id: null, rating: 5, comment: '' })
   const [selectedAttendanceReqId, setSelectedAttendanceReqId] = useState(null)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [isInitializingRazorpay, setIsInitializingRazorpay] = useState(false)
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) { resolve(true); return }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  const handlePay = async () => {
+    try {
+      setIsInitializingRazorpay(true)
+      const isLoaded = await loadRazorpay()
+      if (!isLoaded) {
+        alert('Failed to load Razorpay SDK. Please check your connection.')
+        setIsInitializingRazorpay(false)
+        return
+      }
+
+      // Generate order
+      const initRes = await initPayment({
+        amount: Math.round(estimatedTotal),
+        purpose: 'WORKFORCE_REQUEST',
+        requestId: id,
+      }).unwrap()
+
+      // If keys are missing, backend creates a mock order. Bypass SDK to simulate success.
+      if (initRes.order?.mock) {
+        await verifyPayment({
+          razorpayOrderId: initRes.order.id,
+          razorpayPaymentId: 'pay_mock_' + Date.now(),
+          razorpaySignature: 'mock_signature_123',
+        }).unwrap()
+
+        setShowSuccess(true)
+        setTimeout(() => {
+          navigate('/corporate/billing')
+        }, 2500)
+        setIsInitializingRazorpay(false)
+        return
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        amount: initRes.order?.amount,
+        currency: initRes.order?.currency,
+        name: 'LabourChowk',
+        description: `Payment for Request #${request?.reference}`,
+        order_id: initRes.order?.id,
+        handler: async function (response) {
+          try {
+            await verifyPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            }).unwrap()
+
+            setShowSuccess(true)
+            setTimeout(() => {
+              navigate('/corporate/billing')
+            }, 2500)
+          } catch (err) {
+            console.error('Payment Verification Failed', err)
+            alert('Payment verification failed. Please contact support.')
+          }
+        },
+        prefill: {
+          name: user?.fullName || '',
+          email: user?.email || '',
+          contact: user?.phone || '',
+        },
+        theme: { color: '#059669' },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', function (response) {
+        console.error('Payment Failed', response.error)
+        alert(response.error.description || 'Payment failed')
+      })
+      rzp.open()
+      setIsInitializingRazorpay(false)
+    } catch (err) {
+      console.error(err)
+      alert(err?.data?.message || err?.message || 'Payment initialization failed. Please try again.')
+      setIsInitializingRazorpay(false)
+    }
+  }
 
   const request = data?.request
   const assignments = data?.assignments ?? []
@@ -184,73 +281,115 @@ export function CorporateRequestDetailPage() {
             <span className="text-brand font-black text-lg">₹{Math.round(estimatedTotal).toLocaleString('en-IN')}</span>
           </div>
 
-          {['completed', 'billing'].includes(request.status) && (
-            <div className="pt-4 mt-2 border-t border-slate-100 flex justify-end">
-              <Link
-                to="/corporate/billing"
-                className="w-full sm:w-auto text-sm font-bold shadow-md inline-flex justify-center items-center rounded-lg bg-brand px-4 py-2 text-white hover:bg-brand/90 transition"
-              >
-                Make Payment
-              </Link>
+        </div>
+      </AppSurface>
+
+      {(['completed', 'billing'].includes(request.status) || forcePayment) ? (
+        <AppSurface className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-200/50 text-emerald-700">
+                  <CheckCircle2 className="h-5 w-5" />
+                </span>
+                <h3 className="text-lg font-black text-emerald-900">Work Completed</h3>
+              </div>
+              <p className="text-sm font-medium text-emerald-700 mt-2">
+                All daily attendances have been finalized. Please proceed to payment to successfully close this workforce request.
+              </p>
             </div>
-          )}
-        </div>
-      </AppSurface>
-
-      <AppSurface>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-brand" aria-hidden />
-            <p className="text-sm font-extrabold text-slate-900">Assigned roster</p>
-          </div>
-          {assignments.length > 0 && (
             <button
-              onClick={() => setSelectedAttendanceReqId(request._id)}
-              className="text-[10px] font-bold text-brand hover:text-white hover:bg-brand bg-brand/10 px-2.5 py-1 rounded-full transition-all duration-300"
+              onClick={handlePay}
+              disabled={isInitializingRazorpay || isInit}
+              className="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:hover:scale-100"
             >
-              View Attendance
+              {(isInitializingRazorpay || isInit || isVerifying) ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Make Payment'}
             </button>
-          )}
-        </div>
-        <div>
-          {request.preferredCrewIds?.length > 0 && (
-            <ul className="mt-3 space-y-3">
-              {request.preferredCrewIds.map((crew) => {
-                const serv = crew.services?.[0]
-                const categoryName = crew.category || crew.categoryName || ''
-                const serviceName = serv?.name || crew.serviceName || categoryName || 'Labour'
-                const adminPrice = Number(crew.adminPrice ?? serv?.adminPrice ?? serv?.price ?? 0)
-
-                return (
-                  <li key={crew._id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-slate-900">{crew.fullName}</p>
+          </div>
+        </AppSurface>
+      ) : (
+        <AppSurface>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-brand" aria-hidden />
+              <p className="text-sm font-extrabold text-slate-900">Assigned roster</p>
+            </div>
+            {assignments.length > 0 && (
+              <button
+                onClick={() => setSelectedAttendanceReqId(request._id)}
+                className="text-[10px] font-bold text-brand hover:text-white hover:bg-brand bg-brand/10 px-2.5 py-1 rounded-full transition-all duration-300"
+              >
+                View Attendance
+              </button>
+            )}
+          </div>
+          <div>
+            {request.preferredCrewIds?.length > 0 && (
+              <ul className="mt-3 space-y-3">
+                {request.preferredCrewIds.map((crew) => {
+                  const serv = crew.services?.[0]
+                  const categoryName = crew.category || crew.categoryName || ''
+                  const serviceName = serv?.name || crew.serviceName || categoryName || 'Labour'
+                  const adminPrice = Number(crew.adminPrice ?? serv?.adminPrice ?? serv?.price ?? 0)
+  
+                  return (
+                    <li key={crew._id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-slate-900">{crew.fullName}</p>
+                        </div>
+                        {categoryName ? (
+                          <p className="text-xs font-bold text-slate-800 mt-0.5">{categoryName}</p>
+                        ) : null}
+                        {serviceName && serviceName !== categoryName ? (
+                          <p className="text-xs text-slate-500 font-medium">{serviceName}</p>
+                        ) : null}
                       </div>
-                      {categoryName ? (
-                        <p className="text-xs font-bold text-slate-800 mt-0.5">{categoryName}</p>
-                      ) : null}
-                      {serviceName && serviceName !== categoryName ? (
-                        <p className="text-xs text-slate-500 font-medium">{serviceName}</p>
-                      ) : null}
-                    </div>
-                    <div className="text-right">
-                      <span className="inline-block text-xs font-bold text-slate-800 bg-white border border-slate-200 px-2.5 py-1 rounded-lg shadow-sm">
-                        ₹{adminPrice.toLocaleString('en-IN')} / day
-                      </span>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
-      </AppSurface>
+                      <div className="text-right">
+                        <span className="inline-block text-xs font-bold text-slate-800 bg-white border border-slate-200 px-2.5 py-1 rounded-lg shadow-sm">
+                          ₹{adminPrice.toLocaleString('en-IN')} / day
+                        </span>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        </AppSurface>
+      )}
 
       <SharedAttendanceDrawer
         requestId={selectedAttendanceReqId}
         onClose={() => setSelectedAttendanceReqId(null)}
       />
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="flex flex-col items-center bg-white p-8 rounded-3xl shadow-2xl border border-emerald-100 max-w-sm w-full mx-4 text-center"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6"
+              >
+                <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+              </motion.div>
+              <h2 className="text-2xl font-black text-slate-900 mb-2">Payment Done!</h2>
+              <p className="text-slate-500 font-medium">Your invoice has been settled successfully.</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

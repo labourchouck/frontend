@@ -55,7 +55,10 @@ export function AdminSettingsPage() {
   const [saving, setSaving] = useState('')
   const [toast, setToast] = useState({ message: '', variant: 'success' })
 
+  const [rawSettings, setRawSettings] = useState(null)
+
   // Platform Fee
+  const [feeBookingType, setFeeBookingType] = useState('B2C')
   const [feeType, setFeeType] = useState('percentage')
   const [feeValue, setFeeValue] = useState('')
   const [feeActive, setFeeActive] = useState(true)
@@ -64,6 +67,36 @@ export function AdminSettingsPage() {
   const [commissionType, setCommissionType] = useState('global')
   const [commissionPercent, setCommissionPercent] = useState('')
   const [commissionActive, setCommissionActive] = useState(true)
+
+  // Sync Fee UI when booking type changes
+  useEffect(() => {
+    if (!rawSettings) return
+    const s = feeBookingType === 'B2B' ? rawSettings.b2bPlatformFee : rawSettings.platformFee
+    if (s) {
+      setFeeType(s.type || 'percentage')
+      setFeeValue(String(s.value ?? ''))
+      setFeeActive(s.isActive !== false)
+    } else {
+      setFeeType('percentage')
+      setFeeValue('')
+      setFeeActive(true)
+    }
+  }, [feeBookingType, rawSettings])
+
+  // Sync Commission UI when booking type changes
+  useEffect(() => {
+    if (!rawSettings) return
+    const s = rawSettings.commission
+    if (s) {
+      setCommissionType(s.type || 'global')
+      setCommissionPercent(String(s.globalPercentage ?? ''))
+      setCommissionActive(s.isActive !== false)
+    } else {
+      setCommissionType('global')
+      setCommissionPercent('')
+      setCommissionActive(true)
+    }
+  }, [rawSettings])
 
   // Wallet Limit
   const [walletLimit, setWalletLimit] = useState('')
@@ -89,18 +122,8 @@ export function AdminSettingsPage() {
       .then((res) => {
         if (cancelled) return
         const s = res.data?.settings || {}
-        // Platform Fee
-        if (s.platformFee) {
-          setFeeType(s.platformFee.type || 'percentage')
-          setFeeValue(String(s.platformFee.value ?? ''))
-          setFeeActive(s.platformFee.isActive !== false)
-        }
-        // Commission
-        if (s.commission) {
-          setCommissionType(s.commission.type || 'global')
-          setCommissionPercent(String(s.commission.globalPercentage ?? ''))
-          setCommissionActive(s.commission.isActive !== false)
-        }
+        setRawSettings(s)
+        
         // Wallet Limit
         if (s.walletLimit != null) {
           setWalletLimit(String(s.walletLimit))
@@ -174,6 +197,17 @@ export function AdminSettingsPage() {
           description="Fee charged to customers on each booking"
         >
           <div>
+            <label className={labelClass}>Booking Type</label>
+            <select
+              className={inputClass + ' mt-1.5'}
+              value={feeBookingType}
+              onChange={(e) => setFeeBookingType(e.target.value)}
+            >
+              <option value="B2C">Individual -{'>'} Labour</option>
+              <option value="B2B">Corporate -{'>'} Vendor</option>
+            </select>
+          </div>
+          <div>
             <label className={labelClass}>Fee Type</label>
             <select
               className={inputClass + ' mt-1.5'}
@@ -209,6 +243,7 @@ export function AdminSettingsPage() {
             type="button"
             loading={saving === 'Platform Fee'}
             onClick={() => handleSave('Platform Fee', adminSettingsApi.updatePlatformFees, {
+              bookingType: feeBookingType,
               type: feeType,
               value: Number(feeValue),
               isActive: feeActive,
@@ -222,8 +257,9 @@ export function AdminSettingsPage() {
         <SettingsSection
           icon={IndianRupee}
           title="Commission"
-          description="Percentage the platform takes from laborers"
+          description="Percentage the platform takes from workers/vendors"
         >
+
           <div>
             <label className={labelClass}>Commission Percentage</label>
             <input

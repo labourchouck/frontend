@@ -142,7 +142,7 @@ export function CorporateRequestLabourSelection({
           onClick={handleProceed}
           disabled={!isValidSelection}
         >
-          Proceed to Billing
+          Send Request
         </AppPrimaryButton>
         <button 
           type="button" 
