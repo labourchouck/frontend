@@ -6,6 +6,8 @@ import {
   updateVendorBuildmartEnquiryStatus,
 } from '../../../api/vendorBuildmartApi.js'
 import { ApiError } from '../../../api/http.js'
+
+import { AppSearchableSelect } from '../../../components/app-ui/inputs/AppSearchableSelect.jsx'
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
 import { VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
 import { Link } from 'react-router-dom'
@@ -167,9 +169,13 @@ export function VendorMartEnquiriesPage() {
             <p className="mt-1 text-sm text-slate-500">You haven't received any quote requests.</p>
           </GlassPanel>
         ) : (
-          items.map((lead) => {
+          items.map((lead, index) => {
             return (
-              <GlassPanel key={lead._id} className="p-5 rounded-3xl border border-orange-100/90 shadow-sm">
+              <GlassPanel 
+                key={lead._id} 
+                className="p-5 rounded-3xl border border-orange-100/90 shadow-sm !overflow-visible relative"
+                style={{ zIndex: 50 - index }}
+              >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -221,18 +227,17 @@ export function VendorMartEnquiriesPage() {
                     
                     <div className="w-full">
                       <label className="sr-only">Update Status</label>
-                      <select
+                      <AppSearchableSelect
                         value={lead.status}
-                        onChange={(e) => handleStatusChange(lead._id, e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-700 focus:border-brand focus:ring-1 focus:ring-brand"
-                      >
-                        <option value="" disabled>Update Status</option>
-                        {STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => (
-                          <option key={o.value} value={o.value}>
-                            Mark as {o.label}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(val) => handleStatusChange(lead._id, val)}
+                        options={STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => ({
+                          label: `Mark as ${o.label}`,
+                          value: o.value
+                        }))}
+                        hideSearch
+                        placeholder="Update Status"
+                        className="font-bold text-slate-700"
+                      />
                     </div>
                   </div>
                 </div>

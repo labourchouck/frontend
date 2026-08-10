@@ -81,7 +81,7 @@ export const workforceApi = baseApi.injectEndpoints({
     mockPayRequest: build.mutation({
       query: (id) => ({ url: `/workforce/requests/${id}/mock-pay`, method: 'POST' }),
       transformResponse: unwrap,
-      invalidatesTags: ['Requests', 'Invoices', 'CorporateDashboard'],
+      invalidatesTags: ['Requests', 'Invoices', 'CorporateDashboard', 'CorporateSubscription'],
     }),
     searchVendors: build.mutation({
       query: (body) => ({ url: '/corporate/vendors/search', method: 'POST', body }),
@@ -135,6 +135,26 @@ export const workforceApi = baseApi.injectEndpoints({
     verifyPayment: build.mutation({
       query: (body) => ({ url: '/payments/verify', method: 'POST', body }),
       transformResponse: unwrap,
+      invalidatesTags: ['CorporateSubscription', 'VendorSubscription', 'Invoices', 'Requests', 'CorporateDashboard'],
+    }),
+    getCorporateSubscriptionPlans: build.query({
+      query: () => '/corporate/subscription/plans',
+      transformResponse: unwrap,
+      providesTags: ['CorporateSubscription'],
+    }),
+    getCorporateMySubscription: build.query({
+      query: () => '/corporate/subscription/my-subscription',
+      transformResponse: unwrap,
+      providesTags: ['CorporateSubscription'],
+    }),
+    createCorporateSubscriptionOrder: build.mutation({
+      query: (body) => ({ url: '/corporate/subscription/order', method: 'POST', body }),
+      transformResponse: unwrap,
+    }),
+    verifyCorporateSubscriptionPayment: build.mutation({
+      query: (body) => ({ url: '/corporate/subscription/verify', method: 'POST', body }),
+      transformResponse: unwrap,
+      invalidatesTags: ['CorporateSubscription'],
     }),
     getVendorDashboard: build.query({
       query: () => '/vendor/dashboard',
@@ -240,6 +260,11 @@ export const workforceApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'AdminRequests', id: 'LIST' }],
     }),
+    getAdminRequestById: build.query({
+      query: (id) => ({ url: `/admin/workforce/requests/${id}` }),
+      transformResponse: unwrap,
+      providesTags: (_r, _e, id) => [{ type: 'AdminRequests', id }],
+    }),
     patchRequestStatus: build.mutation({
       query: ({ id, ...body }) => ({
         url: `/admin/workforce/requests/${id}/status`,
@@ -339,6 +364,10 @@ export const {
   useCreateCorporateProjectMutation,
   useGetCorporateProjectQuery,
   useAddCorporateSiteMutation,
+  useGetCorporateSubscriptionPlansQuery,
+  useGetCorporateMySubscriptionQuery,
+  useCreateCorporateSubscriptionOrderMutation,
+  useVerifyCorporateSubscriptionPaymentMutation,
   useGetMyRequestsQuery,
   useGetRequestQuery,
   useCreateRequestMutation,
@@ -371,6 +400,7 @@ export const {
   useCheckOutMutation,
   useGetAttendanceQuery,
   useGetAdminRequestsQuery,
+  useGetAdminRequestByIdQuery,
   usePatchRequestStatusMutation,
   useDeleteAdminRequestMutation,
   useCreateAllocationMutation,

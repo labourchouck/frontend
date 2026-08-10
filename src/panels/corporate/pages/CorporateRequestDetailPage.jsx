@@ -305,7 +305,7 @@ export function CorporateRequestDetailPage() {
         </div>
       </AppSurface>
 
-      {(['completed', 'billing'].includes(request.status) || forcePayment) ? (
+      {((['completed', 'billing'].includes(request.status) || forcePayment) && request.paymentStatus !== 'PAID') ? (
         <AppSurface className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div>

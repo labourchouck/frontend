@@ -32,6 +32,7 @@ export function PanelShell({
   const drawerInitials = adminInitials(user)
 
   const hideShellHeader =
+    pathname === '/corporate' ||
     pathname.includes('/profile') ||
     pathname.includes('/support') ||
     pathname.endsWith('/new') ||
@@ -39,11 +40,18 @@ export function PanelShell({
     /\/requests\/[^/]+$/.test(pathname) ||
     /\/jobs\/[^/]+$/.test(pathname) ||
     /\/crew\/[^/]+$/.test(pathname) ||
-    pathname.includes('/invoice')
+    pathname.includes('/invoice') ||
+    pathname.includes('/subscription')
 
   useEffect(() => {
     queueMicrotask(() => setDrawerOpen(false))
   }, [pathname])
+
+  useEffect(() => {
+    const onOpen = () => queueMicrotask(() => setDrawerOpen(true))
+    window.addEventListener('lc-open-panel-drawer', onOpen)
+    return () => window.removeEventListener('lc-open-panel-drawer', onOpen)
+  }, [])
 
   useEffect(() => {
     if (!drawerOpen) return
@@ -55,7 +63,7 @@ export function PanelShell({
   }, [drawerOpen])
 
   return (
-    <div className={`relative min-h-dvh w-full text-slate-900 ${accentClass}`} data-panel={panelId}>
+    <div className={`relative min-h-dvh w-full overflow-x-hidden text-slate-900 ${accentClass}`} data-panel={panelId}>
       <AppAmbientBackground />
 
       <AnimatePresence>

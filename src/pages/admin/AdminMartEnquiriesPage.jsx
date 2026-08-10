@@ -2,12 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { MessageCircle, Package, RefreshCw, Search } from 'lucide-react'
 import {
-  buildWhatsAppLeadUrl,
   fetchAdminBuildMartLeads,
   updateBuildMartLeadStatus,
 } from '../../api/adminBuildmartApi.js'
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+import { AppSearchableSelect } from '../../components/app-ui/inputs/AppSearchableSelect.jsx'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -40,6 +40,7 @@ export function AdminBuildMartLeadsPage() {
   const [search, setSearch] = useState('')
   const [debounced, setDebounced] = useState('')
   const [status, setStatus] = useState('all')
+  const [type, setType] = useState('all')
   const [page, setPage] = useState(1)
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
@@ -54,7 +55,7 @@ export function AdminBuildMartLeadsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [debounced, status])
+  }, [debounced, status, type])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -63,6 +64,7 @@ export function AdminBuildMartLeadsPage() {
       const data = await fetchAdminBuildMartLeads({
         search: debounced,
         status,
+        type,
         page,
         limit: 15,
       })
@@ -75,7 +77,7 @@ export function AdminBuildMartLeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [debounced, status, page])
+  }, [debounced, status, type, page])
 
   useEffect(() => {
     load()
@@ -117,6 +119,27 @@ export function AdminBuildMartLeadsPage() {
         </button>
       </div>
 
+      <div className="mb-4 flex gap-4 border-b border-slate-200 px-1">
+        <button
+          onClick={() => setType('all')}
+          className={`pb-3 text-sm font-bold transition-colors relative ${type === 'all' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}`}
+        >
+          All Enquiries
+          {type === 'all' && (
+            <motion.div layoutId="adm-lead-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand" />
+          )}
+        </button>
+        <button
+          onClick={() => setType('platform')}
+          className={`pb-3 text-sm font-bold transition-colors relative ${type === 'platform' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}`}
+        >
+          Direct Platform Enquiries
+          {type === 'platform' && (
+            <motion.div layoutId="adm-lead-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand" />
+          )}
+        </button>
+      </div>
+
       <GlassPanel className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -152,10 +175,23 @@ export function AdminBuildMartLeadsPage() {
         ) : items.length === 0 ? (
           <GlassPanel className="p-8 text-center text-sm text-slate-600">No leads yet.</GlassPanel>
         ) : (
-          items.map((lead) => {
-            const wa = buildWhatsAppLeadUrl(lead)
+          items.map((lead, index) => {
+            let customerWa = null
+            if (!lead.vendorId && lead.phone) {
+              const digits = lead.phone.replace(/\\D/g, '')
+              const text = [
+                'Hi, regarding your BuildMart enquiry',
+                `Product: ${lead.productName}`,
+                lead.quantity ? `Qty: ${lead.quantity}` : null,
+              ].filter(Boolean).join('\\n')
+              customerWa = `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
+            }
             return (
-              <GlassPanel key={lead._id} className="p-4">
+              <GlassPanel 
+                key={lead._id} 
+                className="p-4 !overflow-visible relative"
+                style={{ zIndex: 50 - index }}
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1 w-full">
                     <div className="flex flex-wrap items-center gap-2">
@@ -196,7 +232,12 @@ export function AdminBuildMartLeadsPage() {
                              <p className="text-slate-600 font-mono text-xs mt-0.5">{lead.vendorId.phone} {lead.vendorId.email ? `· ${lead.vendorId.email}` : ''}</p>
                            </div>
                          ) : (
-                           <p className="text-xs font-semibold text-amber-600">Unassigned (No vendor matching this product)</p>
+                           <div>
+                             <p className="font-bold text-brand flex items-center gap-1.5">
+                               Admin Product
+                             </p>
+                             <p className="text-slate-600 text-xs mt-0.5">Assigned to platform directly</p>
+                           </div>
                          )}
                       </div>
                     </div>
@@ -206,31 +247,30 @@ export function AdminBuildMartLeadsPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col gap-2 sm:items-end w-full sm:w-auto mt-3 sm:mt-0">
-                    {wa ? (
+                    {customerWa ? (
                       <a
-                        href={wa}
+                        href={customerWa}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#20bd5a] w-full"
                       >
                         <MessageCircle className="h-4 w-4" aria-hidden />
-                        WhatsApp
+                        Message
                       </a>
                     ) : null}
                     
                     <div className="w-full">
-                      <select
+                      <AppSearchableSelect
                         value={lead.status}
-                        onChange={(e) => handleStatusChange(lead._id, e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-700 focus:border-brand focus:ring-1 focus:ring-brand"
-                      >
-                        <option value="" disabled>Update Status</option>
-                        {STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => (
-                          <option key={o.value} value={o.value}>
-                            Mark as {o.label}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(val) => handleStatusChange(lead._id, val)}
+                        options={STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => ({
+                          label: `Mark as ${o.label}`,
+                          value: o.value
+                        }))}
+                        hideSearch
+                        placeholder="Update Status"
+                        className="font-bold text-slate-700"
+                      />
                     </div>
                   </div>
                 </div>

@@ -1,8 +1,15 @@
 import React from 'react'
-import { XCircle, Calendar, Phone, Briefcase, IndianRupee, MapPin } from 'lucide-react'
+import { XCircle, Calendar, Phone, Briefcase, IndianRupee, MapPin, Loader2 } from 'lucide-react'
+import { useGetAdminRequestByIdQuery } from '../../../store/api/workforceApi.js'
 
-export function AdminCorporateRequestViewModal({ request, onClose }) {
-  if (!request) return null
+export function AdminCorporateRequestViewModal({ request: initialRequest, onClose }) {
+  if (!initialRequest) return null
+
+  const { data: requestData, isLoading } = useGetAdminRequestByIdQuery(initialRequest._id, {
+    skip: !initialRequest._id,
+  })
+
+  const request = requestData?.request || requestData || initialRequest
 
   const assignments = request.assignments || []
   const requestedCrew = request.preferredCrewIds || []
@@ -31,6 +38,10 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
     sumAdminPrice += aFee
   })
 
+  const taxAmount = requestData?.pricingSummary?.taxAmount ?? request.taxAmount ?? 0
+  const platformFee = requestData?.pricingSummary?.platformFee ?? request.platformFee ?? 0
+  const totalAmount = requestData?.pricingSummary?.estimatedTotal ?? request.totalAmount ?? (sumAdminPrice + taxAmount + platformFee)
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
       <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-8 shadow-xl relative">
@@ -41,6 +52,13 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
           <XCircle className="w-7 h-7" />
         </button>
 
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 text-brand animate-spin mb-4" />
+            <p className="text-slate-500 font-medium">Loading details...</p>
+          </div>
+        ) : (
+          <>
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <h2 className="text-2xl font-extrabold text-slate-900">Request {request.reference}</h2>
@@ -192,17 +210,33 @@ export function AdminCorporateRequestViewModal({ request, onClose }) {
                 <tfoot className="bg-slate-50/80 border-t-2 border-slate-200">
                   <tr>
                     <td colSpan={2} className="p-4 text-right font-extrabold text-slate-800 uppercase tracking-wider text-xs">
-                      Totals
+                      Subtotals
                     </td>
                     <td className="p-4 text-right font-extrabold text-slate-800">₹{sumVendorPrice.toLocaleString('en-IN')}</td>
                     <td className="p-4 text-right font-extrabold text-brand">₹{sumPriceDiff.toLocaleString('en-IN')}</td>
-                    <td className="p-4 text-right font-black text-slate-900 bg-brand/10">₹{sumAdminPrice.toLocaleString('en-IN')}</td>
+                    <td className="p-4 text-right font-black text-slate-900 bg-brand/5">₹{sumAdminPrice.toLocaleString('en-IN')}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={4} className="p-4 text-right font-bold text-slate-600 text-xs">Platform Fee</td>
+                    <td className="p-4 text-right font-bold text-slate-900 bg-brand/5">₹{platformFee.toLocaleString('en-IN')}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={4} className="p-4 text-right font-bold text-slate-600 text-xs">GST</td>
+                    <td className="p-4 text-right font-bold text-slate-900 bg-brand/5">₹{taxAmount.toLocaleString('en-IN')}</td>
+                  </tr>
+                  <tr className="border-t-2 border-slate-200 bg-brand/10">
+                    <td colSpan={4} className="p-4 text-right font-black text-brand uppercase tracking-wider text-sm">
+                      Total Amount
+                    </td>
+                    <td className="p-4 text-right font-black text-brand text-lg">₹{totalAmount.toLocaleString('en-IN')}</td>
                   </tr>
                 </tfoot>
               )}
             </table>
           </div>
         </div>
+        </>
+        )}
 
       </div>
     </div>

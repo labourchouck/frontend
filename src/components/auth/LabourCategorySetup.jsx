@@ -483,43 +483,7 @@ export function LabourCategorySetup({ variant = 'app', onComplete }) {
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setOptionalOpen((o) => !o)}
-                className="flex w-full items-center justify-between rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-left text-sm font-bold text-slate-700 shadow-sm"
-              >
-                <span className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-brand" aria-hidden />
-                  Profile tags <span className="font-normal text-slate-400">(optional)</span>
-                </span>
-                <ChevronDown className={`h-5 w-5 text-slate-400 transition ${optionalOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {optionalOpen ? (
-                <div className="space-y-4 rounded-2xl border border-slate-200/90 bg-slate-50/80 p-3">
-                  {profileGroups.map((g) => (
-                    <div key={g._id}>
-                      <p className="mb-2 text-xs font-bold text-slate-700">{g.name}</p>
-                      <ul className="space-y-2">
-                        {(g.categories || []).map((c) => {
-                          const id = categoryId(c)
-                          return (
-                            <li key={id}>
-                                <SelectRow
-                                  label={c.name}
-                                  subtitle={c.subtitle || undefined}
-                                  selected={selected.has(id)}
-                                  onToggle={() => toggle(id)}
-                                  pricing={selected.get(id)}
-                                  onUpdatePrice={(field, val) => updatePrice(id, field, val)}
-                                />
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+
             </motion.div>
           ) : (
             <motion.div

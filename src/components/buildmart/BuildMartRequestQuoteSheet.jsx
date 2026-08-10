@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { CheckCircle2, Loader2, MessageCircle } from 'lucide-react'
+import { CheckCircle2, Loader2, MessageCircle, MapPin } from 'lucide-react'
 import { AppBottomSheetBackdrop, AppBottomSheetChrome, AppBottomSheetPanel } from '../app-ui/feedback/AppBottomSheet.jsx'
 import { AppField } from '../app-ui/inputs/AppField.jsx'
 import { AppTextInput } from '../app-ui/inputs/AppTextInput.jsx'
+import { readAppUserLocation, formatAppUserLocationLabel } from '../../lib/appUserLocationStorage.js'
 import { submitBuildMartQuote } from '../../api/buildmartApi.js'
 import { ApiError } from '../../api/http.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -49,6 +50,26 @@ export function BuildMartRequestQuoteSheet({
   }, [open, user?.fullName, user?.phone])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+
+  const handleFetchLocation = () => {
+    const loc = readAppUserLocation()
+    const label = formatAppUserLocationLabel(loc)
+    if (label) {
+      setForm((f) => ({ ...f, siteLocation: label }))
+    } else {
+      // Fallback if no location is saved in storage: ask for browser geolocation directly
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setForm((f) => ({ ...f, siteLocation: `GPS ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}` }))
+          },
+          () => {
+            alert('Could not fetch location. Please enter manually.')
+          }
+        )
+      }
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -152,12 +173,25 @@ export function BuildMartRequestQuoteSheet({
                   />
                 </AppField>
                 <AppField label="Site location" required>
-                  <AppTextInput
-                    value={form.siteLocation}
-                    onChange={set('siteLocation')}
-                    placeholder="Sector, city, landmark"
-                    required
-                  />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <AppTextInput
+                        value={form.siteLocation}
+                        onChange={set('siteLocation')}
+                        placeholder="Sector, city, landmark"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleFetchLocation}
+                      className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                      title="Fetch current location"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      <span className="hidden xs:inline">Fetch location</span>
+                    </button>
+                  </div>
                 </AppField>
                 <AppField label="Product quantity" required>
                   <AppTextInput

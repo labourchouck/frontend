@@ -35,6 +35,7 @@ import { AdminCorporateBannersPage } from './pages/admin/AdminCorporateBannersPa
 import { AdminVendorBannersPage } from './pages/admin/AdminVendorBannersPage.jsx'
 import { AdminMartSubscriptionsPage } from './pages/admin/AdminMartSubscriptionsPage.jsx'
 import { AdminUserSubscriptionsPage } from './pages/admin/AdminUserSubscriptionsPage.jsx'
+import { AdminCorporateSubscriptionsPage } from './pages/admin/AdminCorporateSubscriptionsPage.jsx'
 import { AdminBannersPage } from './pages/admin/AdminBannersPage.jsx'
 import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage.jsx'
 import { AdminProfilePage } from './pages/admin/AdminProfilePage.jsx'
@@ -130,6 +131,7 @@ function App() {
             <Route path="vendors" element={<AdminVendorsPage />} />
             <Route path="mart-subscriptions" element={<AdminMartSubscriptionsPage />} />
             <Route path="user-subscriptions" element={<AdminUserSubscriptionsPage />} />
+            <Route path="corporate-subscriptions" element={<AdminCorporateSubscriptionsPage />} />
             <Route path="corporate-banners" element={<AdminCorporateBannersPage />} />
             <Route path="vendor-banners" element={<AdminVendorBannersPage />} />
             <Route path="labour" element={<AdminLabourPage />} />

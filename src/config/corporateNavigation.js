@@ -7,12 +7,14 @@ import {
   Home,
   LifeBuoy,
   UserRound,
+  Store,
 } from 'lucide-react'
 
 export const corporateNavigation = {
   headerTagline: 'Bulk workforce, billing & projects',
   bottomNav: [
     { id: 'home', to: '/corporate', label: 'Home', icon: Home, end: true },
+    { id: 'mart', to: '/corporate/mart', label: 'Mart', icon: Store },
     { id: 'attendance', to: '/corporate/attendance', label: 'Attendance', icon: Clock },
     { id: 'requests', to: '/corporate/requests', label: 'Requests', icon: ClipboardList },
     { id: 'profile', to: '/corporate/profile', label: 'Profile', icon: UserRound },

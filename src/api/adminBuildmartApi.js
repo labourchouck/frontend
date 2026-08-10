@@ -1,10 +1,11 @@
 import { apiRequest } from './http.js'
 
-export async function fetchAdminBuildMartLeads({ page = 1, limit = 20, status = 'all', search = '' } = {}) {
+export async function fetchAdminBuildMartLeads({ page = 1, limit = 20, status = 'all', search = '', type = 'all' } = {}) {
   const params = new URLSearchParams()
   params.set('page', String(page))
   params.set('limit', String(limit))
   if (status && status !== 'all') params.set('status', status)
+  if (type && type !== 'all') params.set('type', type)
   if (search) params.set('search', search)
 
   const data = await apiRequest(`/admin/buildmart/leads?${params}`)

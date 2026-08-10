@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -69,7 +69,10 @@ export function BuildMartProductPage() {
     return <div className="p-8 text-center text-slate-500">Loading product...</div>
   }
 
-  if (!product) return <Navigate to="/app/buildmart" replace />
+  const { pathname } = useLocation()
+  const basePath = pathname.includes('/corporate/mart') ? '/corporate/mart' : '/app/buildmart'
+
+  if (!product) return <Navigate to={basePath} replace />
 
   const avail = AVAILABILITY[product.availability] || AVAILABILITY.in_stock
 
@@ -80,7 +83,7 @@ export function BuildMartProductPage() {
       animate={{ opacity: 1 }}
     >
       <Link
-        to="/app/buildmart"
+        to={basePath}
         className="inline-flex items-center gap-2 text-sm font-bold text-bm-terracotta"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />

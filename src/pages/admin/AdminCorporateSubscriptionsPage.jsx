@@ -3,7 +3,7 @@ import { Plus, Eye, Edit, Trash2, Shield, Users } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { adminSubscriptionsApi } from '../../api/adminSubscriptionsApi.js'
 import { adminSettingsApi } from '../../api/adminSettingsApi.js'
-import { AddUserSubscriptionPlanModal } from './components/AddUserSubscriptionPlanModal.jsx'
+import { CorporateSubscriptionModal } from './components/CorporateSubscriptionModal.jsx'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -26,7 +26,7 @@ function Toast({ message, variant = 'success' }) {
   )
 }
 
-export function AdminUserSubscriptionsPage() {
+export function AdminCorporateSubscriptionsPage() {
   const [activeTab, setActiveTab] = useState('users') // 'users' or 'plans'
   const [plans, setPlans] = useState([])
   const [subscriptions, setSubscriptions] = useState([])
@@ -56,9 +56,9 @@ export function AdminUserSubscriptionsPage() {
 
       if (activeTab === 'plans') {
         const res = await adminSubscriptionsApi.getPlans()
-        setPlans((res?.plans || []).filter(p => p.planType === 'individual'))
+        setPlans((res?.plans || []).filter(p => p.planType === 'corporate'))
       } else {
-        const res = await adminSubscriptionsApi.getUserSubscriptions()
+        const res = await adminSubscriptionsApi.getCorporateSubscriptions()
         setSubscriptions(res?.subscriptions || [])
       }
     } catch (err) {
@@ -154,12 +154,12 @@ export function AdminUserSubscriptionsPage() {
       </AnimatePresence>
       <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">User Subscriptions</h2>
-          <p className="text-sm text-slate-500">Manage individual user subscription plans and subscribers</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Corporate Subscriptions</h2>
+          <p className="text-sm text-slate-500">Manage corporate subscription plans and subscribers</p>
         </div>
         <div className="flex items-center gap-4">
           <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700">
-            <span>Enable User Subscriptions</span>
+            <span>Enable Corporate Subscriptions</span>
             <div className="relative">
               <input
                 type="checkbox"
@@ -204,7 +204,7 @@ export function AdminUserSubscriptionsPage() {
       ) : activeTab === 'plans' ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
-            <GlassPanel key={plan._id} className="group relative overflow-hidden flex flex-col rounded-2xl p-4 pt-12 transition hover:shadow-lg">
+            <GlassPanel key={plan._id} className="group relative overflow-hidden rounded-2xl p-4 pt-12 transition hover:shadow-lg">
 
               {deleteConfirm === plan._id && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl bg-white/95 p-4 backdrop-blur-sm">
@@ -256,7 +256,7 @@ export function AdminUserSubscriptionsPage() {
                 ))}
               </div>
 
-              <div className="mt-auto flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+              <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
                 <button
                   onClick={() => openViewModal(plan)}
                   className="rounded-full bg-slate-100 p-2 text-slate-600 transition hover:bg-slate-200"
@@ -341,7 +341,7 @@ export function AdminUserSubscriptionsPage() {
         </GlassPanel>
       )}
 
-      <AddUserSubscriptionPlanModal
+      <CorporateSubscriptionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSavePlan}

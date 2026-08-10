@@ -10,6 +10,7 @@ import {
   useCreateRequestMutation,
   useGetCorporateProjectsQuery,
   useSearchVendorsMutation,
+  useGetCorporateMySubscriptionQuery,
 } from '../../../store/api/workforceApi.js'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { CorporateRequestCheckout } from '../components/CorporateRequestCheckout.jsx'
@@ -30,6 +31,10 @@ export function CorporateRequestNewPage() {
   const { data: projectsData } = useGetCorporateProjectsQuery()
   const [createRequest, { isLoading }] = useCreateRequestMutation()
   const projects = projectsData?.projects ?? []
+  
+  const { data: subscriptionData } = useGetCorporateMySubscriptionQuery()
+  const hasActiveSubscription = subscriptionData?.subscription?.status === 'active' && 
+                               subscriptionData?.subscription?.bookingsUsed < (subscriptionData?.subscription?.plan?.allowedBookings || subscriptionData?.subscription?.snapshotPlanDetails?.allowedBookings || 0)
 
   const [projectName, setProjectName] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -568,12 +573,36 @@ export function CorporateRequestNewPage() {
                 No vendors found matching all your requirements. Try adjusting your skill lines.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className={`relative space-y-3 ${!hasActiveSubscription ? 'min-h-[280px]' : ''}`}>
+                {!hasActiveSubscription && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[4px] rounded-xl">
+                    <div className="bg-white px-6 py-4 rounded-2xl shadow-xl flex flex-col items-center max-w-sm text-center">
+                      <div className="h-12 w-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-3">
+                        <CheckCircle2 className="h-6 w-6" />
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-lg mb-1">Subscription Required</h3>
+                      <p className="text-sm font-medium text-slate-500 mb-4">
+                        You need an active subscription with available bookings to hire vendors.
+                      </p>
+                      <Link to="/corporate/subscription">
+                        <AppPrimaryButton className="w-full">
+                          View Subscription Plans
+                        </AppPrimaryButton>
+                      </Link>
+                    </div>
+                  </div>
+                )}
                 {searchResults.map((vendor) => (
                   <div 
                     key={vendor._id} 
-                    onClick={() => setSelectedVendorId(vendor._id)}
-                    className={`flex items-center justify-between rounded-xl border p-4 shadow-sm cursor-pointer transition-colors ${
+                    onClick={() => {
+                      if (hasActiveSubscription) {
+                        setSelectedVendorId(vendor._id)
+                      }
+                    }}
+                    className={`flex items-center justify-between rounded-xl border p-4 shadow-sm transition-colors ${
+                      hasActiveSubscription ? 'cursor-pointer' : 'opacity-80'
+                    } ${
                       selectedVendorId === vendor._id 
                         ? 'border-brand bg-brand/5 ring-1 ring-brand' 
                         : 'border-slate-200 bg-white hover:border-brand/30'

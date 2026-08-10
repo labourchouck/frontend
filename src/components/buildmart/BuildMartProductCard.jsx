@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight, Package, Truck } from 'lucide-react'
 import { formatBuildMartPrice } from '../../data/buildmartCatalog.js'
@@ -6,6 +6,8 @@ import { formatBuildMartPrice } from '../../data/buildmartCatalog.js'
 export function BuildMartProductCard({ product, index = 0 }) {
   const reduce = useReducedMotion()
   const primaryVariant = product.variants?.[0]
+  const { pathname } = useLocation()
+  const basePath = pathname.includes('/corporate/mart') ? '/corporate/mart' : '/app/buildmart'
 
   return (
     <motion.article
@@ -15,7 +17,7 @@ export function BuildMartProductCard({ product, index = 0 }) {
       transition={{ duration: 0.35, delay: Math.min(index * 0.05, 0.25) }}
       whileHover={reduce ? undefined : { y: -3 }}
     >
-      <Link to={`/app/buildmart/product/${product.id || product._id}`} className="block">
+      <Link to={`${basePath}/product/${product.id || product._id}`} className="block">
         <motion.div
           className="relative aspect-[16/10] overflow-hidden bg-slate-100"
           whileHover={reduce ? undefined : { scale: 1.02 }}

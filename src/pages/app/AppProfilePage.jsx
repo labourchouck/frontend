@@ -610,12 +610,6 @@ export function AppProfilePage() {
         Delete account
       </button>
 
-      {import.meta.env.DEV && token ? (
-        <p className="break-all rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-3 font-mono text-[10px] text-slate-500">
-          dev token: {token.slice(0, 28)}…
-        </p>
-      ) : null}
-
       <AppModal 
         open={editProfileOpen} 
         onClose={() => !savingProfile && setEditProfileOpen(false)} 

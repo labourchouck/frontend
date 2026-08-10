@@ -58,6 +58,7 @@ import {
 import { useLabourSocket } from '../../../hooks/useLabourSocket.js'
 import { bookingsApi } from '../../../api/bookingsApi.js'
 import { broadcastsApi } from '../../../api/broadcastsApi.js'
+import { withdrawalsApi } from '../../../api/withdrawalsApi.js'
 import { readWalletState, subscribeWallet } from '../../../lib/labourWalletStorage.js'
 import {
   buildAttendanceHistoryRows,
@@ -134,6 +135,7 @@ export function LabourHomeScreen({ user }) {
   const [jobs, setJobs] = useState({ offers: [], active: [], history: [] }) // legacy fallback if needed
   const { liveOffers, removeOfferLocal } = useLabourSocket()
   const [activeBookings, setActiveBookings] = useState([])
+  const [withdrawals, setWithdrawals] = useState([])
 
   const loadBookings = useCallback(() => {
     if (!user || user.id === 'guest') return
@@ -144,6 +146,9 @@ export function LabourHomeScreen({ user }) {
         console.error('Failed to load bookings:', err)
       }
     })
+    withdrawalsApi.getWithdrawals().then(res => {
+      setWithdrawals(res.data?.requests || res.requests || [])
+    }).catch(console.error)
   }, [user])
 
   useEffect(() => {
@@ -279,14 +284,49 @@ export function LabourHomeScreen({ user }) {
 
   const historyRows = useMemo(() => buildAttendanceHistoryRows(entries), [entries])
 
-  const withdrawnPaise = useMemo(
-    () => wallet.withdrawals.reduce((acc, w) => acc + w.amountPaise, 0),
-    [wallet.withdrawals],
-  )
-  const earnings = useMemo(
-    () => buildEarningsGlance(entries, wallet.ratePaisePerMin, withdrawnPaise),
-    [entries, wallet.ratePaisePerMin, withdrawnPaise],
-  )
+  const earnings = useMemo(() => {
+    let earnedPaise = 0
+    let todayPaise = 0
+    let weekPaise = 0
+    
+    const now = new Date()
+    const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+    
+    const weekAgo = new Date(now)
+    weekAgo.setDate(now.getDate() - 7)
+    
+    activeBookings.forEach(b => {
+      if (['COMPLETED', 'ACCEPTED', 'ASSIGNED', 'STARTED'].includes(b.status)) {
+        const share = b.laborShare || b.basePrice || 0
+        if (b.paymentMethod !== 'CASH') {
+           earnedPaise += share * 100
+           
+           const bookingDate = new Date(b.scheduledAt || b.createdAt)
+           const bDateStr = new Date(bookingDate.getTime() - bookingDate.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+           
+           if (bDateStr === todayStr) {
+             todayPaise += share * 100
+           }
+           if (bookingDate >= weekAgo) {
+             weekPaise += share * 100
+           }
+        }
+      }
+    })
+    
+    const paidInr = withdrawals.filter(w => w.status === 'APPROVED').reduce((acc, curr) => acc + (curr.amount || 0), 0)
+    const pendingInr = withdrawals.filter(w => w.status === 'PENDING').reduce((acc, curr) => acc + (curr.amount || 0), 0)
+    
+    const availableInr = Math.floor(earnedPaise / 100) - paidInr - pendingInr
+    const availablePaise = Math.max(0, availableInr * 100)
+    
+    return {
+      earnedPaise,
+      todayPaise,
+      weekPaise,
+      availablePaise
+    }
+  }, [activeBookings, withdrawals])
 
   const notifications = useMemo(
     () => buildLabourNotifications(user, jobs, earnings),
@@ -996,10 +1036,7 @@ export function LabourHomeScreen({ user }) {
           </AnimatePresence>
         </section>
 
-        <p className="flex items-center justify-center gap-1.5 pb-2 text-center text-[10px] font-medium text-slate-400">
-          <Sparkles className="h-3 w-3" aria-hidden />
-          Demo jobs & earnings on this device — syncs when backend is live
-        </p>
+
       </div>
 
       <AppUserLocationModal

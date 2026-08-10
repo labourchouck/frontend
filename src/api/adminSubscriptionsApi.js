@@ -20,5 +20,6 @@ export const adminSubscriptionsApi = {
   }),
 
   getVendorSubscriptions: () => apiRequest('/admin/subscriptions/vendors'),
-  getUserSubscriptions: () => apiRequest('/admin/subscriptions/users')
+  getUserSubscriptions: () => apiRequest('/admin/subscriptions/users'),
+  getCorporateSubscriptions: () => apiRequest('/admin/subscriptions/corporate')
 }
