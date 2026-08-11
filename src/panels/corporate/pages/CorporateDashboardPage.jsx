@@ -11,6 +11,7 @@ import { AppUserLocationModal } from '../../../components/app/AppUserLocationMod
 import { readAppUserLocation, formatAppUserLocationLabel } from '../../../lib/appUserLocationStorage.js'
 
 import { fetchAppMartProducts } from '../../../api/buildmartApi.js'
+import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 
 export function CorporateDashboardPage() {
   const { user } = useAuth()
@@ -26,6 +27,13 @@ export function CorporateDashboardPage() {
   const [martProducts, setMartProducts] = useState([])
   const [loadingMart, setLoadingMart] = useState(true)
 
+  const [constructionServices, setConstructionServices] = useState([])
+  const [cleaningServices, setCleaningServices] = useState([])
+  const [hospitalityCategories, setHospitalityCategories] = useState([])
+  const [interiorCategories, setInteriorCategories] = useState([])
+  const [outdoorCategories, setOutdoorCategories] = useState([])
+  const [loadingServices, setLoadingServices] = useState(true)
+
   useEffect(() => {
     let mounted = true
     async function loadMart() {
@@ -40,7 +48,48 @@ export function CorporateDashboardPage() {
         if (mounted) setLoadingMart(false)
       }
     }
+
+    async function loadServices() {
+      try {
+        const res = await fetchLabourCategoriesGrouped()
+        if (mounted) {
+          const groups = res?.data?.groups || []
+          const constructionGroup = groups.find(g => g.name.toLowerCase().includes('construction')) || groups[0]
+          
+          if (constructionGroup) {
+            setConstructionServices(constructionGroup.categories || [])
+          }
+
+          const cleaningGroup = groups.find(g => g.name.toLowerCase().includes('cleaning'))
+          if (cleaningGroup) {
+            const flattened = cleaningGroup.categories.flatMap(cat => 
+              cat.services.map(srv => ({
+                ...srv,
+                categoryName: cat.name,
+                imageUrl: cat.imageUrl
+              }))
+            )
+            setCleaningServices(flattened)
+          }
+
+          const hospitalityGroup = groups.find(g => g.name.toLowerCase().includes('hospitality'))
+          if (hospitalityGroup) setHospitalityCategories(hospitalityGroup.categories || [])
+
+          const interiorGroup = groups.find(g => g.name.toLowerCase().includes('interior') || g.name.toLowerCase().includes('finishing'))
+          if (interiorGroup) setInteriorCategories(interiorGroup.categories || [])
+
+          const outdoorGroup = groups.find(g => g.name.toLowerCase().includes('outdoor'))
+          if (outdoorGroup) setOutdoorCategories(outdoorGroup.categories || [])
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        if (mounted) setLoadingServices(false)
+      }
+    }
+
     loadMart()
+    loadServices()
     return () => { mounted = false }
   }, [])
 
@@ -312,7 +361,7 @@ export function CorporateDashboardPage() {
         </section>
 
         {/* Ongoing Bookings Section */}
-        <section>
+        <section className="-mt-3">
           <div className="flex items-center justify-between mb-3 px-1">
             <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">Ongoing Bookings</h3>
             <Link to="/corporate/requests" className="text-sm font-bold text-brand hover:text-brand-600 transition-colors">
@@ -363,7 +412,7 @@ export function CorporateDashboardPage() {
         </section>
 
         {/* Products / Mart Section */}
-        <section className="pb-4">
+        <section className="pb-1 -mt-3">
           <div className="flex items-center justify-between mb-3 px-1">
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
               Products
@@ -399,7 +448,7 @@ export function CorporateDashboardPage() {
                 <div className="flex flex-col px-1 pt-1 flex-1">
                   <h4 className="text-[14px] font-extrabold text-slate-900 leading-tight group-hover:text-brand transition-colors line-clamp-2 min-h-[40px]">{p.name}</h4>
                   <div className="mt-1">
-                    <span className="text-[15px] font-extrabold text-brand">₹{p.basePrice || 0}/{p.unit || 'item'}</span>
+                    <span className="text-[15px] font-extrabold text-brand">{p.priceLabel || `₹${p.variants?.[0]?.contractorPrice || 0}/${p.variants?.[0]?.unit || 'item'}`}</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-2 text-[10px] text-slate-500 font-medium">
                     <Truck className="h-3 w-3 shrink-0" />
@@ -428,6 +477,208 @@ export function CorporateDashboardPage() {
             </Link>
           </div>
         </section>
+
+        {/* Popular in Construction Section */}
+        <section className="pb-4 -mt-5">
+          <div className="flex flex-col mb-2.5 px-1">
+            <h3 className="text-[20px] font-extrabold text-slate-900 tracking-tight">
+              Popular in Construction
+            </h3>
+            <span className="text-[14px] text-slate-500 font-medium mt-0.5">
+              Swipe to explore services
+            </span>
+          </div>
+          
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-2 px-1 -mx-1">
+            <div className="w-1 shrink-0" /> {/* Left spacer */}
+            {loadingServices ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="min-w-[180px] sm:min-w-[200px] h-[190px] bg-slate-100 rounded-[20px] animate-pulse shrink-0 border border-slate-200/60" />
+              ))
+            ) : constructionServices.map((cat) => (
+              <Link 
+                key={cat._id} 
+                to={`/corporate/requests/new?category=${cat._id}`}
+                className="w-[180px] min-w-[180px] sm:w-[200px] sm:min-w-[200px] snap-start shrink-0 bg-white rounded-[20px] overflow-hidden flex flex-col shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-slate-100 hover:border-brand/30 hover:shadow-lg transition-all group active:scale-[0.98]"
+              >
+                <div className="w-full h-[95px] bg-slate-100 relative border-b border-slate-100/50">
+                  {cat.imageUrl ? (
+                    <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
+                      <span className="text-[12px] font-bold">No Image</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col p-3 pb-2.5 flex-1">
+                  <h4 className="text-[15px] font-extrabold text-slate-900 leading-tight mb-0.5">{cat.name}</h4>
+                  <p className="text-[12px] text-slate-500 font-medium line-clamp-1 mb-2">{cat.subtitle || `Experts in ${cat.name.toLowerCase()}`}</p>
+                  <div className="mt-auto pt-1">
+                    <span className="text-[13px] font-extrabold text-brand">Book now</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            <div className="w-1 shrink-0" /> {/* Right spacer */}
+          </div>
+        </section>
+
+        {/* Cleaning Services Section */}
+        {cleaningServices.length > 0 && (
+          <section className="pb-4 -mt-3">
+            <div className="flex flex-col mb-3.5 px-1">
+              <h3 className="text-[20px] font-extrabold text-slate-900 tracking-tight">
+                Cleaning Services — quick book
+              </h3>
+              <span className="text-[14px] text-slate-500 font-medium mt-0.5">
+                Tap a role to start booking
+              </span>
+            </div>
+            
+            <div className="flex flex-col gap-3 px-1">
+              {cleaningServices.slice(0, 4).map((srv) => (
+                <Link 
+                  key={srv._id} 
+                  to={`/corporate/requests/new?service=${srv._id}`}
+                  className="bg-white rounded-[20px] p-3 flex items-center justify-between border border-slate-100/70 shadow-[0_4px_16px_rgba(0,0,0,0.02)] hover:border-brand/30 transition-all active:scale-[0.98]"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <img src={srv.imageUrl} alt={srv.name} className="w-[60px] h-[60px] rounded-2xl object-cover" />
+                    <div className="flex flex-col">
+                      <h4 className="text-[16px] font-bold text-slate-900 leading-tight mb-0.5">{srv.name}</h4>
+                      <span className="text-[13px] text-slate-500 font-medium">{srv.categoryName}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[16px] font-bold text-brand">₹{srv.basePrice || 0}</span>
+                    <ChevronRight className="h-5 w-5 text-slate-300" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            
+            <div className="flex justify-end mt-4 px-1">
+              <Link 
+                to="/corporate/requests/new" 
+                className="text-[14px] font-bold text-brand hover:text-brand-700 transition-colors"
+              >
+                See more
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* Hospitality Section */}
+        {hospitalityCategories.length > 0 && (
+          <section className="pb-4 -mt-5">
+            <div className="flex flex-col mb-3.5 px-1">
+              <h3 className="text-[20px] font-extrabold text-slate-900 tracking-tight">
+                Top Hospitality picks
+              </h3>
+              <span className="text-[14px] text-slate-500 font-medium mt-0.5">
+                Featured roles on your site
+              </span>
+            </div>
+            <div className="flex flex-col gap-3 px-1">
+              {hospitalityCategories.filter(c => c.name === 'Delivery').map(cat => (
+                <Link key={cat._id} to={`/corporate/requests/new?category=${cat._id}`} className="relative rounded-3xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)] group border border-slate-100">
+                  <img src={cat.imageUrl} alt={cat.name} className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 sm:p-5 flex flex-col justify-end items-start">
+                    <span className="text-[10px] font-extrabold text-white/90 tracking-wider mb-1 uppercase drop-shadow-sm">FEATURED</span>
+                    <h4 className="text-2xl font-extrabold text-white mb-1.5 drop-shadow-md">{cat.name}</h4>
+                    <p className="text-[13px] text-white/90 font-medium max-w-[220px] leading-snug mb-3 drop-shadow-sm">
+                      {cat.subtitle || 'Fast and reliable delivery service professionals.'}
+                    </p>
+                    <button className="bg-[#10b981] text-white px-4 py-1.5 rounded-[10px] text-[14px] font-extrabold shadow-sm hover:bg-[#059669] transition-colors">Book</button>
+                  </div>
+                </Link>
+              ))}
+              <div className="grid grid-cols-2 gap-3">
+                {hospitalityCategories.filter(c => c.name !== 'Delivery').slice(0, 2).map(cat => (
+                  <Link key={cat._id} to={`/corporate/requests/new?category=${cat._id}`} className="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-100/70 group active:scale-[0.98] transition-transform flex flex-col">
+                    <img src={cat.imageUrl} alt={cat.name} className="w-full h-[80px] object-cover" />
+                    <div className="p-3 bg-white flex-1 flex items-center">
+                      <h4 className="text-[14px] font-extrabold text-slate-900 leading-tight">{cat.name}</h4>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Interior & Finishing Section */}
+        {interiorCategories.length > 0 && (
+          <section className="pb-4 -mt-5">
+            <div className="flex flex-col mb-3.5 px-1">
+              <h3 className="text-[20px] font-extrabold text-slate-900 tracking-tight">
+                Explore Interior & Finishing
+              </h3>
+              <span className="text-[14px] text-slate-500 font-medium mt-0.5">
+                Wide cards · fast selection
+              </span>
+            </div>
+            <div className="px-1 flex flex-col gap-3">
+              {interiorCategories.map(cat => (
+                <Link key={cat._id} to={`/corporate/requests/new?category=${cat._id}`} className="bg-white rounded-[20px] p-2 flex items-center justify-between border border-slate-100/70 shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:border-brand/30 transition-all active:scale-[0.98]">
+                  <div className="flex items-center gap-3 w-full">
+                    <img src={cat.imageUrl} alt={cat.name} className="w-[100px] h-[76px] rounded-2xl object-cover shrink-0" />
+                    <div className="flex flex-col min-w-0 flex-1 py-1 pr-1">
+                      <h4 className="text-[15px] font-extrabold text-slate-900 leading-tight mb-0.5 truncate">{cat.name}</h4>
+                      <span className="text-[12px] text-slate-500 font-medium line-clamp-1">{cat.subtitle}</span>
+                    </div>
+                    <div className="px-2 shrink-0">
+                      <span className="bg-emerald-50 text-brand px-3 py-1.5 rounded-lg text-[13px] font-extrabold hover:bg-brand hover:text-white transition-colors">Book</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Outdoor Services Section */}
+        {outdoorCategories.length > 0 && (
+          <section className="pb-4 -mt-5">
+            <div className="flex flex-col mb-2.5 px-1">
+              <h3 className="text-[20px] font-extrabold text-slate-900 tracking-tight">
+                Popular in Outdoor Services
+              </h3>
+              <span className="text-[14px] text-slate-500 font-medium mt-0.5">
+                Swipe to explore services
+              </span>
+            </div>
+            
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-2 px-1 -mx-1">
+              <div className="w-1 shrink-0" /> {/* Left spacer */}
+              {outdoorCategories.map(cat => (
+                <Link 
+                  key={cat._id} 
+                  to={`/corporate/requests/new?category=${cat._id}`}
+                  className="w-[180px] min-w-[180px] sm:w-[200px] sm:min-w-[200px] snap-start shrink-0 bg-white rounded-[20px] overflow-hidden flex flex-col shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-slate-100 hover:border-brand/30 hover:shadow-lg transition-all group active:scale-[0.98]"
+                >
+                  <div className="w-full h-[140px] bg-slate-100 relative border-b border-slate-100/50">
+                    {cat.imageUrl ? (
+                      <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
+                        <span className="text-[12px] font-bold">No Image</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col p-3 pb-2.5 flex-1">
+                    <h4 className="text-[15px] font-extrabold text-slate-900 leading-tight mb-0.5 line-clamp-1">{cat.name}</h4>
+                    <p className="text-[12px] text-slate-500 font-medium line-clamp-1 mb-2">{cat.subtitle || `Experts in ${cat.name.toLowerCase()}`}</p>
+                    <div className="mt-auto pt-1">
+                      <span className="text-[13px] font-extrabold text-brand">Book now</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+              <div className="w-1 shrink-0" /> {/* Right spacer */}
+            </div>
+          </section>
+        )}
       </div>
 
       <AppUserLocationModal
