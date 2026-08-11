@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowLeft,
+  BellRing,
   Building2,
   CalendarClock,
   Camera,
@@ -45,6 +46,8 @@ import { AppTextInput } from '../../components/app-ui/inputs/AppTextInput.jsx'
 import { AppButton } from '../../components/app-ui/buttons/AppButton.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { patchCurrentUser, deleteCurrentUser } from '../../api/userProfileApi.js'
+import { registerFcmToken, sendTestNotification } from '../../api/notificationsApi.js'
+import { requestFcmToken } from '../../lib/firebase.js'
 import { ApiError } from '../../api/http.js'
 import { setUser } from '../../store/slices/authSlice.js'
 
@@ -180,6 +183,9 @@ export function AppProfilePage() {
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteErr, setDeleteErr] = useState('')
 
+  const [testingPush, setTestingPush] = useState(false)
+  const [pushTestResult, setPushTestResult] = useState(null) // { ok: boolean, text: string }
+
   const labourCategories = user?.labourProfile?.categoryIds
   const labourKyc = user?.labourProfile?.kycStatus
   const statusPill = roleStatusPill(user)
@@ -295,6 +301,67 @@ export function AppProfilePage() {
       setSavingProfile(false)
     }
   }, [editNameValue, editPhoneValue, editEmailValue, dispatch])
+
+  const handleTestPush = useCallback(async () => {
+    setTestingPush(true)
+    setPushTestResult(null)
+    try {
+      // Make sure this device actually has permission + a registered token first
+      const fcmToken = await requestFcmToken()
+      if (!fcmToken) {
+        setPushTestResult({
+          ok: false,
+          text:
+            typeof Notification !== 'undefined' && Notification.permission === 'denied'
+              ? 'Notifications are blocked for this site. Enable them in your browser settings, then try again.'
+              : 'Push is not supported here. Use HTTPS or localhost, and allow notifications when asked.',
+        })
+        return
+      }
+      await registerFcmToken(fcmToken, 'web')
+
+      // Step 1 — LOCAL display test (no FCM involved): proves whether this
+      // device can show notifications at all.
+      const registration =
+        (await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')) ||
+        (await navigator.serviceWorker.ready)
+      let localShown = false
+      if (registration) {
+        await registration.showNotification('Display test 🔔', {
+          body: 'If you can see this banner, notifications display correctly on this device.',
+          icon: '/logo.svg',
+          tag: 'lc-local-test',
+        })
+        // Give the browser a beat, then verify the notification object exists
+        await new Promise((r) => setTimeout(r, 400))
+        const active = await registration.getNotifications({ tag: 'lc-local-test' })
+        localShown = active.length > 0
+      }
+
+      // Step 2 — real push through the backend + FCM
+      const res = await sendTestNotification()
+      const devices = res?.data?.devices
+
+      if (registration && !localShown) {
+        setPushTestResult({
+          ok: false,
+          text: 'The push was sent, but your browser could not display notifications. Check browser notification permissions for this site.',
+        })
+      } else {
+        setPushTestResult({
+          ok: true,
+          text: `${devices ? `Sent to ${devices.web} web + ${devices.app} app device(s). ` : 'Sent. '}Two notifications were triggered (a local display test + the real push). If you did not see any banner, Windows is hiding them — turn OFF "Do not disturb" (Settings → System → Notifications) and check the notification center (Win+N).`,
+        })
+      }
+    } catch (err) {
+      setPushTestResult({
+        ok: false,
+        text: err instanceof ApiError ? err.message : 'Could not send the test notification. Please try again.',
+      })
+    } finally {
+      setTestingPush(false)
+    }
+  }, [])
 
   const handleSignOut = async () => {
     await logout()
@@ -590,6 +657,32 @@ export function AppProfilePage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section>
+        <AppSectionHeader title="Notifications" className="mb-3 px-0.5" />
+        <button
+          type="button"
+          onClick={() => void handleTestPush()}
+          disabled={testingPush}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-brand/25 bg-brand/8 py-3.5 text-sm font-bold text-brand shadow-sm transition hover:bg-brand/12 active:scale-[0.99] disabled:opacity-60"
+        >
+          {testingPush ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            <BellRing className="h-4 w-4" aria-hidden />
+          )}
+          {testingPush ? 'Sending test notification…' : 'Test push notification'}
+        </button>
+        {pushTestResult ? (
+          <p
+            className={`mt-2 px-1 text-xs font-medium ${
+              pushTestResult.ok ? 'text-emerald-700' : 'text-rose-700'
+            }`}
+          >
+            {pushTestResult.text}
+          </p>
+        ) : null}
       </section>
 
       <button

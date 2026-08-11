@@ -49,6 +49,7 @@ import { AdminVendorsPage } from './pages/admin/AdminVendorsPage.jsx'
 import { AdminReviewsRatingsPage } from './pages/admin/AdminReviewsRatingsPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
+import { PushNotificationManager } from './hooks/usePushNotifications.js'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'
@@ -161,6 +162,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <BroadcastPopup />
+        <PushNotificationManager />
       </AuthProvider>
     </BrowserRouter>
   )
