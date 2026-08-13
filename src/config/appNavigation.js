@@ -52,7 +52,6 @@ const byRole = {
       { id: 'jobs', to: '/app/jobs', label: 'Assignments', icon: HardHat },
       { id: 'book', to: '/app/my-bookings', label: 'My bookings', icon: CalendarClock },
       { id: 'buildmart', to: '/app/buildmart', label: 'BuildMart materials', icon: Package },
-      { id: 'attendance', to: '/app/attendance', label: 'Attendance', icon: Clock },
       { id: 'earnings', to: '/app/earnings', label: 'Earnings & payouts', icon: IndianRupee },
       { id: 'kyc', to: '/app/kyc', label: 'Aadhaar KYC', icon: ShieldCheck },
       { id: 'workTypes', to: '/app/work-categories', label: 'Work types', icon: Wrench },
@@ -71,7 +70,6 @@ export function getAppShellTitle(pathname) {
   if (pathname.startsWith('/app/buildmart')) return 'BuildMart'
   if (pathname.startsWith('/app/jobs')) return 'Jobs'
   if (pathname.startsWith('/app/earnings')) return 'Earnings'
-  if (pathname.startsWith('/app/attendance')) return 'Attendance'
   if (pathname.startsWith('/app/kyc')) return 'KYC verification'
   if (pathname.startsWith('/app/notifications')) return 'Notifications'
   if (pathname.startsWith('/app/work-categories')) return 'Work types'

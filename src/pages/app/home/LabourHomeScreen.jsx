@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
+  AlertCircle,
   AlertTriangle,
   Bell,
   Building2,
@@ -100,7 +101,6 @@ function formatPunchTime(iso) {
 }
 
 const QUICK_ACTIONS = [
-  { to: '/app/attendance', label: 'Attendance', icon: CalendarClock, bg: 'from-sky-500/15 to-sky-50', iconTone: 'text-sky-700' },
   { to: '/app/earnings', label: 'Earnings', icon: IndianRupee, bg: 'from-emerald-500/15 to-emerald-50', iconTone: 'text-emerald-700' },
   { to: '/app/jobs', label: 'My jobs', icon: HardHat, bg: 'from-amber-500/15 to-amber-50', iconTone: 'text-amber-800' },
   { to: '/app/jobs', label: 'Site details', icon: MapPin, bg: 'from-violet-500/15 to-violet-50', iconTone: 'text-violet-700' },
@@ -543,12 +543,12 @@ export function LabourHomeScreen({ user }) {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4"
+            className="relative z-10 flex items-start gap-3 rounded-2xl bg-amber-50 border border-amber-200/80 p-4 shadow-sm"
           >
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" aria-hidden />
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
             <div>
-              <h3 className="text-sm font-bold text-amber-500">Currently Offline (Schedule)</h3>
-              <p className="mt-1 text-xs text-slate-300">
+              <h3 className="text-sm font-bold text-amber-800">Currently Offline (Schedule)</h3>
+              <p className="mt-1 text-xs text-amber-900/80 leading-relaxed font-medium">
                 Your global toggle is on, but your current schedule shows you are offline or outside working hours. You will not receive any instant or scheduled bookings right now.
               </p>
             </div>
@@ -653,6 +653,7 @@ export function LabourHomeScreen({ user }) {
                         const { updateLabourSchedule } = await import('../../../api/userLabourApi.js')
                         await updateLabourSchedule(schedule)
                         showToast('Time schedule saved successfully')
+                        setTimeManagementOpen(false)
                       } catch (err) {
                         showToast(err?.message || 'Failed to save schedule')
                       }

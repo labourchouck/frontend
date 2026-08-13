@@ -6,7 +6,6 @@ import { AppJobsPage } from '../pages/app/AppJobsPage.jsx'
 import { AppSupportPage } from '../pages/app/AppSupportPage.jsx'
 import { AppProfilePage } from '../pages/app/AppProfilePage.jsx'
 import { AppEarningsPage } from '../pages/app/AppEarningsPage.jsx'
-import { AppAttendancePage } from '../pages/app/AppAttendancePage.jsx'
 import { AppKycPage } from '../pages/app/AppKycPage.jsx'
 import { LabourNotificationsPage } from '../pages/app/labour/LabourNotificationsPage.jsx'
 import { IndividualBookingFlowPage } from '../pages/app/booking/IndividualBookingFlowPage.jsx'
@@ -159,14 +158,7 @@ export const appShellChildRoutes = (
         </RoleRoute>
       }
     />
-    <Route
-      path="attendance"
-      element={
-        <RoleRoute allow={[USER_ROLES.LABOUR]}>
-          <AppAttendancePage />
-        </RoleRoute>
-      }
-    />
+
     <Route
       path="kyc"
       element={

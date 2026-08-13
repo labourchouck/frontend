@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Shield, Loader2, AlertTriangle, ChevronRight } from 'lucide-react'
+import { CheckCircle2, Shield, Loader2, AlertTriangle, ChevronRight, Sparkles, X } from 'lucide-react'
 import { userSubscriptionApi } from '../../api/userSubscriptionApi'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -30,6 +30,7 @@ export function AppSubscriptionPage() {
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState(null)
   const [toast, setToast] = useState({ message: '', variant: 'success' })
+  const [successModalOpen, setSuccessModalOpen] = useState(false)
   const navigate = useNavigate()
   const user = useSelector((s) => s.auth.user)
 
@@ -102,7 +103,7 @@ export function AppSubscriptionPage() {
               razorpay_signature: response.razorpay_signature,
               planId: plan._id
             })
-            showToast('Subscription activated successfully!', 'success')
+            setSuccessModalOpen(true)
             loadData()
           } catch (err) {
             showToast('Payment verification failed', 'error')
@@ -153,6 +154,58 @@ export function AppSubscriptionPage() {
             Unlock seamless booking experiences with our flexible subscription plans tailored for you.
           </p>
         </div>
+
+        <AnimatePresence>
+          {successModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm overflow-hidden rounded-[2rem] bg-white p-6 text-center shadow-2xl"
+              >
+                {/* Decorative background blob */}
+                <div className="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-brand/10 blur-3xl" aria-hidden />
+                <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden />
+                
+                <button
+                  onClick={() => {
+                    setSuccessModalOpen(false)
+                    navigate('/app')
+                  }}
+                  className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", delay: 0.1, bounce: 0.5 }}
+                  className="mx-auto mt-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 ring-8 ring-emerald-50"
+                >
+                  <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                </motion.div>
+
+                <h2 className="mt-6 text-2xl font-black text-slate-900">Payment Successful!</h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  Your subscription has been activated successfully. You can now start booking without limits!
+                </p>
+
+                <button
+                  onClick={() => {
+                    setSuccessModalOpen(false)
+                    navigate('/app')
+                  }}
+                  className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-active active:scale-95"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Continue
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {activeSubscription && (
           <div className="mb-10 overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-200/50">

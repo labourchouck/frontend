@@ -49,7 +49,6 @@ const TOPICS_BY_ROLE = {
   [USER_ROLES.LABOUR]: [
     { id: 'payout', label: 'Payouts & wages', desc: 'Delays, deductions, withdrawals' },
     { id: 'safety', label: 'Site safety', desc: 'Unsafe work, incidents' },
-    { id: 'attendance', label: 'Attendance', desc: 'Check-in errors, missing days' },
     { id: 'kyc', label: 'KYC & profile', desc: 'Verification, skills, documents' },
   ],
   [USER_ROLES.CONTRACTOR]: [

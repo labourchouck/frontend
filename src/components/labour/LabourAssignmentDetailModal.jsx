@@ -101,6 +101,33 @@ export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assign
     }
   }
 
+  const handleDailyOtpSubmit = async (type, dayNumber, requireImage) => {
+    if (!otp) {
+      setErrorMsg('OTP is required.')
+      return
+    }
+    if (requireImage && !jobImage) {
+      setErrorMsg(type === 'start' ? 'Before Work image is required.' : 'After Work image is required.')
+      return
+    }
+    setLoading(true)
+    setErrorMsg('')
+    try {
+      const payload = { type, otp, dayNumber }
+      if (requireImage) {
+        payload.image = jobImage
+      }
+      await bookingsApi.verifyDailyOtp(rawJob._id, payload)
+      setOtp('')
+      setJobImage(null)
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to verify OTP.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (typeof document === 'undefined') return null
 
   const sheet = (
@@ -264,134 +291,205 @@ export function LabourAssignmentDetailModal({ open, onClose, job, rawJob, assign
                     <p className="text-xs font-bold text-rose-600">{errorMsg}</p>
                   )}
 
-                  {rawJob.status === 'ACCEPTED' && (
-                    <AppPrimaryButton 
-                      type="button" 
-                      onClick={() => handleStatusUpdate('EN_ROUTE', false)}
-                      disabled={loading}
-                      className="w-full"
-                    >
-                      {loading ? 'Updating...' : 'I am En Route'}
-                    </AppPrimaryButton>
-                  )}
+                  {(() => {
+                    const isMultiDay = rawJob.durationKind === 'multi_day'
+                    let currentDayLog = null
+                    let isDailyStartRequired = false
+                    let isDailyEndRequired = false
+                    if (isMultiDay && rawJob.attendanceLog) {
+                      currentDayLog = rawJob.attendanceLog.find(log => !log.endOtpVerifiedAt) || rawJob.attendanceLog[rawJob.attendanceLog.length - 1]
+                      if (currentDayLog) {
+                        isDailyStartRequired = !currentDayLog.startOtpVerifiedAt
+                        isDailyEndRequired = !!currentDayLog.startOtpVerifiedAt && !currentDayLog.endOtpVerifiedAt
+                      }
+                    }
 
-                  {rawJob.status === 'EN_ROUTE' && (
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 mb-2">1. Upload Before Work Image</p>
-                        {jobImage ? (
-                          <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
-                            <img src={jobImage} alt="Before work" className="h-full w-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => setJobImage(null)}
-                              className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                    return (
+                      <>
+                        {isMultiDay && (isDailyStartRequired || isDailyEndRequired) ? (
+                          <div className={`space-y-4 ${isDailyStartRequired ? '' : 'border-emerald-500/20 bg-emerald-50'}`}>
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 mb-2">1. Upload {isDailyStartRequired ? 'Before Work' : 'After Work'} Image</p>
+                              {jobImage ? (
+                                <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                                  <img src={jobImage} alt="Work" className="h-full w-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => setJobImage(null)}
+                                    className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <label className={`flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-${isDailyStartRequired ? 'brand' : 'emerald-500'} hover:bg-${isDailyStartRequired ? 'brand' : 'emerald-500'}/5 hover:text-${isDailyStartRequired ? 'brand' : 'emerald-500'}`}>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                    disabled={uploadingImage}
+                                  />
+                                  {uploadingImage ? (
+                                    <Loader2 className={`h-6 w-6 animate-spin text-${isDailyStartRequired ? 'brand' : 'emerald-500'}`} />
+                                  ) : (
+                                    <>
+                                      <Camera className="h-6 w-6" />
+                                      <span className="text-sm font-semibold">Tap to capture</span>
+                                    </>
+                                  )}
+                                </label>
+                              )}
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Day {currentDayLog.dayNumber} {isDailyStartRequired ? 'Start' : 'End'} OTP</p>
+                              <input 
+                                type="text" 
+                                placeholder="Enter 4-digit OTP" 
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                className={`w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-${isDailyStartRequired ? 'brand' : 'emerald-500'} focus:ring-1 focus:ring-${isDailyStartRequired ? 'brand' : 'emerald-500'}`}
+                                maxLength={4}
+                              />
+                            </div>
+                            <AppPrimaryButton 
+                              type="button" 
+                              onClick={() => handleDailyOtpSubmit(isDailyStartRequired ? 'start' : 'end', currentDayLog.dayNumber, true)}
+                              disabled={loading || otp.length < 4 || !jobImage || uploadingImage}
+                              className={`w-full ${isDailyStartRequired ? '' : 'bg-emerald-600 hover:bg-emerald-700'}`}
                             >
-                              <X className="h-4 w-4" />
-                            </button>
+                              {loading ? 'Updating...' : `${isDailyStartRequired ? 'Start Shift' : 'End Shift'}`}
+                            </AppPrimaryButton>
                           </div>
-                        ) : (
-                          <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-brand hover:bg-brand/5 hover:text-brand">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              className="hidden"
-                              onChange={handleImageUpload}
-                              disabled={uploadingImage}
-                            />
-                            {uploadingImage ? (
-                              <Loader2 className="h-6 w-6 animate-spin text-brand" />
-                            ) : (
-                              <>
-                                <Camera className="h-6 w-6" />
-                                <span className="text-sm font-semibold">Tap to capture</span>
-                              </>
-                            )}
-                          </label>
-                        )}
-                      </div>
+                        ) : rawJob.status === 'ACCEPTED' && !isMultiDay ? (
+                          <AppPrimaryButton 
+                            type="button" 
+                            onClick={() => handleStatusUpdate('EN_ROUTE', false)}
+                            disabled={loading}
+                            className="w-full"
+                          >
+                            {loading ? 'Updating...' : 'I am En Route'}
+                          </AppPrimaryButton>
+                        ) : rawJob.status === 'EN_ROUTE' && !isMultiDay ? (
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 mb-2">1. Upload Before Work Image</p>
+                              {jobImage ? (
+                                <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                                  <img src={jobImage} alt="Before work" className="h-full w-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => setJobImage(null)}
+                                    className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-brand hover:bg-brand/5 hover:text-brand">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                    disabled={uploadingImage}
+                                  />
+                                  {uploadingImage ? (
+                                    <Loader2 className="h-6 w-6 animate-spin text-brand" />
+                                  ) : (
+                                    <>
+                                      <Camera className="h-6 w-6" />
+                                      <span className="text-sm font-semibold">Tap to capture</span>
+                                    </>
+                                  )}
+                                </label>
+                              )}
+                            </div>
 
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Start OTP</p>
-                        <input 
-                          type="text" 
-                          placeholder="Enter Start OTP" 
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
-                          maxLength={4}
-                        />
-                      </div>
-                      <AppPrimaryButton 
-                        type="button" 
-                        onClick={() => handleStatusUpdate('STARTED', true)}
-                        disabled={loading || otp.length < 4 || !jobImage || uploadingImage}
-                        className="w-full"
-                      >
-                        {loading ? 'Updating...' : 'Start Job'}
-                      </AppPrimaryButton>
-                    </div>
-                  )}
-
-                  {rawJob.status === 'STARTED' && (
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 mb-2">1. Upload After Work Image</p>
-                        {jobImage ? (
-                          <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
-                            <img src={jobImage} alt="After work" className="h-full w-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => setJobImage(null)}
-                              className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Start OTP</p>
+                              <input 
+                                type="text" 
+                                placeholder="Enter Start OTP" 
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-brand focus:ring-1 focus:ring-brand"
+                                maxLength={4}
+                              />
+                            </div>
+                            <AppPrimaryButton 
+                              type="button" 
+                              onClick={() => handleStatusUpdate('STARTED', true)}
+                              disabled={loading || otp.length < 4 || !jobImage || uploadingImage}
+                              className="w-full"
                             >
-                              <X className="h-4 w-4" />
-                            </button>
+                              {loading ? 'Updating...' : 'Start Job'}
+                            </AppPrimaryButton>
                           </div>
-                        ) : (
-                          <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-500/5 hover:text-emerald-500">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              className="hidden"
-                              onChange={handleImageUpload}
-                              disabled={uploadingImage}
-                            />
-                            {uploadingImage ? (
-                              <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
-                            ) : (
-                              <>
-                                <Camera className="h-6 w-6" />
-                                <span className="text-sm font-semibold">Tap to capture</span>
-                              </>
-                            )}
-                          </label>
-                        )}
-                      </div>
+                        ) : rawJob.status === 'STARTED' && !isMultiDay ? (
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 mb-2">1. Upload After Work Image</p>
+                              {jobImage ? (
+                                <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                                  <img src={jobImage} alt="After work" className="h-full w-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => setJobImage(null)}
+                                    className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-emerald-500 hover:bg-emerald-500/5 hover:text-emerald-500">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                    disabled={uploadingImage}
+                                  />
+                                  {uploadingImage ? (
+                                    <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+                                  ) : (
+                                    <>
+                                      <Camera className="h-6 w-6" />
+                                      <span className="text-sm font-semibold">Tap to capture</span>
+                                    </>
+                                  )}
+                                </label>
+                              )}
+                            </div>
 
-                      <div>
-                        <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Completion OTP</p>
-                        <input 
-                          type="text" 
-                          placeholder="Enter Completion OTP" 
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                          maxLength={4}
-                        />
-                      </div>
-                      <AppPrimaryButton 
-                        type="button" 
-                        onClick={() => handleStatusUpdate('COMPLETED', true)}
-                        disabled={loading || otp.length < 4 || !jobImage || uploadingImage}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        {loading ? 'Updating...' : 'Complete Job'}
-                      </AppPrimaryButton>
-                    </div>
-                  )}
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Completion OTP</p>
+                              <input 
+                                type="text" 
+                                placeholder="Enter Completion OTP" 
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                className="w-full rounded-xl border border-slate-200 p-3 text-sm font-semibold tracking-widest outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                maxLength={4}
+                              />
+                            </div>
+                            <AppPrimaryButton 
+                              type="button" 
+                              onClick={() => handleStatusUpdate('COMPLETED', true)}
+                              disabled={loading || otp.length < 4 || !jobImage || uploadingImage}
+                              className="w-full bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              {loading ? 'Updating...' : 'Complete Job'}
+                            </AppPrimaryButton>
+                          </div>
+                        ) : null}
+                      </>
+                    )
+                  })()}
                 </GlassPanel>
               </section>
             ) : null}
