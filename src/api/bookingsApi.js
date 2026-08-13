@@ -36,4 +36,11 @@ export const bookingsApi = {
       body: { paymentMethod },
     })
   },
+
+  verifyDailyOtp: (id, payload) => {
+    return apiRequest(`/bookings/${id}/verify-daily-otp`, {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle,
   ArrowRight,
@@ -69,6 +69,9 @@ export function ActiveJob() {
   const [showCashConfirm, setShowCashConfirm] = useState(false)
   const [pendingCashSubmit, setPendingCashSubmit] = useState(null)
 
+  const [paymentWaitMode, setPaymentWaitMode] = useState(false)
+  const [paymentCollected, setPaymentCollected] = useState(false)
+
   // Fetch booking
   useEffect(() => {
     if (!bookingId) return
@@ -97,8 +100,18 @@ export function ActiveJob() {
       }
     }
 
+    const handlePaymentCompleted = (data) => {
+      if (data.bookingId === bookingId) {
+        setPaymentCollected(true)
+      }
+    }
+
     socket.on('BOOKING_STATUS_UPDATE', handleStatusUpdate)
-    return () => { socket.off('BOOKING_STATUS_UPDATE', handleStatusUpdate) }
+    socket.on('ONLINE_PAYMENT_COMPLETED', handlePaymentCompleted)
+    return () => { 
+      socket.off('BOOKING_STATUS_UPDATE', handleStatusUpdate)
+      socket.off('ONLINE_PAYMENT_COMPLETED', handlePaymentCompleted)
+    }
   }, [socket, bookingId])
 
   const handleStatusUpdate = useCallback(async (nextStatus, requireOtp = false, bypassCashCheck = false) => {
@@ -132,7 +145,11 @@ export function ActiveJob() {
       setJobImage(null)
       setBooking((prev) => prev ? { ...prev, status: nextStatus } : prev)
       if (nextStatus === 'COMPLETED') {
-        setTimeout(() => navigate('/app/my-bookings', { replace: true }), 1500)
+        if (booking?.paymentMethod === 'ONLINE') {
+          setPaymentWaitMode(true)
+        } else {
+          setTimeout(() => navigate('/app/my-bookings', { replace: true }), 1500)
+        }
       }
     } catch (err) {
       setUpdateError(err instanceof ApiError ? err.message : 'Failed to update status')
@@ -140,6 +157,47 @@ export function ActiveJob() {
       setUpdating(false)
     }
   }, [bookingId, navigate, otp, jobImage])
+
+  const handleDailyOtpSubmit = useCallback(async (type, dayNumber, requireImage) => {
+    if (!otp) {
+      setUpdateError('OTP is required.')
+      return
+    }
+    if (requireImage && !jobImage) {
+      setUpdateError(type === 'start' ? 'Before Work image is required.' : 'After Work image is required.')
+      return
+    }
+
+    if (type === 'end' && dayNumber === booking?.durationDays && booking?.paymentMethod === 'CASH') {
+      setShowCashConfirm(true)
+      setPendingCashSubmit({ isDaily: true, type, dayNumber })
+      return
+    }
+
+    setUpdating(true)
+    setUpdateError('')
+    try {
+      const payload = { type, otp, dayNumber }
+      if (requireImage) payload.image = jobImage
+
+      const res = await bookingsApi.verifyDailyOtp(bookingId, payload)
+      setOtp('')
+      setJobImage(null)
+      setBooking((prev) => prev ? { ...prev, ...res.data?.booking } : prev)
+      
+      if (type === 'end' && dayNumber === booking?.durationDays) {
+        if (booking?.paymentMethod === 'ONLINE') {
+          setPaymentWaitMode(true)
+        } else {
+          setTimeout(() => navigate('/app/my-bookings', { replace: true }), 1500)
+        }
+      }
+    } catch (err) {
+      setUpdateError(err instanceof ApiError ? err.message : 'Failed to verify OTP')
+    } finally {
+      setUpdating(false)
+    }
+  }, [bookingId, navigate, otp, jobImage, booking])
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -232,6 +290,18 @@ export function ActiveJob() {
   // Check if it's too early to start a scheduled job (more than 30 mins away)
   const isTooEarly = booking.type === 'SCHEDULED' && booking.status === 'ACCEPTED' &&
     (new Date(booking.scheduledAt).getTime() - Date.now() > 30 * 60 * 1000)
+
+  const isMultiDay = booking.durationKind === 'multi_day'
+  let currentDayLog = null
+  let isDailyStartRequired = false
+  let isDailyEndRequired = false
+  if (isMultiDay && booking.attendanceLog) {
+    currentDayLog = booking.attendanceLog.find(log => !log.endOtpVerifiedAt) || booking.attendanceLog[booking.attendanceLog.length - 1]
+    if (currentDayLog) {
+      isDailyStartRequired = !currentDayLog.startOtpVerifiedAt
+      isDailyEndRequired = !!currentDayLog.startOtpVerifiedAt && !currentDayLog.endOtpVerifiedAt
+    }
+  }
 
   return (
     <div className="space-y-4 pb-8">
@@ -332,7 +402,65 @@ export function ActiveJob() {
             </GlassPanel>
           ) : (
             <>
-              {status === 'EN_ROUTE' ? (
+              {isMultiDay && (isDailyStartRequired || isDailyEndRequired) ? (
+                <GlassPanel className={`space-y-4 ${isDailyStartRequired ? 'border-brand/20 bg-brand/5' : 'border-emerald-500/20 bg-emerald-50'} p-4 text-left`}>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 mb-2">1. Upload {isDailyStartRequired ? 'Before Work' : 'After Work'} Image</p>
+                    {jobImage ? (
+                      <div className="relative h-40 w-full overflow-hidden rounded-xl border border-slate-200">
+                        <img src={jobImage} alt="Work" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setJobImage(null)}
+                          className="absolute right-2 top-2 rounded-full bg-slate-900/50 p-1.5 text-white backdrop-blur-sm"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className={`flex h-40 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 text-slate-500 transition hover:border-${isDailyStartRequired ? 'brand' : 'emerald-500'} hover:bg-${isDailyStartRequired ? 'brand' : 'emerald-500'}/5 hover:text-${isDailyStartRequired ? 'brand' : 'emerald-500'}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                        />
+                        {uploadingImage ? (
+                          <Loader2 className={`h-6 w-6 animate-spin text-${isDailyStartRequired ? 'brand' : 'emerald-500'}`} />
+                        ) : (
+                          <>
+                            <Camera className="h-6 w-6" />
+                            <span className="text-sm font-semibold">Tap to capture</span>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 mb-2">2. Ask customer for Day {currentDayLog.dayNumber} {isDailyStartRequired ? 'Start' : 'End'} OTP</p>
+                    <input
+                      type="text"
+                      placeholder="Enter 4-digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className={`w-full rounded-xl border border-slate-200 p-3 text-lg font-bold tracking-widest text-center outline-hidden focus:border-${isDailyStartRequired ? 'brand' : 'emerald-500'} focus:ring-1 focus:ring-${isDailyStartRequired ? 'brand' : 'emerald-500'}`}
+                      maxLength={4}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={updating || otp.length < 4 || !jobImage || uploadingImage}
+                    onClick={() => handleDailyOtpSubmit(isDailyStartRequired ? 'start' : 'end', currentDayLog.dayNumber, true)}
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50 bg-${isDailyStartRequired ? 'brand' : 'emerald-500'}`}
+                  >
+                    {updating ? <Loader2 className="h-5 w-5 animate-spin" /> : `${isDailyStartRequired ? 'Start Shift' : 'End Shift'}`}
+                  </button>
+                </GlassPanel>
+              ) : status === 'EN_ROUTE' && !isMultiDay ? (
                 <GlassPanel className="space-y-4 border-brand/20 bg-brand/5 p-4 text-left">
                   <div>
                     <p className="text-sm font-bold text-slate-800 mb-2">1. Upload Before Work Image</p>
@@ -390,7 +518,7 @@ export function ActiveJob() {
                     {updating ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Start Job'}
                   </button>
                 </GlassPanel>
-              ) : status === 'STARTED' ? (
+              ) : status === 'STARTED' && !isMultiDay ? (
                 <GlassPanel className="space-y-4 border-emerald-500/20 bg-emerald-50 p-4 text-left">
                   <div>
                     <p className="text-sm font-bold text-slate-800 mb-2">1. Upload After Work Image</p>
@@ -510,7 +638,11 @@ export function ActiveJob() {
                 onClick={() => {
                   setShowCashConfirm(false)
                   if (pendingCashSubmit) {
-                    handleStatusUpdate(pendingCashSubmit.nextStatus, pendingCashSubmit.requireOtp, true)
+                    if (pendingCashSubmit.isDaily) {
+                      handleDailyOtpSubmit(pendingCashSubmit.type, pendingCashSubmit.dayNumber, true)
+                    } else {
+                      handleStatusUpdate(pendingCashSubmit.nextStatus, pendingCashSubmit.requireOtp, true)
+                    }
                   }
                 }}
                 className="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white transition hover:bg-brand/90"
@@ -521,6 +653,61 @@ export function ActiveJob() {
           </motion.div>
         </div>
       )}
+
+      {/* Online Payment Waiting & Success Modal */}
+      <AnimatePresence>
+        {paymentWaitMode && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm overflow-hidden rounded-[2rem] bg-white p-6 shadow-2xl text-center relative"
+            >
+              {!paymentCollected ? (
+                // Waiting State
+                <>
+                  <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand/10 mb-6">
+                    <Loader2 className="h-10 w-10 animate-spin text-brand" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-slate-900">Waiting for Payment</h3>
+                  <p className="mt-3 text-sm font-medium text-slate-600">
+                    The job is complete! Please wait while the customer completes the online payment.
+                  </p>
+                </>
+              ) : (
+                // Success State
+                <>
+                  <div className="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden />
+                  <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-brand/10 blur-3xl" aria-hidden />
+
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.5 }}
+                    className="mx-auto mt-4 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 ring-8 ring-emerald-50 mb-6 relative z-10"
+                  >
+                    <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+                  </motion.div>
+                  <h3 className="text-xl font-extrabold text-slate-900 relative z-10">Payment Received!</h3>
+                  <p className="mt-3 text-sm font-medium text-slate-600 relative z-10">
+                    The customer has paid. You can now collect the money to your wallet!
+                  </p>
+                  <button
+                    onClick={() => {
+                      setPaymentWaitMode(false)
+                      navigate('/app', { replace: true })
+                    }}
+                    className="relative z-10 mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-4 text-base font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-active active:scale-95"
+                  >
+                    Collect Money
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

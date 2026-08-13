@@ -72,9 +72,9 @@ function FeedbackBanner({ variant, children }) {
 
 function AuthField({ label, hint, children }) {
   return (
-    <div>
-      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</label>
+    <div className="mt-2">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <label className="text-[12px] font-medium text-slate-400">{label}</label>
         {hint}
       </div>
       {children}
@@ -83,7 +83,7 @@ function AuthField({ label, hint, children }) {
 }
 
 const inputClass =
-  'w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 text-base font-medium text-slate-900 shadow-sm outline-none transition focus:border-brand/40 focus:ring-2 focus:ring-brand/25'
+  'w-full border-b-2 border-slate-200 bg-transparent py-2 text-base font-semibold text-slate-900 transition-colors focus:border-brand focus:outline-none placeholder:text-slate-300'
 
 export function AuthEntryPage() {
   const navigate = useNavigate()
@@ -290,66 +290,25 @@ export function AuthEntryPage() {
 
   return (
     <>
-      <AppAmbientBackground />
-      <MobileShell transparent className="overflow-x-hidden pb-8">
-        <div className="mb-5 flex items-center gap-3">
-          <Link
-            to="/"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-800 shadow-sm transition hover:border-brand/35 hover:text-brand"
-            aria-label="Back to home"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <img src="/logo-transparent.svg" alt="LabourChowk" className="h-4 w-auto mb-1" />
-            <h1 className="text-xl font-black tracking-tight text-slate-900">
-              {step === 'otp' ? 'Verify OTP' : mode === 'login' ? 'Welcome back' : 'Create account'}
-            </h1>
-          </div>
+      <div className="absolute inset-x-0 top-0 -z-10">
+        <svg viewBox="0 0 375 220" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto text-brand fill-current drop-shadow-sm">
+          <path d="M0 0H375V150C375 150 310 200 250 180C190 160 130 140 70 170C30 190 0 150 0 150V0Z" />
+        </svg>
+      </div>
+      <MobileShell transparent className="relative z-10 overflow-x-hidden pb-4 min-h-screen">
+        <div className="px-6 pt-12 pb-3 flex flex-col items-start">
+          <img src="/logo-white.svg" alt="Labour Chowk" className="-ml-3 h-[52px] w-auto mb-16 drop-shadow-sm" />
+          <h1 className="text-[32px] font-bold tracking-tight text-brand mt-4">
+            {step === 'otp' ? 'Verification' : mode === 'login' ? 'Hi there!' : 'Welcome!'}
+          </h1>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            {step === 'otp'
+              ? 'Enter the code sent to your number'
+              : mode === 'login'
+              ? 'Welcome back.'
+              : 'Sign up to continue.'}
+          </p>
         </div>
-
-        <GlassPanel className="mb-5 overflow-hidden border-slate-200/90 p-4 ring-1 ring-slate-100/90">
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-brand-bright to-brand text-white shadow-md ring-1 ring-brand/25">
-              <Sparkles className="h-5 w-5" aria-hidden />
-            </span>
-            <div>
-              <p className="text-sm font-bold text-slate-900">Sign in with mobile OTP</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                No password — we text a 6-digit code to your Indian mobile number.
-              </p>
-              <p className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-                <ShieldCheck className="h-3.5 w-3.5 text-brand" aria-hidden />
-                Secure · Aadhaar-verified workers on platform
-              </p>
-            </div>
-          </div>
-        </GlassPanel>
-
-        {step === 'form' ? (
-          <div className="mb-5 flex gap-1 rounded-2xl border border-slate-200/90 bg-white/80 p-1 shadow-sm ring-1 ring-slate-100">
-            <button
-              type="button"
-              className={`flex-1 rounded-xl py-3 text-sm font-bold transition ${
-                mode === 'login' ? 'bg-brand text-white shadow-md shadow-brand/25' : 'text-slate-600 hover:text-slate-900'
-              }`}
-              onClick={() => switchMode('login')}
-            >
-              Login
-            </button>
-            <button
-              type="button"
-              className={`flex-1 rounded-xl py-3 text-sm font-bold transition ${
-                mode === 'register'
-                  ? 'bg-brand text-white shadow-md shadow-brand/25'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              onClick={() => switchMode('register')}
-            >
-              Register
-            </button>
-          </div>
-        ) : null}
 
         <AnimatePresence mode="wait">
           {step === 'form' ? (
@@ -358,12 +317,12 @@ export function AuthEntryPage() {
               initial={reduce ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reduce ? false : { opacity: 0, y: -8 }}
-              className="space-y-4"
+              className="space-y-3"
             >
               {mode === 'register' ? (
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">I am a</p>
-                  <div className="grid gap-2">
+                <div className="px-6 mb-3">
+                  <p className="mb-2 text-[12px] font-medium text-slate-400">I am a</p>
+                  <div className="grid grid-cols-2 gap-3">
                     {ROLE_OPTIONS.map((opt) => {
                       const Icon = opt.icon
                       const active = role === opt.role
@@ -372,23 +331,28 @@ export function AuthEntryPage() {
                           key={opt.role}
                           type="button"
                           onClick={() => setRole(opt.role)}
-                          className={`flex items-start gap-3 rounded-2xl border px-3.5 py-3 text-left transition active:scale-[0.99] ${
+                          className={`group relative flex flex-col items-center justify-center gap-1.5 rounded-[1rem] border p-2 text-center transition-all duration-300 active:scale-95 ${
                             active
-                              ? 'border-brand/40 bg-linear-to-r from-brand/10 via-white to-emerald-50/40 ring-2 ring-brand/20'
-                              : 'border-slate-200/90 bg-white hover:border-brand/25'
+                              ? 'border-brand bg-brand/5 shadow-sm shadow-brand/10'
+                              : 'border-slate-200/60 bg-transparent hover:border-brand/30'
                           }`}
                         >
                           <span
-                            className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                              active ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600'
+                            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${
+                              active ? 'bg-brand text-white shadow-sm shadow-brand/20' : 'bg-slate-100 text-slate-500 group-hover:bg-brand/10 group-hover:text-brand'
                             }`}
                           >
                             <Icon className="h-5 w-5" aria-hidden />
                           </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-bold text-slate-900">{ROLE_LABELS[opt.role]}</span>
-                            <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{opt.desc}</span>
-                          </span>
+                          <span className="text-[12px] font-bold text-slate-800 leading-tight">{ROLE_LABELS[opt.role]}</span>
+                          {active && (
+                            <motion.div
+                              layoutId="role-active-indicator"
+                              className="absolute inset-0 rounded-[1.25rem] border-2 border-brand"
+                              initial={false}
+                              transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                            />
+                          )}
                         </button>
                       )
                     })}
@@ -401,9 +365,9 @@ export function AuthEntryPage() {
                 </div>
               ) : null}
 
-              <GlassPanel className="space-y-4 border-slate-200/90 p-4 ring-1 ring-slate-100/90">
+              <div className="space-y-3 px-6">
                 <AuthField
-                  label="Mobile number"
+                  label="Mobile Number"
                   hint={
                     mode === 'register' ? (
                       <span className={`text-xs tabular-nums ${phoneComplete ? 'font-bold text-brand' : 'text-slate-400'}`}>
@@ -413,13 +377,13 @@ export function AuthEntryPage() {
                   }
                 >
                   <div
-                    className={`flex overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition focus-within:ring-2 ${
+                    className={`flex items-end border-b-2 transition-colors duration-300 ${
                       banner?.variant === 'error' && phone.length > 0 && !phoneComplete
-                        ? 'ring-amber-300'
-                        : 'focus-within:ring-brand/30'
+                        ? 'border-amber-400'
+                        : 'border-slate-200 focus-within:border-brand'
                     }`}
                   >
-                    <span className="flex items-center border-r border-slate-100 bg-slate-50 px-3.5 text-sm font-bold text-slate-600">
+                    <span className="mb-2 mr-2 text-[15px] font-bold text-slate-600">
                       +91
                     </span>
                     <input
@@ -429,7 +393,7 @@ export function AuthEntryPage() {
                       autoComplete="tel-national"
                       maxLength={10}
                       placeholder="9876543210"
-                      className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3.5 text-lg font-semibold tracking-wide text-slate-900 outline-none"
+                      className="w-full bg-transparent py-2 text-base font-semibold tracking-wide text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-300"
                       value={phone}
                       onChange={(e) => setPhoneDigits(e.target.value)}
                       onKeyDown={(e) => {
@@ -487,13 +451,32 @@ export function AuthEntryPage() {
                     ) : null}
                   </>
                 ) : null}
-              </GlassPanel>
+              </div>
 
-              <FeedbackBanner variant={banner?.variant}>{banner?.message}</FeedbackBanner>
-              <AppPrimaryButton type="button" disabled={busy} className="w-full py-3.5 text-[15px]" onClick={() => void handleSendOtp()}>
-                {busy ? 'Please wait…' : 'Send OTP'}
-                <Phone className="h-4 w-4" aria-hidden />
-              </AppPrimaryButton>
+              <div className="px-6 pt-3 pb-2">
+                <FeedbackBanner variant={banner?.variant}>{banner?.message}</FeedbackBanner>
+                <button 
+                  type="button" 
+                  disabled={busy} 
+                  className="mt-3 w-full rounded-full bg-brand py-3 text-[15px] font-bold text-white shadow-md shadow-brand/20 transition-all hover:bg-brand-active active:scale-95 disabled:opacity-70" 
+                  onClick={() => void handleSendOtp()}
+                >
+                  {busy ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Sign Up'}
+                </button>
+                
+                <div className="mt-4 text-left">
+                  <p className="text-[13px] font-medium text-slate-400">
+                    {mode === 'login' ? 'New member?' : 'Already a member?'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
+                    className="mt-1 text-[15px] font-bold text-brand transition-colors hover:text-brand-active"
+                  >
+                    {mode === 'login' ? 'Sign Up' : 'Sign In'}
+                  </button>
+                </div>
+              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -503,18 +486,16 @@ export function AuthEntryPage() {
               exit={reduce ? false : { opacity: 0, y: -8 }}
               className="space-y-4"
             >
-              <GlassPanel className="border-slate-200/90 p-4 ring-1 ring-slate-100/90">
-                <p className="text-sm text-slate-600">
-                  Code sent to{' '}
-                  <span className="font-bold tabular-nums text-slate-900">+91 {phone}</span>
+              <div className="px-6 pt-4 space-y-6">
+                <p className="text-[14px] font-medium text-slate-500">
+                  Code sent to <span className="font-bold text-slate-900">+91 {phone}</span>
                 </p>
                 {OTP_BYPASS_HINT && p ? (
-                  <p className="mt-2 rounded-xl border border-brand/20 bg-brand/5 px-3 py-2 text-xs font-semibold text-brand">
-                    Demo: OTP is the last 6 digits of your number ({demoOtpFromPhone(p)}).
+                  <p className="rounded-xl border border-brand/20 bg-brand/5 px-3 py-2 text-[13px] font-semibold text-brand">
+                    Demo: OTP is {demoOtpFromPhone(p)}
                   </p>
                 ) : null}
-                <p className="mt-4 mb-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">Enter OTP</p>
-                <div className="flex gap-2" onPaste={handleOtpPaste}>
+                <div className="mt-6 flex justify-between gap-2" onPaste={handleOtpPaste}>
                   {otpCells.map((digit, i) => (
                     <input
                       key={i}
@@ -526,7 +507,7 @@ export function AuthEntryPage() {
                       autoComplete={i === 0 ? 'one-time-code' : 'off'}
                       maxLength={1}
                       aria-label={`OTP digit ${i + 1} of 6`}
-                      className="min-w-0 flex-1 rounded-2xl border border-slate-200/90 bg-white py-4 text-center font-mono text-xl font-bold tabular-nums text-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-brand/35"
+                      className="h-12 w-11 border-b-2 border-slate-200 bg-transparent text-center font-mono text-2xl font-bold tabular-nums text-slate-900 outline-none transition-colors focus:border-brand"
                       value={digit}
                       onPaste={handleOtpPaste}
                       onChange={(e) => {
@@ -581,30 +562,31 @@ export function AuthEntryPage() {
                     />
                   ))}
                 </div>
-              </GlassPanel>
+              </div>
 
-              <FeedbackBanner variant={banner?.variant}>{banner?.message}</FeedbackBanner>
-              <AppPrimaryButton
-                type="button"
-                disabled={busy}
-                className="w-full py-3.5 text-[15px]"
-                onClick={() => void handleVerifyOtp()}
-              >
-                {busy ? 'Verifying…' : mode === 'login' ? 'Verify & login' : 'Verify & continue'}
-                <User className="h-4 w-4" aria-hidden />
-              </AppPrimaryButton>
-              <button
-                type="button"
-                className="w-full py-2 text-sm font-bold text-brand"
-                onClick={resetFlowToForm}
-              >
-                Edit mobile number
-              </button>
+              <div className="px-6 pt-4 pb-2">
+                <FeedbackBanner variant={banner?.variant}>{banner?.message}</FeedbackBanner>
+                <button
+                  type="button"
+                  disabled={busy}
+                  className="mt-4 w-full rounded-full bg-brand py-3 text-[15px] font-bold text-white shadow-md shadow-brand/20 transition-all hover:bg-brand-active active:scale-95 disabled:opacity-70"
+                  onClick={() => void handleVerifyOtp()}
+                >
+                  {busy ? 'Verifying…' : 'Verify'}
+                </button>
+                <button
+                  type="button"
+                  className="mt-4 w-full py-2 text-[14px] font-bold text-brand transition-colors hover:text-brand-active"
+                  onClick={resetFlowToForm}
+                >
+                  Change mobile number
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-[12px] text-slate-500">
           Admin?{' '}
           <Link to="/admin/login" className="font-bold text-brand hover:underline">
             Web login

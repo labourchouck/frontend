@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useDispatch, useSelector } from 'react-redux'
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import {
   Check,
   CheckCircle2,
@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react'
 import { bookingsApi } from '../../api/bookingsApi.js'
+import { paymentsApi } from '../../api/paymentsApi.js'
 import { ApiError } from '../../api/http.js'
 import { useSocket } from '../../context/SocketContext.jsx'
 import { setActiveBooking, updateBookingStatus as updateBookingStatusAction, clearActiveBooking } from '../../store/slices/activeBookingSlice.js'
@@ -32,6 +33,7 @@ export function JobTracking() {
   const { bookingId } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const user = useSelector((s) => s.auth.user)
   const socket = useSocket()
   const reduce = useReducedMotion()
 
@@ -39,6 +41,9 @@ export function JobTracking() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showReview, setShowReview] = useState(false)
+  const [showBilling, setShowBilling] = useState(false)
+  const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false)
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
   const [labourLocation, setLabourLocation] = useState(null)
 
   // Fetch booking on mount
@@ -52,6 +57,13 @@ export function JobTracking() {
         if (b) {
           setBooking(b)
           dispatch(setActiveBooking({ bookingId: b._id, status: b.status }))
+          if (b.status === 'COMPLETED') {
+            if (b.paymentMethod === 'ONLINE' && b.paymentStatus === 'PAID') {
+              setShowReview(true)
+            } else {
+              setShowBilling(true)
+            }
+          }
         }
       })
       .catch((err) => {
@@ -83,11 +95,18 @@ export function JobTracking() {
 
     const handleStatusUpdate = (data) => {
       if (data.bookingId === bookingId) {
-        setBooking((prev) => prev ? { ...prev, status: data.status } : prev)
+        setBooking((prev) => {
+          const updated = prev ? { ...prev, status: data.status } : null
+          if (data.status === 'COMPLETED' && updated) {
+            if (updated.paymentMethod === 'ONLINE' && updated.paymentStatus === 'PAID') {
+              setShowReview(true)
+            } else {
+              setShowBilling(true)
+            }
+          }
+          return updated
+        })
         dispatch(updateBookingStatusAction(data.status))
-        if (data.status === 'COMPLETED') {
-          setShowReview(true)
-        }
       }
     }
 
@@ -119,6 +138,80 @@ export function JobTracking() {
     dispatch(clearActiveBooking())
     navigate('/app/my-bookings', { replace: true })
   }, [dispatch, navigate])
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true)
+        return
+      }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  const handlePayment = async () => {
+    try {
+      setPaymentProcessing(true)
+      const res = await loadRazorpay()
+      if (!res) {
+        alert('Razorpay SDK failed to load. Are you online?')
+        setPaymentProcessing(false)
+        return
+      }
+
+      const orderRes = await paymentsApi.initPayment({
+        amount: booking.totalAmount,
+        purpose: 'BOOKING',
+        bookingId: booking._id,
+      })
+      const { order } = orderRes.data
+
+      const options = {
+        key: process.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB', // fallback
+        amount: order.amount,
+        currency: order.currency,
+        name: 'LabourChowck',
+        description: `Payment for Booking`,
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            await paymentsApi.verifyPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            })
+            // Payment verified successfully!
+            setBooking(prev => prev ? { ...prev, paymentStatus: 'PAID' } : prev)
+            setShowBilling(false)
+            setShowPaymentSuccessModal(true)
+          } catch (err) {
+            alert('Payment verification failed')
+          }
+        },
+        prefill: {
+          name: user?.fullName || '',
+          contact: user?.phone || '',
+          email: user?.email || ''
+        },
+        theme: { color: '#f97316' }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', function (response) {
+        alert(response.error.description || 'Payment failed')
+      })
+      rzp.open()
+    } catch (err) {
+      console.error(err)
+      alert(err?.response?.data?.message || 'Failed to initiate checkout')
+    } finally {
+      setPaymentProcessing(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -288,19 +381,160 @@ export function JobTracking() {
       </GlassPanel>
 
       {/* OTP Display for Customer */}
-      {(booking.status === 'EN_ROUTE' && booking.startOtp) ? (
-        <GlassPanel className="border-brand/20 bg-brand/5 p-4 text-center">
-          <p className="text-xs font-bold uppercase tracking-wider text-brand">Start OTP</p>
-          <p className="mt-2 text-3xl font-black tracking-[0.2em] text-slate-900">{booking.startOtp}</p>
-          <p className="mt-1 text-xs font-semibold text-slate-600">Share this with the worker to start the job.</p>
-        </GlassPanel>
-      ) : (booking.status === 'STARTED' && booking.completionOtp) ? (
-        <GlassPanel className="border-emerald-500/20 bg-emerald-50 p-4 text-center">
-          <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Completion OTP</p>
-          <p className="mt-2 text-3xl font-black tracking-[0.2em] text-slate-900">{booking.completionOtp}</p>
-          <p className="mt-1 text-xs font-semibold text-slate-600">Share this with the worker when the job is done.</p>
-        </GlassPanel>
-      ) : null}
+      {(() => {
+        const isMultiDay = booking.durationKind === 'multi_day'
+        let currentDayLog = null
+        let isDailyStartRequired = false
+        let isDailyEndRequired = false
+        if (isMultiDay && booking.attendanceLog) {
+          currentDayLog = booking.attendanceLog.find(log => !log.endOtpVerifiedAt) || booking.attendanceLog[booking.attendanceLog.length - 1]
+          if (currentDayLog) {
+            isDailyStartRequired = !currentDayLog.startOtpVerifiedAt
+            isDailyEndRequired = !!currentDayLog.startOtpVerifiedAt && !currentDayLog.endOtpVerifiedAt
+          }
+        }
+
+        if (isMultiDay && currentDayLog && (isDailyStartRequired || isDailyEndRequired)) {
+          return (
+            <GlassPanel className={`border-${isDailyStartRequired ? 'brand' : 'emerald-500'}/20 bg-${isDailyStartRequired ? 'brand' : 'emerald-500'}/5 p-4 text-center`}>
+              <p className={`text-xs font-bold uppercase tracking-wider text-${isDailyStartRequired ? 'brand' : 'emerald-600'}`}>Day {currentDayLog.dayNumber} {isDailyStartRequired ? 'Start' : 'End'} OTP</p>
+              <p className="mt-2 text-3xl font-black tracking-[0.2em] text-slate-900">{isDailyStartRequired ? currentDayLog.startOtp : currentDayLog.endOtp}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-600">Share this with the worker to {isDailyStartRequired ? 'start' : 'end'} the shift for the day.</p>
+            </GlassPanel>
+          )
+        }
+
+        if (!isMultiDay && booking.status === 'EN_ROUTE' && booking.startOtp) {
+          return (
+            <GlassPanel className="border-brand/20 bg-brand/5 p-4 text-center">
+              <p className="text-xs font-bold uppercase tracking-wider text-brand">Start OTP</p>
+              <p className="mt-2 text-3xl font-black tracking-[0.2em] text-slate-900">{booking.startOtp}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-600">Share this with the worker to start the job.</p>
+            </GlassPanel>
+          )
+        }
+        if (!isMultiDay && booking.status === 'STARTED' && booking.completionOtp) {
+          return (
+            <GlassPanel className="border-emerald-500/20 bg-emerald-50 p-4 text-center">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Completion OTP</p>
+              <p className="mt-2 text-3xl font-black tracking-[0.2em] text-slate-900">{booking.completionOtp}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-600">Share this with the worker when the job is done.</p>
+            </GlassPanel>
+          )
+        }
+        return null
+      })()}
+
+      {/* Billing Modal */}
+      <AnimatePresence>
+        {showBilling && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm overflow-hidden rounded-[2rem] bg-white p-6 shadow-2xl relative"
+            >
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Job Complete!</h3>
+              <p className="text-sm font-medium text-slate-600 mb-6">
+                Please review your billing details for this booking.
+              </p>
+
+              <div className="rounded-xl bg-slate-50 p-4 border border-slate-100 space-y-3 mb-6">
+                <div className="flex justify-between items-center text-sm font-semibold text-slate-700">
+                  <span>Service</span>
+                  <span>{booking.serviceId?.name || booking.type}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm font-semibold text-slate-700">
+                  <span>Duration</span>
+                  <span>{booking.durationKind === 'multi_day' ? `${booking.durationDays} Days` : 'Single Day'}</span>
+                </div>
+                {booking.paymentMethod === 'ONLINE' && booking.platformFee > 0 && (
+                  <div className="flex justify-between items-center text-sm font-semibold text-slate-700">
+                    <span>Platform Fee</span>
+                    <span>₹{booking.platformFee}</span>
+                  </div>
+                )}
+                <div className="pt-3 border-t border-slate-200 mt-3 flex justify-between items-center">
+                  <span className="text-base font-bold text-slate-900">Total Amount</span>
+                  <span className="text-xl font-black text-brand">₹{booking.totalAmount}</span>
+                </div>
+              </div>
+
+              {booking.paymentMethod === 'CASH' ? (
+                <>
+                  <p className="text-center text-sm font-bold text-emerald-600 mb-6 bg-emerald-50 py-2 rounded-lg border border-emerald-100">
+                    Please pay ₹{booking.totalAmount} directly to the worker in cash.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowBilling(false)
+                      setShowReview(true)
+                    }}
+                    className="flex w-full items-center justify-center rounded-2xl bg-brand py-3.5 text-base font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-active active:scale-95"
+                  >
+                    Continue to Review
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handlePayment}
+                  disabled={paymentProcessing}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-base font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-active active:scale-95 disabled:opacity-70"
+                >
+                  {paymentProcessing ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    'Proceed to Payment'
+                  )}
+                </button>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Payment Success Modal */}
+      <AnimatePresence>
+        {showPaymentSuccessModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm overflow-hidden rounded-[2rem] bg-white p-6 text-center shadow-2xl"
+            >
+              {/* Decorative background blob */}
+              <div className="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-brand/10 blur-3xl" aria-hidden />
+              <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden />
+              
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.1, bounce: 0.5 }}
+                className="mx-auto mt-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 ring-8 ring-emerald-50 relative z-10"
+              >
+                <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+              </motion.div>
+
+              <h2 className="mt-6 text-2xl font-black text-slate-900 relative z-10">Payment Successful!</h2>
+              <p className="mt-2 text-sm text-slate-600 relative z-10">
+                Your payment for this booking has been processed securely.
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowPaymentSuccessModal(false)
+                  setShowReview(true)
+                }}
+                className="relative z-10 mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-active active:scale-95"
+              >
+                Continue to Review
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Review Modal */}
       <ReviewModal

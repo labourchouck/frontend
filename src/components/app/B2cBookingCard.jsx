@@ -15,7 +15,9 @@ export function B2cBookingCard({ booking, isLabour }) {
   const navigate = useNavigate()
   const status = (booking.status || 'CREATED').toUpperCase()
   const subcategory = typeof booking.subcategoryId === 'object' ? booking.subcategoryId : null
-  const isActive = status !== 'COMPLETED' && status !== 'CANCELLED'
+  const isUnpaid = booking.paymentMethod === 'ONLINE' && booking.paymentStatus !== 'PAID'
+  const isUnreviewed = !booking.review
+  const isActive = status !== 'CANCELLED' && (status !== 'COMPLETED' || isUnpaid || isUnreviewed)
 
   return (
     <GlassPanel

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle,
   ArrowRight,
@@ -16,6 +16,7 @@ import {
   Phone,
   Star,
   Zap,
+  Loader2,
 } from 'lucide-react'
 import { AppStackScreenHeader } from '../../../components/app/AppStackScreenHeader.jsx'
 import { AppButton } from '../../../components/app-ui/buttons/AppButton.jsx'
@@ -33,6 +34,7 @@ import { BookingServiceHighlight } from '../../../components/app/booking/Booking
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 import { useBookingSocket } from '../../../hooks/useBookingSocket.js'
 import { useAuth } from '../../../hooks/useAuth.js'
+import { paymentsApi } from '../../../api/paymentsApi.js'
 import {
   PAYMENT_METHODS,
   durationKindLabel,
@@ -96,7 +98,10 @@ export function IndividualBookingFlowPage() {
   const [calculatedBill, setCalculatedBill] = useState(null)
   const [isCalculating, setIsCalculating] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [authDrawerOpen, setAuthDrawerOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
+  const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false)
 
   const [timeSlots, setTimeSlots] = useState([])
   const [timeSlotsLoading, setTimeSlotsLoading] = useState(true)
@@ -110,6 +115,8 @@ export function IndividualBookingFlowPage() {
   const markerInstance = useRef(null)
   
   const [activeSubscription, setActiveSubscription] = useState(null)
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false)
+  const [subscriptionModalMsg, setSubscriptionModalMsg] = useState('')
 
   const { bookingEvent } = useBookingSocket(activeBookingId)
 
@@ -212,13 +219,13 @@ export function IndividualBookingFlowPage() {
       const newStatus = bookingEvent.data?.status
       setActiveBooking(prev => prev ? { ...prev, status: newStatus } : null)
       if (newStatus === 'COMPLETED') {
-        // Refresh booking details then show review prompt
+        // Refresh booking details then show payment step
         if (realUser) {
           bookingsApi.getBookingStatus(activeBookingId).then(res => {
             if (res.data?.booking) setActiveBooking(res.data.booking)
           }).catch(() => { })
         }
-        setReviewOpen(true)
+        goStep('payment')
       }
     }
   }, [bookingEvent, activeBookingId, goStep, realUser])
@@ -489,7 +496,7 @@ export function IndividualBookingFlowPage() {
         setFormError('Pick a start time.')
         return false
       }
-      if (!draft.endTime) {
+      if (draft.durationKind !== 'multi_day' && !draft.endTime) {
         setFormError('Pick an end time.')
         return false
       }
@@ -497,7 +504,7 @@ export function IndividualBookingFlowPage() {
         setFormError('Start time cannot be in the past.')
         return false
       }
-      if (draft.timeSlot >= draft.endTime) {
+      if (draft.durationKind !== 'multi_day' && draft.timeSlot >= draft.endTime) {
         setFormError('End time must be after start time.')
         return false
       }
@@ -566,7 +573,12 @@ export function IndividualBookingFlowPage() {
       goStep(draft.bookingType === 'scheduled' ? 'scheduled_success' : 'searching')
     } catch (err) {
       console.error(err)
-      alert(err.message || 'Failed to create booking')
+      if (err.message && err.message.includes('subscription plan')) {
+        setSubscriptionModalMsg(err.message)
+        setSubscriptionModalOpen(true)
+      } else {
+        alert(err.message || 'Failed to create booking')
+      }
     } finally {
       setIsCreating(false)
     }
@@ -811,20 +823,96 @@ export function IndividualBookingFlowPage() {
             </div>
             <BookingPrimaryButton
               type="button"
+              disabled={paymentProcessing}
               onClick={async () => {
-                if (activeBookingId) {
+                if (draft.paymentMethod === 'ONLINE') {
+                  setPaymentProcessing(true)
                   try {
-                    await bookingsApi.updatePaymentMethod(activeBookingId, draft.paymentMethod || 'CASH')
+                    // Update to ONLINE just in case
+                    if (activeBooking?.paymentMethod !== 'ONLINE') {
+                      await bookingsApi.updatePaymentMethod(activeBookingId, 'ONLINE')
+                    }
+                    
+                    // load Razorpay
+                    let rzpLoaded = window.Razorpay
+                    if (!rzpLoaded) {
+                      rzpLoaded = await new Promise((resolve) => {
+                        const script = document.createElement('script')
+                        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+                        script.onload = () => resolve(true)
+                        script.onerror = () => resolve(false)
+                        document.body.appendChild(script)
+                      })
+                    }
+                    if (!rzpLoaded) {
+                      alert('Razorpay SDK failed to load. Are you online?')
+                      setPaymentProcessing(false)
+                      return
+                    }
+
+                    const orderRes = await paymentsApi.initPayment({
+                      amount: activeBooking?.totalAmount || booking?.totalAmount || 0,
+                      purpose: 'BOOKING',
+                      bookingId: activeBookingId,
+                    })
+                    const { order } = orderRes.data
+
+                    const options = {
+                      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB',
+                      amount: order.amount,
+                      currency: order.currency,
+                      name: 'LabourChowck',
+                      description: `Payment for Booking`,
+                      order_id: order.id,
+                      handler: async function (response) {
+                        try {
+                          await paymentsApi.verifyPayment({
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature,
+                          })
+                          // Success!
+                          setActiveBooking(prev => prev ? { ...prev, paymentStatus: 'PAID' } : prev)
+                          setShowPaymentSuccessModal(true)
+                        } catch (err) {
+                          alert('Payment verification failed')
+                        }
+                      },
+                      prefill: {
+                        name: realUser?.fullName || '',
+                        contact: realUser?.phone || '',
+                        email: realUser?.email || ''
+                      },
+                      theme: { color: '#f97316' }
+                    }
+
+                    const rzp = new window.Razorpay(options)
+                    rzp.on('payment.failed', function (response) {
+                      alert(response.error.description || 'Payment failed')
+                    })
+                    rzp.open()
+
                   } catch (e) {
-                    console.error('Failed to update payment method:', e)
+                    console.error('Payment Error:', e)
+                    alert(e?.response?.data?.message || 'Failed to initiate checkout')
+                  } finally {
+                    setPaymentProcessing(false)
                   }
+                } else {
+                  if (activeBookingId) {
+                    try {
+                      await bookingsApi.updatePaymentMethod(activeBookingId, 'CASH')
+                    } catch (e) {
+                      console.error('Failed to update payment method:', e)
+                    }
+                  }
+                  clearBookingDraft()
+                  setReviewOpen(true)
                 }
-                clearBookingDraft()
-                navigate(`/app/my-bookings`)
               }}
             >
-              <CheckCircle2 className="h-4 w-4" aria-hidden />
-              Confirm payment
+              {paymentProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" aria-hidden />}
+              {draft.paymentMethod === 'ONLINE' ? 'Proceed to payment' : 'Confirm payment'}
             </BookingPrimaryButton>
           </motion.div>
         ) : (
@@ -846,13 +934,59 @@ export function IndividualBookingFlowPage() {
           open={reviewOpen}
           bookingId={activeBookingId}
           workerName={activeBooking?.laborId?.fullName || activeBooking?.laborId?.name || ''}
-          onClose={() => setReviewOpen(false)}
+          onClose={() => {
+            setReviewOpen(false)
+            clearBookingDraft()
+            window.location.href = '/app'
+          }}
           onSubmitted={() => {
             setReviewOpen(false)
             clearBookingDraft()
-            navigate('/app/my-bookings', { replace: true })
+            window.location.href = '/app'
           }}
         />
+
+        <AnimatePresence>
+          {showPaymentSuccessModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-sm overflow-hidden rounded-[2rem] bg-white p-6 text-center shadow-2xl"
+              >
+                {/* Decorative background blob */}
+                <div className="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-brand/10 blur-3xl" aria-hidden />
+                <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden />
+                
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", delay: 0.1, bounce: 0.5 }}
+                  className="mx-auto mt-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 ring-8 ring-emerald-50 relative z-10"
+                >
+                  <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+                </motion.div>
+
+                <h2 className="mt-6 text-2xl font-black text-slate-900 relative z-10">Payment Successful!</h2>
+                <p className="mt-2 text-sm text-slate-600 relative z-10">
+                  Your payment for this booking has been processed securely.
+                </p>
+
+                <button
+                  onClick={() => {
+                    setShowPaymentSuccessModal(false)
+                    clearBookingDraft()
+                    setReviewOpen(true)
+                  }}
+                  className="relative z-10 mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-active active:scale-95"
+                >
+                  Continue to Review
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     )
   }
@@ -1007,12 +1141,12 @@ export function IndividualBookingFlowPage() {
               ) : null}
             </motion.div>
 
-            <motion.div>
-              <FieldLabel>Working duration</FieldLabel>
+            {draft.bookingType !== 'instant' && (
+              <motion.div>
+                <FieldLabel>Working duration</FieldLabel>
               <div className="flex flex-wrap gap-2">
                 {[
                   { id: 'few_hours', label: 'Few hours' },
-                  { id: 'full_day', label: 'Full day' },
                   { id: 'multi_day', label: 'Multi day' },
                 ].map((d) => (
                   <button
@@ -1064,7 +1198,8 @@ export function IndividualBookingFlowPage() {
                   </div>
                 </div>
               ) : null}
-            </motion.div>
+              </motion.div>
+            )}
 
             {draft.bookingType === 'instant' ? (
               <div className="space-y-3">
@@ -1091,7 +1226,7 @@ export function IndividualBookingFlowPage() {
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black"
                   />
                 </motion.div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className={draft.durationKind === 'multi_day' ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}>
                   <motion.div>
                     <FieldLabel htmlFor="scheduled-time">Start Time</FieldLabel>
                     <input
@@ -1103,17 +1238,19 @@ export function IndividualBookingFlowPage() {
                       className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black outline-none focus:border-brand focus:ring-1"
                     />
                   </motion.div>
-                  <motion.div>
-                    <FieldLabel htmlFor="scheduled-end-time">End Time</FieldLabel>
-                    <input
-                      id="scheduled-end-time"
-                      name="endTime"
-                      type="time"
-                      value={draft.endTime || ''}
-                      onChange={(e) => syncDraft({ endTime: e.target.value })}
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black outline-none focus:border-brand focus:ring-1"
-                    />
-                  </motion.div>
+                  {draft.durationKind !== 'multi_day' && (
+                    <motion.div>
+                      <FieldLabel htmlFor="scheduled-end-time">End Time</FieldLabel>
+                      <input
+                        id="scheduled-end-time"
+                        name="endTime"
+                        type="time"
+                        value={draft.endTime || ''}
+                        onChange={(e) => syncDraft({ endTime: e.target.value })}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-black outline-none focus:border-brand focus:ring-1"
+                      />
+                    </motion.div>
+                  )}
                 </div>
               </div>
             )}
@@ -1257,6 +1394,57 @@ export function IndividualBookingFlowPage() {
           </motion.div>
           )
         ) : null}
+
+        <AnimatePresence>
+          {subscriptionModalOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm"
+                onClick={() => setSubscriptionModalOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="fixed left-1/2 top-1/2 z-[101] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 p-4"
+              >
+                <div className="overflow-hidden rounded-3xl bg-white shadow-2xl">
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-6 text-center">
+                    <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white/20">
+                      <AlertCircle className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Limit Reached</h3>
+                  </div>
+                  <div className="p-6 text-center">
+                    <p className="mb-6 text-sm font-medium text-slate-600">
+                      {subscriptionModalMsg}
+                    </p>
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => {
+                          setSubscriptionModalOpen(false)
+                          navigate('/app/subscriptions')
+                        }}
+                        className="w-full rounded-xl bg-brand py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/30 hover:bg-brand-dark"
+                      >
+                        View Subscription Plans
+                      </button>
+                      <button
+                        onClick={() => setSubscriptionModalOpen(false)}
+                        className="w-full rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         <BookingTypeSheet
           open={typeSheetOpen}
