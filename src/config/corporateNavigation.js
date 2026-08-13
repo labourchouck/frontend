@@ -26,6 +26,9 @@ export const corporateNavigation = {
     { id: 'billing', to: '/corporate/billing', label: 'Billing & invoices', icon: FileText },
     { id: 'analytics', to: '/corporate/analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'support', to: '/corporate/support', label: 'Support', icon: LifeBuoy },
+    { id: 'terms', to: '/corporate/terms', label: 'Terms & Conditions', icon: FileText },
+    { id: 'privacy-policy', to: '/corporate/privacy-policy', label: 'Privacy Policy', icon: FileText },
+    { id: 'faq', to: '/corporate/faq', label: 'FAQs', icon: FileText },
     { id: 'profile', to: '/corporate/profile', label: 'Profile & KYC', icon: UserRound },
   ],
 }
@@ -38,6 +41,9 @@ export function getCorporateTitle(pathname) {
   if (pathname.startsWith('/corporate/billing')) return 'Billing'
   if (pathname.startsWith('/corporate/analytics')) return 'Analytics'
   if (pathname.startsWith('/corporate/support')) return 'Support'
+  if (pathname.startsWith('/corporate/terms')) return 'Terms'
+  if (pathname.startsWith('/corporate/privacy-policy')) return 'Privacy Policy'
+  if (pathname.startsWith('/corporate/faq')) return 'FAQs'
   if (pathname.startsWith('/corporate/profile')) return 'Profile'
   return 'Dashboard'
 }

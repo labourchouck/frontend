@@ -10,6 +10,9 @@ import { CorporateAnalyticsPage } from '../panels/corporate/pages/CorporateAnaly
 import { CorporateProfilePage } from '../panels/corporate/pages/CorporateProfilePage.jsx'
 import { CorporateSupportPage } from '../panels/corporate/pages/CorporateSupportPage.jsx'
 import { CorporateSubscriptionPage } from '../panels/corporate/pages/CorporateSubscriptionPage.jsx'
+import { CorporateTermsPage } from '../panels/corporate/pages/CorporateTermsPage.jsx'
+import { CorporatePrivacyPolicyPage } from '../panels/corporate/pages/CorporatePrivacyPolicyPage.jsx'
+import { CorporateFaqPage } from '../panels/corporate/pages/CorporateFaqPage.jsx'
 import { BuildMartHomePage } from '../pages/app/buildmart/BuildMartHomePage.jsx'
 import { BuildMartProductPage } from '../pages/app/buildmart/BuildMartProductPage.jsx'
 
@@ -27,6 +30,9 @@ export const corporateChildRoutes = (
     <Route path="profile" element={<CorporateProfilePage />} />
     <Route path="support" element={<CorporateSupportPage />} />
     <Route path="subscription" element={<CorporateSubscriptionPage />} />
+    <Route path="terms" element={<CorporateTermsPage />} />
+    <Route path="privacy-policy" element={<CorporatePrivacyPolicyPage />} />
+    <Route path="faq" element={<CorporateFaqPage />} />
     <Route path="mart" element={<BuildMartHomePage />} />
     <Route path="mart/product/:productId" element={<BuildMartProductPage />} />
   </>

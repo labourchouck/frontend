@@ -1,5 +1,5 @@
-import React from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, FileText, Loader2, Download, Printer } from 'lucide-react'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
@@ -9,6 +9,7 @@ import {
   useVerifyPaymentMutation,
   useGetRequestQuery
 } from '../../../store/api/workforceApi.js'
+import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 
 function formatMoney(n) {
   if (n == null) return '—'
@@ -18,6 +19,8 @@ function formatMoney(n) {
 export function CorporateInvoicePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [showReviewModal, setShowReviewModal] = useState(false)
   
   const { data: invoicesData, isLoading: invLoading } = useGetCorporateInvoicesQuery()
   const [initPayment, { isLoading: isInitLoading }] = useInitPaymentMutation()
@@ -49,8 +52,9 @@ export function CorporateInvoicePage() {
       }
 
       await verifyPayment(mockRazorpayResponse).unwrap()
-      alert('Payment successful!')
-      navigate('/corporate/billing')
+      // Remove review=true from URL if present to avoid reopening on refresh
+      setSearchParams({})
+      setShowReviewModal(true)
     } catch (err) {
       console.error('Payment failed', err)
       alert('Payment failed. Please try again.')
@@ -286,6 +290,15 @@ export function CorporateInvoicePage() {
           )}
         </div>
       </div>
+      
+      <BookingReviewModal 
+        open={showReviewModal}
+        bookingId={reqId}
+        revieweeId={request?.preferredVendorId?._id}
+        workerName={request?.preferredVendorId?.contractorProfile?.businessName || request?.preferredVendorId?.fullName || 'Vendor'}
+        onClose={() => navigate('/corporate')}
+        onSubmitted={() => navigate('/corporate')}
+      />
     </div>
   )
 }

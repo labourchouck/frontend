@@ -1,22 +1,192 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowLeft, CheckCircle2, LifeBuoy, MessageSquare } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Banknote,
+  Building2,
+  CalendarClock,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  FileText,
+  HardHat,
+  Headphones,
+  LifeBuoy,
+  Mail,
+  Menu,
+  MessageSquare,
+  Phone,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  Wallet,
+} from 'lucide-react'
+import { useAuth } from '../../../hooks/useAuth.js'
 import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
-import { VendorCard, VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
+import { AppSectionHeader } from '../../../components/app-ui/layout/AppSectionHeader.jsx'
+import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
+import { complaintsApi } from '../../../api/complaintsApi.js'
+import { VendorPageLayout } from '../../../components/vendor/VendorPageLayout.jsx'
 
 const TOPICS = [
-  { id: 'supply', label: 'Supply jobs' },
-  { id: 'workforce', label: 'Workforce' },
-  { id: 'payment', label: 'Payouts' },
+  { id: 'supply', label: 'Supply & allocation', desc: 'Admin assignments, crew counts' },
+  { id: 'workforce', label: 'Workforce', desc: 'Onboarding, replacements' },
+  { id: 'client', label: 'Client sites', desc: 'Coordination, escalations' },
+  { id: 'payment', label: 'Vendor payments', desc: 'Settlement, disputes' },
 ]
+
+const TOPIC_ICONS = {
+  supply: ClipboardList,
+  workforce: HardHat,
+  client: Building2,
+  payment: Wallet,
+}
+
+const WORKFLOW_STEPS = [
+  { id: 'received', label: 'Received', short: 'In queue' },
+  { id: 'triaged', label: 'Triaged', short: 'Priority set' },
+  { id: 'assigned', label: 'Assigned', short: 'Owner' },
+  { id: 'resolution', label: 'Resolution', short: 'Fix in progress' },
+  { id: 'closed', label: 'Closed', short: 'Done' },
+]
+
+function SupportWorkflowTimeline() {
+  return (
+    <GlassPanel className="border-slate-200/90 p-4 ring-1 ring-slate-100/90">
+      <div className="flex items-center gap-2">
+        <Clock className="h-4 w-4 text-brand" aria-hidden />
+        <p className="text-sm font-extrabold text-slate-900">What happens next</p>
+      </div>
+      <ol className="mt-4 space-y-0">
+        {WORKFLOW_STEPS.map((step, i) => {
+          const active = i === 0
+          const upcoming = i > 0
+          return (
+            <li key={step.id} className="relative flex gap-3 pb-4 last:pb-0">
+              {i < WORKFLOW_STEPS.length - 1 ? (
+                <span
+                  className={`absolute left-[0.65rem] top-7 h-[calc(100%-0.25rem)] w-px ${
+                    active ? 'bg-brand/40' : 'bg-slate-200'
+                  }`}
+                  aria-hidden
+                />
+              ) : null}
+              <span
+                className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ring-2 ring-white ${
+                  active
+                    ? 'bg-brand text-white shadow-md shadow-brand/30'
+                    : upcoming
+                      ? 'bg-slate-100 text-slate-400 ring-slate-100'
+                      : 'bg-emerald-500 text-white'
+                }`}
+              >
+                {active ? i + 1 : upcoming ? '' : <CheckCircle2 className="h-3 w-3" />}
+              </span>
+              <div className="min-w-0 flex-1 pt-0.5">
+                <p className={`text-sm font-bold ${active ? 'text-slate-900' : 'text-slate-500'}`}>{step.label}</p>
+                <p className="text-[11px] text-slate-500">{step.short}</p>
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+      <p className="mt-1 rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-relaxed text-slate-500 ring-1 ring-slate-100">
+        SLA targets and in-app status updates appear once ticketing is connected.
+      </p>
+    </GlassPanel>
+  )
+}
+
+function TopicChip({ topic, active, onSelect, reduce, index }) {
+  const Icon = TOPIC_ICONS[topic.id] ?? MessageSquare
+  return (
+    <motion.button
+      type="button"
+      onClick={onSelect}
+      initial={reduce ? false : { opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04 }}
+      className={`flex w-full min-w-0 flex-col rounded-2xl border px-3.5 py-3 text-left transition active:scale-[0.98] ${
+        active
+          ? 'border-brand/45 bg-linear-to-br from-brand/12 via-white to-emerald-50/40 shadow-[0_12px_28px_-18px_rgba(28,175,98,0.45)] ring-2 ring-brand/20'
+          : 'border-slate-200/90 bg-white hover:border-brand/25 hover:shadow-md'
+      }`}
+    >
+      <span
+        className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+          active ? 'bg-brand text-white shadow-sm' : 'bg-slate-100 text-slate-600'
+        }`}
+      >
+        <Icon className="h-4 w-4" aria-hidden />
+      </span>
+      <p className="mt-2 text-sm font-bold text-slate-900">{topic.label}</p>
+      <p className="mt-0.5 line-clamp-2 text-[10px] font-medium leading-snug text-slate-500">{topic.desc}</p>
+    </motion.button>
+  )
+}
+
+function FieldLabel({ children }) {
+  return (
+    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">{children}</label>
+  )
+}
 
 export function VendorSupportPage() {
   const reduce = useReducedMotion()
-  const [topicId, setTopicId] = useState(TOPICS[0].id)
+
+  const [topicId, setTopicId] = useState(TOPICS[0]?.id ?? 'supply')
   const [subject, setSubject] = useState('')
   const [details, setDetails] = useState('')
   const [sent, setSent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [activeTab, setActiveTab] = useState('new') // 'new' | 'history'
+  const [myComplaints, setMyComplaints] = useState(null) // null = not yet loaded
+  const [complaintsLoading, setComplaintsLoading] = useState(false)
+
+  const loadMyComplaints = async () => {
+    if (complaintsLoading) return
+    setComplaintsLoading(true)
+    try {
+      const res = await complaintsApi.getMyComplaints()
+      setMyComplaints(res.data?.complaints ?? res.data?.items ?? [])
+    } catch {
+      setMyComplaints([])
+    } finally {
+      setComplaintsLoading(false)
+    }
+  }
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    if (tab === 'history' && myComplaints === null) loadMyComplaints()
+  }
+
+  const topicMeta = useMemo(() => TOPICS.find((t) => t.id === topicId) ?? TOPICS[0], [topicId])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!subject.trim() || !details.trim()) return
+    setFormError('')
+    setSubmitting(true)
+    try {
+      await complaintsApi.submitComplaint({
+        title: subject.trim(),
+        description: details.trim(),
+      })
+      setSent(true)
+      if (myComplaints !== null) loadMyComplaints()
+    } catch (err) {
+      setFormError(err?.message || 'Failed to submit. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const hero = (
     <section className="px-4 pb-1">
@@ -25,7 +195,7 @@ export function VendorSupportPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <LifeBuoy className="h-8 w-8 shrink-0" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-extrabold">Support</h1>
           <p className="text-xs text-white/75">Supply, crew & payouts</p>
         </div>
@@ -34,62 +204,259 @@ export function VendorSupportPage() {
   )
 
   return (
-    <motion.div initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }}>
+    <motion.div initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} className="pb-28">
       <VendorPageLayout hero={hero}>
-        <div className="flex flex-wrap gap-2">
-          {TOPICS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTopicId(t.id)}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                topicId === t.id ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <div className="space-y-6 pt-2">
+          
+          <SupportWorkflowTimeline />
 
-        <VendorCard>
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 shrink-0 text-brand" />
-            <p className="text-sm font-extrabold text-slate-900">Report issue</p>
-          </div>
-          {sent ? (
-            <div className="mt-4 flex gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-              <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-700" />
-              <p className="text-sm font-semibold text-slate-800">Thanks — we&apos;ll get back to you soon.</p>
+          <section className="min-w-0">
+            <AppSectionHeader title="Choose a topic" className="mb-3 px-0.5" />
+            <div className="grid grid-cols-2 gap-2.5">
+              {TOPICS.map((t, idx) => (
+                <TopicChip
+                  key={t.id}
+                  topic={t}
+                  active={topicId === t.id}
+                  onSelect={() => setTopicId(t.id)}
+                  reduce={reduce}
+                  index={idx}
+                />
+              ))}
             </div>
-          ) : (
-            <form
-              className="mt-4 space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setSent(true)
-              }}
-            >
-              <input
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
-                placeholder="Subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-              />
-              <textarea
-                className="w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 text-sm"
-                rows={4}
-                placeholder="Details — include job reference"
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                required
-              />
-              <AppPrimaryButton type="submit" className="w-full">
-                Submit
-              </AppPrimaryButton>
-            </form>
-          )}
-        </VendorCard>
+          </section>
+
+          <motion.section
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.06 }}
+          >
+            <GlassPanel className="overflow-hidden border-slate-200/90 ring-1 ring-slate-100/90">
+              {/* Panel header + tabs */}
+              <div className="border-b border-slate-100 bg-linear-to-r from-brand/8 via-white to-white px-4 pb-0 pt-3.5">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-brand" aria-hidden />
+                  <h2 className="text-base font-extrabold text-slate-900">Complaints</h2>
+                </div>
+                {/* Tabs */}
+                <div className="mt-3 flex gap-0 border-b border-slate-100">
+                  {[{ id: 'new', label: 'New complaint' }, { id: 'history', label: 'My complaints' }].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`relative px-3 pb-2.5 pt-1 text-xs font-bold transition ${
+                        activeTab === tab.id
+                          ? 'text-brand after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-brand after:content-[\'\']'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4">
+                <AnimatePresence mode="wait">
+
+                  {/* ── NEW COMPLAINT TAB ── */}
+                  {activeTab === 'new' ? (
+                    <motion.div key="new-tab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      {sent ? (
+                        <motion.div
+                          key="success"
+                          initial={reduce ? false : { opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="rounded-2xl border border-emerald-200/80 bg-linear-to-br from-emerald-50 to-white p-4 ring-1 ring-emerald-100"
+                        >
+                          <div className="flex gap-3">
+                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                              <CheckCircle2 className="h-6 w-6" aria-hidden />
+                            </span>
+                            <div>
+                              <p className="text-sm font-black text-slate-900">Complaint submitted!</p>
+                              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                                Your ticket is in the admin queue. You can track it under "My complaints".
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSent(false)
+                                  setSubject('')
+                                  setDetails('')
+                                  setFormError('')
+                                }}
+                                className="mt-3 text-xs font-bold text-brand underline-offset-4 hover:underline"
+                              >
+                                Submit another
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.form
+                          key="form"
+                          onSubmit={handleSubmit}
+                          initial={reduce ? false : { opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="space-y-4"
+                        >
+                          {/* Topic info */}
+                          <p className="text-xs text-slate-500">
+                            Topic: <span className="font-bold text-brand">{topicMeta?.label}</span> — add booking refs, dates, or site names when you can.
+                          </p>
+                          <div>
+                            <FieldLabel>Subject</FieldLabel>
+                            <input
+                              type="text"
+                              value={subject}
+                              onChange={(e) => setSubject(e.target.value)}
+                              placeholder="Short summary of the problem"
+                              required
+                              className="w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm font-medium shadow-sm outline-none focus:ring-2 focus:ring-brand/35"
+                            />
+                          </div>
+                          <div>
+                            <FieldLabel>Details</FieldLabel>
+                            <textarea
+                              value={details}
+                              onChange={(e) => setDetails(e.target.value)}
+                              required
+                              rows={4}
+                              placeholder="What happened? What did you expect?"
+                              className="w-full resize-none rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand/35"
+                            />
+                          </div>
+                          <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
+                            <p className="flex items-start gap-2 text-xs text-amber-950">
+                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                              <span>
+                                <span className="font-bold">Urgent safety issue?</span> Call your supervisor and emergency
+                                services if anyone is at risk.
+                              </span>
+                            </p>
+                          </div>
+                          {formError ? (
+                            <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{formError}</p>
+                          ) : null}
+                          <AppPrimaryButton type="submit" className="w-full py-3.5 text-[15px]" disabled={submitting}>
+                            {submitting ? 'Submitting…' : 'Submit complaint'}
+                            <ArrowRight className="h-4 w-4" aria-hidden />
+                          </AppPrimaryButton>
+                        </motion.form>
+                      )}
+                    </motion.div>
+                  ) : null}
+
+                  {/* ── HISTORY TAB ── */}
+                  {activeTab === 'history' ? (
+                    <motion.div key="history-tab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+                      {complaintsLoading ? (
+                        <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-400">
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-brand" />
+                          Loading…
+                        </div>
+                      ) : !myComplaints?.length ? (
+                        <div className="flex flex-col items-center gap-2 py-8 text-center">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                            <MessageSquare className="h-6 w-6" aria-hidden />
+                          </span>
+                          <p className="text-sm font-bold text-slate-600">No complaints yet</p>
+                          <p className="text-xs text-slate-400">Past tickets will appear here.</p>
+                        </div>
+                      ) : (
+                        myComplaints.map((c) => {
+                          const statusColor =
+                            c.status === 'RESOLVED'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : c.status === 'REJECTED'
+                                ? 'bg-rose-100 text-rose-700'
+                                : 'bg-amber-100 text-amber-700'
+                          return (
+                            <div
+                              key={c._id}
+                              className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="flex-1 text-sm font-bold text-slate-900 leading-snug">{c.title}</p>
+                                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColor}`}>
+                                  {c.status ?? 'OPEN'}
+                                </span>
+                              </div>
+                              {c.description ? (
+                                <p className="mt-1 line-clamp-2 text-xs text-slate-500">{c.description}</p>
+                              ) : null}
+                              {c.adminRemarks ? (
+                                <p className="mt-2 rounded-xl bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
+                                  <span className="font-bold text-brand">Admin: </span>{c.adminRemarks}
+                                </p>
+                              ) : null}
+                              <p className="mt-2 text-[10px] text-slate-400">
+                                {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                              </p>
+                            </div>
+                          )
+                        })
+                      )}
+                      <button
+                        type="button"
+                        onClick={loadMyComplaints}
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-600 transition hover:border-brand/25 hover:text-brand"
+                      >
+                        Refresh
+                      </button>
+                    </motion.div>
+                  ) : null}
+
+                </AnimatePresence>
+              </div>
+            </GlassPanel>
+          </motion.section>
+
+          <section>
+            <AppSectionHeader title="Other ways to reach us" className="mb-3 px-0.5" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <GlassPanel className="border-slate-200/90 p-4 ring-1 ring-slate-100/90">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
+                  <Phone className="h-5 w-5" aria-hidden />
+                </div>
+                <p className="mt-3 text-sm font-extrabold text-slate-900">Phone helpline</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Available 24/7 for all your queries and support needs.
+                </p>
+                <a 
+                  href="tel:+919565195559"
+                  className="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+                >
+                  Call Now
+                </a>
+              </GlassPanel>
+              <GlassPanel className="border-slate-200/90 p-4 ring-1 ring-slate-100/90">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
+                  <Mail className="h-5 w-5" aria-hidden />
+                </div>
+                <p className="mt-3 text-sm font-extrabold text-slate-900">Email support</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Use your registered vendor domain where possible.
+                </p>
+                <a 
+                  href="mailto:laborchowck@gmail.com"
+                  className="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+                >
+                  Email Us
+                </a>
+              </GlassPanel>
+            </div>
+          </section>
+
+          <p className="flex items-center justify-center gap-2 pb-2 text-center text-[11px] font-medium text-slate-400">
+            <Headphones className="h-3.5 w-3.5" aria-hidden />
+            In-app chat & attachments — next phase
+          </p>
+
+        </div>
       </VendorPageLayout>
     </motion.div>
   )

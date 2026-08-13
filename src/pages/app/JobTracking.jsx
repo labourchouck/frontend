@@ -171,7 +171,7 @@ export function JobTracking() {
       const { order } = orderRes.data
 
       const options = {
-        key: process.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB', // fallback
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB', // fallback
         amount: order.amount,
         currency: order.currency,
         name: 'LabourChowck',

@@ -34,7 +34,6 @@ export function PanelShell({
   const hideShellHeader =
     pathname === '/corporate' ||
     pathname.includes('/profile') ||
-    pathname.includes('/support') ||
     pathname.endsWith('/new') ||
     /\/projects\/[^/]+$/.test(pathname) ||
     /\/requests\/[^/]+$/.test(pathname) ||

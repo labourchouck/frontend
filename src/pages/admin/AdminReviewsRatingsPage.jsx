@@ -9,6 +9,7 @@ export function AdminReviewsRatingsPage() {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [filter, setFilter] = useState('ALL')
 
   useEffect(() => {
     let cancelled = false
@@ -72,20 +73,42 @@ export function AdminReviewsRatingsPage() {
       </div>
 
       <GlassPanel className="overflow-hidden p-0">
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-base font-bold text-slate-900">All Reviews</h2>
+          <div className="flex flex-wrap gap-2">
+            {['ALL', 'individual', 'corporate'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                  filter === f
+                    ? 'bg-brand text-white shadow-sm'
+                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {f === 'ALL' ? 'All' : f}
+              </button>
+            ))}
+          </div>
         </div>
         
-        {reviews.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileText className="mx-auto h-12 w-12 text-slate-300" />
-            <p className="mt-4 text-lg font-bold text-slate-900">No Reviews Yet</p>
-            <p className="mt-1 text-sm text-slate-500">When users submit reviews, they will appear here.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {reviews.map((review) => (
-              <div key={review._id} className="p-5 transition hover:bg-slate-50/50">
+        {(() => {
+          const filteredReviews = reviews.filter(r => {
+            if (filter === 'ALL') return true
+            if (r.reviewerId?.role === filter) return true
+            return false
+          })
+
+          return filteredReviews.length === 0 ? (
+            <div className="p-12 text-center">
+              <FileText className="mx-auto h-12 w-12 text-slate-300" />
+              <p className="mt-4 text-lg font-bold text-slate-900">No Reviews Yet</p>
+              <p className="mt-1 text-sm text-slate-500">When users submit reviews, they will appear here.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {filteredReviews.map((review) => (
+                <div key={review._id} className="p-5 transition hover:bg-slate-50/50">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
@@ -119,7 +142,7 @@ export function AdminReviewsRatingsPage() {
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Reviewer</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Reviewer {review.reviewerId?.role ? `(${review.reviewerId.role})` : ''}</p>
                           <p className="text-sm font-semibold text-slate-900 truncate">
                             {review.reviewerId?.fullName || review.reviewerId?.name || 'Unknown User'}
                           </p>
@@ -129,7 +152,7 @@ export function AdminReviewsRatingsPage() {
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-brand mt-0.5 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-brand/60">Reviewed (Labour/Vendor)</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-brand/60">Reviewed {review.revieweeId?.role ? `(${review.revieweeId.role})` : ''}</p>
                           <p className="text-sm font-semibold text-slate-900 truncate">
                             {review.revieweeId?.fullName || review.revieweeId?.name || 'Unknown Worker'}
                           </p>
@@ -152,7 +175,8 @@ export function AdminReviewsRatingsPage() {
               </div>
             ))}
           </div>
-        )}
+          )
+        })()}
       </GlassPanel>
     </div>
   )

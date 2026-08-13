@@ -336,8 +336,6 @@ export function AppSupportPage() {
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <SupportScreenHeader title={intro.title} subtitle={intro.subtitle} />
-
       <motion.section
         initial={reduce ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -584,11 +582,14 @@ export function AppSupportPage() {
             </div>
             <p className="mt-3 text-sm font-extrabold text-slate-900">Phone helpline</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              Regional numbers and hours will be listed here.
+              Available 24/7 for all your queries and support needs.
             </p>
-            <span className="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">
-              Coming soon
-            </span>
+            <a 
+              href="tel:+919565195559"
+              className="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+            >
+              Call Now
+            </a>
           </GlassPanel>
           <GlassPanel className="border-slate-200/90 p-4 ring-1 ring-slate-100/90">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
@@ -598,9 +599,12 @@ export function AppSupportPage() {
             <p className="mt-1 text-xs leading-relaxed text-slate-500">
               Corporates: use your registered domain where possible.
             </p>
-            <span className="mt-3 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">
-              Coming soon
-            </span>
+            <a 
+              href="mailto:laborchowck@gmail.com"
+              className="mt-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+            >
+              Email Us
+            </a>
           </GlassPanel>
         </div>
       </section>

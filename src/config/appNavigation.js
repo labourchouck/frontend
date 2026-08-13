@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   UserRound,
   Wrench,
+  FileText,
 } from 'lucide-react'
 import { USER_ROLES } from '../constants/userRoles.js'
 
@@ -35,6 +36,9 @@ const byRole = {
       { id: 'buildmart', to: '/app/buildmart', label: 'BuildMart materials', icon: Package },
       { id: 'book', to: '/app/my-bookings', label: 'My bookings', icon: ClipboardList },
       { id: 'support', to: '/app/support', label: 'Support & issues', icon: LifeBuoy },
+      { id: 'terms', to: '/app/terms', label: 'Terms & Conditions', icon: FileText },
+      { id: 'privacy-policy', to: '/app/privacy-policy', label: 'Privacy Policy', icon: FileText },
+      { id: 'faq', to: '/app/faq', label: 'FAQs', icon: FileText },
       { id: 'profile', to: '/app/profile', label: 'Profile & settings', icon: UserRound },
     ],
   },
@@ -56,6 +60,9 @@ const byRole = {
       { id: 'kyc', to: '/app/kyc', label: 'Aadhaar KYC', icon: ShieldCheck },
       { id: 'workTypes', to: '/app/work-categories', label: 'Work types', icon: Wrench },
       { id: 'support', to: '/app/support', label: 'Support', icon: LifeBuoy },
+      { id: 'terms', to: '/app/terms', label: 'Terms & Conditions', icon: FileText },
+      { id: 'privacy-policy', to: '/app/privacy-policy', label: 'Privacy Policy', icon: FileText },
+      { id: 'faq', to: '/app/faq', label: 'FAQs', icon: FileText },
       { id: 'profile', to: '/app/profile', label: 'Profile', icon: UserRound },
     ],
   },
@@ -77,8 +84,11 @@ export function getAppShellTitle(pathname) {
   if (pathname.startsWith('/app/support')) return 'Support'
   if (pathname.startsWith('/app/subscriptions')) return 'Subscription'
   if (pathname.startsWith('/app/profile')) return 'Profile'
-  if (pathname.startsWith('/app/bookings')) return 'My bookings'
+  if (pathname.startsWith('/app/bookings') || pathname.startsWith('/app/my-bookings')) return 'My bookings'
   if (pathname.startsWith('/app/search')) return 'Search'
+  if (pathname.startsWith('/app/terms')) return 'Terms & Conditions'
+  if (pathname.startsWith('/app/privacy-policy')) return 'Privacy Policy'
+  if (pathname.startsWith('/app/faq')) return 'FAQs'
   return 'Home'
 }
 

@@ -8,6 +8,7 @@ import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
 import { PipelineTimeline } from '../../../components/shared/PipelineTimeline.jsx'
 import { useGetRequestQuery, useRateCorporateAssignmentMutation, useInitPaymentMutation, useVerifyPaymentMutation } from '../../../store/api/workforceApi.js'
 import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
+import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 import { useAuth } from '../../../hooks/useAuth.js'
 
 function formatDate(d) {
@@ -27,7 +28,10 @@ export function CorporateRequestDetailPage() {
 
   const [ratingState, setRatingState] = useState({ id: null, rating: 5, comment: '' })
   const [selectedAttendanceReqId, setSelectedAttendanceReqId] = useState(null)
-  const [showSuccess, setShowSuccess] = useState(false)
+  
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [createdInvoiceId, setCreatedInvoiceId] = useState(null)
+  
   const [isInitializingRazorpay, setIsInitializingRazorpay] = useState(false)
 
   const loadRazorpay = () => {
@@ -60,16 +64,14 @@ export function CorporateRequestDetailPage() {
 
       // If keys are missing, backend creates a mock order. Bypass SDK to simulate success.
       if (initRes.order?.mock) {
-        await verifyPayment({
+        const verRes = await verifyPayment({
           razorpayOrderId: initRes.order.id,
           razorpayPaymentId: 'pay_mock_' + Date.now(),
           razorpaySignature: 'mock_signature_123',
         }).unwrap()
 
-        setShowSuccess(true)
-        setTimeout(() => {
-          navigate('/corporate/billing')
-        }, 2500)
+        setCreatedInvoiceId(verRes?.invoiceId)
+        setShowReviewModal(true)
         setIsInitializingRazorpay(false)
         return
       }
@@ -83,16 +85,14 @@ export function CorporateRequestDetailPage() {
         order_id: initRes.order?.id,
         handler: async function (response) {
           try {
-            await verifyPayment({
+            const verRes = await verifyPayment({
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             }).unwrap()
 
-            setShowSuccess(true)
-            setTimeout(() => {
-              navigate('/corporate/billing')
-            }, 2500)
+            setCreatedInvoiceId(verRes?.invoiceId)
+            setShowReviewModal(true)
           } catch (err) {
             console.error('Payment Verification Failed', err)
             alert('Payment verification failed. Please contact support.')
@@ -384,33 +384,15 @@ export function CorporateRequestDetailPage() {
         requestId={selectedAttendanceReqId}
         onClose={() => setSelectedAttendanceReqId(null)}
       />
-      <AnimatePresence>
-        {showSuccess && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.8, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              className="flex flex-col items-center bg-white p-8 rounded-3xl shadow-2xl border border-emerald-100 max-w-sm w-full mx-4 text-center"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-                className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6"
-              >
-                <CheckCircle2 className="w-12 h-12 text-emerald-600" />
-              </motion.div>
-              <h2 className="text-2xl font-black text-slate-900 mb-2">Payment Done!</h2>
-              <p className="text-slate-500 font-medium">Your invoice has been settled successfully.</p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+      <BookingReviewModal 
+        open={showReviewModal}
+        bookingId={request?._id}
+        revieweeId={data?.allocation?.vendorId?._id || request?.preferredVendorId?._id}
+        workerName={data?.allocation?.vendorId?.contractorProfile?.businessName || request?.preferredVendorId?.contractorProfile?.businessName || data?.allocation?.vendorId?.fullName || request?.preferredVendorId?.fullName || 'Vendor'}
+        onClose={() => navigate(createdInvoiceId ? `/corporate/billing/invoice/${createdInvoiceId}` : '/corporate/billing')}
+        onSubmitted={() => navigate(createdInvoiceId ? `/corporate/billing/invoice/${createdInvoiceId}` : '/corporate/billing')}
+      />
     </div>
   )
 }

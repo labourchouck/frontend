@@ -33,7 +33,7 @@ const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
  *   onClose     – fn(), called when user dismisses without submitting
  *   onSubmitted – fn(), called after successful review submission
  */
-export function BookingReviewModal({ open, bookingId, workerName, onClose, onSubmitted }) {
+export function BookingReviewModal({ open, bookingId, revieweeId, workerName, onClose, onSubmitted }) {
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [comment, setComment] = useState('')
@@ -51,7 +51,7 @@ export function BookingReviewModal({ open, bookingId, workerName, onClose, onSub
     setError('')
     setSubmitting(true)
     try {
-      await reviewsApi.submitReview({ bookingId, rating, comment: comment.trim() })
+      await reviewsApi.submitReview({ bookingId, rating, comment: comment.trim(), revieweeId })
       setSubmitted(true)
       setTimeout(() => {
         onSubmitted?.()

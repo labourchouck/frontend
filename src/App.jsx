@@ -47,6 +47,9 @@ import { AdminVendorWalletPage } from './pages/admin/AdminVendorWalletPage.jsx'
 import { AdminCashManagementPage } from './pages/admin/AdminCashManagementPage.jsx'
 import { AdminVendorsPage } from './pages/admin/AdminVendorsPage.jsx'
 import { AdminReviewsRatingsPage } from './pages/admin/AdminReviewsRatingsPage.jsx'
+import { AdminTermsAndConditionsPage } from './pages/admin/AdminTermsAndConditionsPage.jsx'
+import { AdminPrivacyPolicyPage } from './pages/admin/AdminPrivacyPolicyPage.jsx'
+import { AdminFaqPage } from './pages/admin/AdminFaqPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
@@ -156,6 +159,9 @@ function App() {
             <Route path="vendor-wallet" element={<AdminVendorWalletPage />} />
             <Route path="cash-management" element={<AdminCashManagementPage />} />
             <Route path="reviews" element={<AdminReviewsRatingsPage />} />
+            <Route path="terms" element={<AdminTermsAndConditionsPage />} />
+            <Route path="privacy-policy" element={<AdminPrivacyPolicyPage />} />
+            <Route path="faq" element={<AdminFaqPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

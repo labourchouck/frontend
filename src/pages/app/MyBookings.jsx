@@ -62,9 +62,7 @@ export function MyBookings() {
   const displayed = tab === 'active' ? activeBookings : pastBookings
 
   return (
-    <div className="space-y-4 pb-8">
-      <AppStackScreenHeader title="My Bookings" backTo="/app" />
-
+    <div className="space-y-4 pb-8 pt-2">
       {/* Tab Bar */}
       <GlassPanel className="p-1.5">
         <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100/90 p-0.5">

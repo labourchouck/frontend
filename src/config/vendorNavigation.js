@@ -9,6 +9,7 @@ import {
   Users,
   Package,
   MessageCircle,
+  FileText,
 } from 'lucide-react'
 
 export const vendorNavigation = {
@@ -30,6 +31,9 @@ export const vendorNavigation = {
     { id: 'enquiries', to: '/vendor/mart/enquiries', label: 'Product Leads', icon: MessageCircle },
     { id: 'analytics', to: '/vendor/analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'support', to: '/vendor/support', label: 'Support', icon: LifeBuoy },
+    { id: 'terms', to: '/vendor/terms', label: 'Terms & Conditions', icon: FileText },
+    { id: 'privacy-policy', to: '/vendor/privacy-policy', label: 'Privacy Policy', icon: FileText },
+    { id: 'faq', to: '/vendor/faq', label: 'FAQs', icon: FileText },
     { id: 'profile', to: '/vendor/profile', label: 'Profile & KYC', icon: UserRound },
   ],
 }
@@ -44,6 +48,9 @@ export function getVendorTitle(pathname) {
   if (pathname.startsWith('/vendor/earnings')) return 'Earnings'
   if (pathname.startsWith('/vendor/analytics')) return 'Analytics'
   if (pathname.startsWith('/vendor/support')) return 'Support'
+  if (pathname.startsWith('/vendor/terms')) return 'Terms'
+  if (pathname.startsWith('/vendor/privacy-policy')) return 'Privacy Policy'
+  if (pathname.startsWith('/vendor/faq')) return 'FAQs'
   if (pathname.startsWith('/vendor/mart/enquiries')) return 'Product Leads'
   if (pathname.startsWith('/vendor/mart/products')) return 'My Products'
   if (pathname.startsWith('/vendor/mart')) return 'Mart'

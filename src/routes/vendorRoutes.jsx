@@ -10,6 +10,9 @@ import { VendorEarningsPage } from '../panels/vendor/pages/VendorEarningsPage.js
 import { VendorProfilePage } from '../panels/vendor/pages/VendorProfilePage.jsx'
 import { VendorSupportPage } from '../panels/vendor/pages/VendorSupportPage.jsx'
 import { VendorAnalyticsPage } from '../panels/vendor/pages/VendorAnalyticsPage.jsx'
+import { VendorTermsPage } from '../panels/vendor/pages/VendorTermsPage.jsx'
+import { VendorPrivacyPolicyPage } from '../panels/vendor/pages/VendorPrivacyPolicyPage.jsx'
+import { VendorFaqPage } from '../panels/vendor/pages/VendorFaqPage.jsx'
 import { VendorMartPage } from '../panels/vendor/pages/VendorMartPage.jsx'
 import { VendorMartProductCreatePage } from '../panels/vendor/pages/VendorMartProductCreatePage.jsx'
 import { VendorMartProductsListPage } from '../panels/vendor/pages/VendorMartProductsListPage.jsx'
@@ -30,6 +33,9 @@ export const vendorChildRoutes = (
     <Route path="analytics" element={<VendorAnalyticsPage />} />
     <Route path="profile" element={<VendorProfilePage />} />
     <Route path="support" element={<VendorSupportPage />} />
+    <Route path="terms" element={<VendorTermsPage />} />
+    <Route path="privacy-policy" element={<VendorPrivacyPolicyPage />} />
+    <Route path="faq" element={<VendorFaqPage />} />
     <Route path="mart">
       <Route index element={<VendorMartPage />} />
       <Route path="category/:categoryId" element={<VendorMartProductCreatePage />} />

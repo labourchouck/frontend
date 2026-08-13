@@ -19,6 +19,7 @@ import {
   LogOut,
   Mail,
   Menu,
+  HelpCircle,
   Pencil,
   Phone,
   ShieldCheck,
@@ -335,15 +336,16 @@ export function AppProfilePage() {
     quickLinks.push({ to: '/app/workforce', icon: ClipboardList, label: 'Workforce' })
   }
   quickLinks.push({ to: '/app/support', icon: LifeBuoy, label: 'Support' })
+  quickLinks.push({ to: '/app/terms', icon: FileText, label: 'Terms & Conditions' })
+  quickLinks.push({ to: '/app/privacy-policy', icon: FileText, label: 'Privacy Policy' })
+  quickLinks.push({ to: '/app/faq', icon: HelpCircle, label: 'FAQs' })
 
   return (
     <motion.div
-      className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden bg-linear-to-b from-slate-50/95 via-white to-emerald-50/15 pb-28 pt-1"
+      className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden bg-linear-to-b from-slate-50/95 via-white to-emerald-50/15 pb-28 pt-2"
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <ProfileScreenHeader />
-
       <motion.section
         initial={reduce ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

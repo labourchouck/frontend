@@ -138,8 +138,11 @@ export function VendorAttendancePage() {
       let allOthersCheckedOut = false
 
       if (job) {
-        const jobEndDate = job.endDate ? new Date(job.endDate).toISOString().split('T')[0] : new Date(job.startDate).toISOString().split('T')[0]
-        if (selectedDate === jobEndDate) {
+        const isLastDayStr = job.bookedDates && job.bookedDates.length > 0 
+          ? job.bookedDates[job.bookedDates.length - 1] 
+          : null;
+          
+        if (selectedDate === isLastDayStr) {
           isLastDay = true
           const others = job.attendanceRecords.filter(r => r._id !== record._id)
           allOthersCheckedOut = others.every(r => r.vendorCheckOut)

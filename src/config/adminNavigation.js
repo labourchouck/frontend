@@ -24,6 +24,7 @@ import {
   HandCoins,
   ClipboardCheck,
   Star,
+  FileText,
 } from 'lucide-react'
 
 /**
@@ -116,6 +117,9 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/banners', label: 'Banners', icon: Image },
       { to: '/admin/corporate-banners', label: 'Corporate Banners', icon: Image },
       { to: '/admin/vendor-banners', label: 'Vendor Banners', icon: Image },
+      { to: '/admin/terms', label: 'Terms & Conditions', icon: FileText },
+      { to: '/admin/privacy-policy', label: 'Privacy Policy', icon: FileText },
+      { to: '/admin/faq', label: 'FAQs', icon: FileText },
     ],
   },
   {
@@ -135,6 +139,9 @@ const ROUTE_TITLES = [
   { prefix: '/admin/banners', title: 'Banners' },
   { prefix: '/admin/corporate-banners', title: 'Corporate Banners' },
   { prefix: '/admin/vendor-banners', title: 'Vendor Banners' },
+  { prefix: '/admin/terms', title: 'Terms & Conditions' },
+  { prefix: '/admin/privacy-policy', title: 'Privacy Policy' },
+  { prefix: '/admin/faq', title: 'FAQs' },
   { prefix: '/admin/reports', title: 'Reports & analytics' },
   { prefix: '/admin/pricing', title: 'Pricing & rates' },
   { prefix: '/admin/platform-fee', title: 'Platform Fee' },

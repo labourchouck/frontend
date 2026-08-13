@@ -7,6 +7,9 @@ import { AppSupportPage } from '../pages/app/AppSupportPage.jsx'
 import { AppProfilePage } from '../pages/app/AppProfilePage.jsx'
 import { AppEarningsPage } from '../pages/app/AppEarningsPage.jsx'
 import { AppKycPage } from '../pages/app/AppKycPage.jsx'
+import { AppTermsPage } from '../pages/app/AppTermsPage.jsx'
+import { AppPrivacyPolicyPage } from '../pages/app/AppPrivacyPolicyPage.jsx'
+import { AppFaqPage } from '../pages/app/AppFaqPage.jsx'
 import { LabourNotificationsPage } from '../pages/app/labour/LabourNotificationsPage.jsx'
 import { IndividualBookingFlowPage } from '../pages/app/booking/IndividualBookingFlowPage.jsx'
 import { BuildMartHomePage } from '../pages/app/buildmart/BuildMartHomePage.jsx'
@@ -149,6 +152,9 @@ export const appShellChildRoutes = (
       }
     />
     <Route path="support" element={<AppSupportPage />} />
+    <Route path="terms" element={<AppTermsPage />} />
+    <Route path="privacy-policy" element={<AppPrivacyPolicyPage />} />
+    <Route path="faq" element={<AppFaqPage />} />
     <Route path="profile" element={<AppProfilePage />} />
     <Route
       path="earnings"
