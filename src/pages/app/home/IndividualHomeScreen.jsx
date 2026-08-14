@@ -421,7 +421,7 @@ export function IndividualHomeScreen({ user }) {
         </div>
 
         <IndividualHomeWorkerCarousel
-          title="Nearby labour"
+          title="Explore services"
           workers={nearbyLabours}
           loading={laboursLoading}
           error={laboursErr}

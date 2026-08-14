@@ -4,7 +4,7 @@ import { hashSeed } from '../../../lib/discoverLabourDummyUi.js'
 import skillImg from '../../../assets/skill.png'
 
 export function IndividualHomeWorkerCarousel({
-  title = 'Nearby labour',
+  title = 'Explore services',
   workers,
   loading,
   error,

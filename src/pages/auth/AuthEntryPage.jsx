@@ -100,6 +100,7 @@ export function AuthEntryPage() {
   const [companyName, setCompanyName] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [gstNumber, setGstNumber] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [otpCells, setOtpCells] = useState(() => Array(6).fill(''))
   const [challengeId, setChallengeId] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -179,6 +180,11 @@ export function AuthEntryPage() {
         }
         if (role === USER_ROLES.CONTRACTOR && !businessName.trim()) {
           setBanner({ variant: 'error', message: 'Business name is required.' })
+          setBusy(false)
+          return
+        }
+        if (!termsAccepted) {
+          setBanner({ variant: 'error', message: 'You must accept the Terms and Conditions.' })
           setBusy(false)
           return
         }
@@ -449,6 +455,25 @@ export function AuthEntryPage() {
                         />
                       </AuthField>
                     ) : null}
+                    <div className="flex items-start gap-2 pt-2">
+                      <input
+                        type="checkbox"
+                        id="terms"
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                      />
+                      <label htmlFor="terms" className="text-[13px] text-slate-500">
+                        I agree to the{' '}
+                        <Link to="/terms" target="_blank" className="font-medium text-brand hover:underline">
+                          Terms & Conditions
+                        </Link>{' '}
+                        and{' '}
+                        <Link to="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+                          Privacy Policy
+                        </Link>
+                      </label>
+                    </div>
                   </>
                 ) : null}
               </div>
