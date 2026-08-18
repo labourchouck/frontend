@@ -45,7 +45,7 @@ export function BookingTypeSheet({ open, onClose, value, onSelect, categoryLabel
             exit={reduce ? undefined : { y: 28 }}
             transition={reduce ? { duration: 0.2 } : appSpring}
           >
-            <AppBottomSheetPanel className="rounded-t-[1.75rem] sm:rounded-3xl">
+            <AppBottomSheetPanel className="">
               <AppBottomSheetChrome
                 onClose={onClose}
                 title={
