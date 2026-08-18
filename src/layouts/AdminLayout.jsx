@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
-  Bell,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +18,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { ADMIN_NAV_SECTIONS, getAdminTitle } from '../config/adminNavigation.js'
 import { appSpring } from '../components/app/appMotion.js'
 import { GlassPanel } from '../components/ui/GlassPanel.jsx'
+import { NotificationBell } from '../components/notifications/NotificationBell.jsx'
 import { adminInitials, formatLastLoginDisplay, formatLastLoginRelative } from '../lib/formatAdminLastLogin.js'
 
 const STORAGE_KEY = 'lc-admin-sidebar-collapsed'
@@ -38,10 +38,8 @@ export function AdminLayout() {
   })
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [notifOpen, setNotifOpen] = useState(false)
 
   const profileRef = useRef(null)
-  const notifRef = useRef(null)
 
   useEffect(() => {
     try {
@@ -54,18 +52,15 @@ export function AdminLayout() {
   useEffect(() => {
     setMobileOpen(false)
     setProfileOpen(false)
-    setNotifOpen(false)
   }, [pathname])
 
   useEffect(() => {
     function handlePointerDown(e) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false)
-      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false)
     }
     function handleKey(e) {
       if (e.key === 'Escape') {
         setProfileOpen(false)
-        setNotifOpen(false)
       }
     }
     document.addEventListener('mousedown', handlePointerDown)
@@ -261,47 +256,12 @@ export function AdminLayout() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2 md:gap-3">
-            <div className="relative" ref={notifRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  setNotifOpen((o) => !o)
-                  setProfileOpen(false)
-                }}
-                className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/70 bg-white text-slate-600 shadow-sm transition hover:border-brand/25 hover:text-brand hover:shadow-md"
-                aria-expanded={notifOpen}
-                aria-haspopup="true"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5" aria-hidden />
-              </button>
-              <AnimatePresence>
-                {notifOpen ? (
-                  <motion.div
-                    initial={reduce ? false : { opacity: 0, y: 6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={reduce ? undefined : { opacity: 0, y: 4, scale: 0.98 }}
-                    transition={{ duration: 0.18 }}
-                    className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-[min(calc(100vw-2rem),20rem)] origin-top-right"
-                  >
-                    <GlassPanel className="p-4 shadow-xl ring-1 ring-slate-200/60">
-                      <p className="text-sm font-bold text-slate-900">Notifications</p>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                        No new alerts. Booking approvals, KYC queues, and payment events will appear here.
-                      </p>
-                    </GlassPanel>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </div>
+            <NotificationBell />
 
             <div className="relative" ref={profileRef}>
               <button
                 type="button"
-                onClick={() => {
-                  setProfileOpen((o) => !o)
-                  setNotifOpen(false)
-                }}
+                onClick={() => setProfileOpen((o) => !o)}
                 className="flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white py-1 pl-1 pr-2 shadow-sm transition hover:border-brand/25 hover:shadow-md md:pr-3"
                 aria-expanded={profileOpen}
                 aria-haspopup="true"

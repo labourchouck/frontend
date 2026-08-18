@@ -4,7 +4,6 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   AlertCircle,
   AlertTriangle,
-  Bell,
   Building2,
   CalendarClock,
   Check,
@@ -38,6 +37,7 @@ import { AppPrimaryButton } from '../../../components/app/AppPrimaryButton.jsx'
 import { AppSecondaryButton } from '../../../components/app/AppSecondaryButton.jsx'
 import { AppSectionHeader } from '../../../components/app-ui/layout/AppSectionHeader.jsx'
 import { GlassPanel } from '../../../components/ui/GlassPanel.jsx'
+import { NotificationBell } from '../../../components/notifications/NotificationBell.jsx'
 import { useNow } from '../../../hooks/useNow.js'
 import { formatSecondsAsClock } from '../../../lib/formatDurationClock.js'
 import {
@@ -73,11 +73,7 @@ import {
   SAFETY_BANNERS,
   whatsAppSupportUrl,
 } from '../../../lib/labourHomeHelpers.js'
-import {
-  buildLabourNotifications,
-  markNotificationRead,
-  subscribeLabourNotifications,
-} from '../../../lib/labourNotifications.js'
+import { markNotificationRead } from '../../../lib/labourNotifications.js'
 
 function getTimeGreeting() {
   const h = new Date().getHours()
@@ -159,7 +155,6 @@ export function LabourHomeScreen({ user }) {
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
   const [workAreaModalOpen, setWorkAreaModalOpen] = useState(false)
   const [timeManagementOpen, setTimeManagementOpen] = useState(false)
-  const [notifTick, setNotifTick] = useState(0)
   const [assignmentDetailOpen, setAssignmentDetailOpen] = useState(false)
   const { online, setOnline } = useLabourPresence()
   const [schedule, setSchedule] = useState(() => {
@@ -211,9 +206,6 @@ export function LabourHomeScreen({ user }) {
 
   useEffect(() => subscribeAttendance(setEntries), [])
   useEffect(() => subscribeWallet(setWallet), [])
-  // Removed dummy subscribeJobDemo
-  useEffect(() => subscribeLabourNotifications(() => setNotifTick((t) => t + 1)), [])
-
   useEffect(() => {
     const onLoc = () => setAppLocation(readAppUserLocation())
     window.addEventListener('lc-app-user-location-changed', onLoc)
@@ -328,11 +320,6 @@ export function LabourHomeScreen({ user }) {
     }
   }, [activeBookings, withdrawals])
 
-  const notifications = useMemo(
-    () => buildLabourNotifications(user, jobs, earnings),
-    [user, jobs, earnings, notifTick],
-  )
-
   const hasWorkLocation = useMemo(() => hasAppUserLocation(appLocation), [appLocation])
   const locationLabel = formatAppUserLocationLabel(appLocation) || 'Set your work area'
   const siteLabel = hasWorkLocation ? locationLabel : (todayJob?.siteName || todayJob?.title || (lastIn?.projectLabel && lastIn.projectLabel !== 'Unassigned' ? lastIn.projectLabel : 'No site assigned'))
@@ -423,23 +410,9 @@ export function LabourHomeScreen({ user }) {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <button
-                type="button"
-                onClick={() => navigate('/app/notifications')}
-                className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
-                aria-label={
-                  notifications.unreadCount > 0
-                    ? `Notifications, ${notifications.unreadCount} unread`
-                    : 'Notifications'
-                }
-              >
-                <Bell className="h-5 w-5" />
-                {notifications.unreadCount > 0 ? (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white shadow-md ring-2 ring-slate-900/80">
-                    {notifications.unreadCount > 9 ? '9+' : notifications.unreadCount}
-                  </span>
-                ) : null}
-              </button>
+              <NotificationBell
+                buttonClassName="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+              />
             </div>
 
             <div className="mt-4 flex items-stretch gap-2.5 sm:gap-3">

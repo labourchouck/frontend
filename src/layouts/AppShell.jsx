@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Bell, ChevronDown, LogOut, MapPin, Menu, Sparkles, X } from 'lucide-react'
+import { ChevronDown, LogOut, MapPin, Menu, Sparkles, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.js'
 import {
   getAppNavigation,
@@ -14,6 +14,7 @@ import { AppAmbientBackground } from '../components/app/AppAmbientBackground.jsx
 import { AppPageTransition } from '../components/app/AppPageTransition.jsx'
 import { appSpring } from '../components/app/appMotion.js'
 import { GlassPanel } from '../components/ui/GlassPanel.jsx'
+import { NotificationBell } from '../components/notifications/NotificationBell.jsx'
 import { AppBottomNav } from '../components/app-ui/navigation/AppBottomNav.jsx'
 import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
@@ -388,13 +389,9 @@ export function AppShell() {
                     <p className="sr-only">{individualLocationSubtitle}</p>
                   </div>
                 </button>
-                <Link
-                  to="/app/support"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm transition hover:bg-white/95"
-                  aria-label="Support and notifications"
-                >
-                  <Bell className="h-5 w-5" aria-hidden />
-                </Link>
+                <NotificationBell
+                  buttonClassName="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm transition hover:bg-white/95"
+                />
                 <Link
                   to="/app/profile"
                   className="flex shrink-0 items-center rounded-full ring-2 ring-white/50 transition hover:ring-white"

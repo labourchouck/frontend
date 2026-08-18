@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { LogOut, Menu, Sparkles, X } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.js'
 import { AppAmbientBackground } from '../components/app/AppAmbientBackground.jsx'
 import { AppPageTransition } from '../components/app/AppPageTransition.jsx'
 import { appSpring } from '../components/app/appMotion.js'
 import { GlassPanel } from '../components/ui/GlassPanel.jsx'
+import { NotificationBell } from '../components/notifications/NotificationBell.jsx'
 import { AppBottomNav } from '../components/app-ui/navigation/AppBottomNav.jsx'
 import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { BOOT_ROUTES } from '../constants/bootFlow.js'
@@ -170,9 +171,9 @@ export function PanelShell({
                 <h1 className="truncate text-lg font-extrabold tracking-tight text-slate-900">{title}</h1>
                 <p className="truncate text-xs font-medium text-slate-500">{headerTagline}</p>
               </div>
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-brand/15 to-brand-muted/60 text-brand ring-1 ring-brand/15">
-                <Sparkles className="h-5 w-5" aria-hidden />
-              </span>
+              <NotificationBell
+                buttonClassName="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/70 bg-white/90 text-slate-600 shadow-sm transition hover:border-brand/25 hover:text-brand"
+              />
             </GlassPanel>
           </header>
         ) : null}
