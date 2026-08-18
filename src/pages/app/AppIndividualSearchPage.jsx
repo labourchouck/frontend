@@ -29,10 +29,7 @@ export function AppIndividualSearchPage() {
   }, [])
 
   return (
-    <div className="-mx-4 flex h-[100dvh] flex-col bg-white overflow-hidden">
-      <div className="shrink-0">
-        <AppStackScreenHeader title="Search" backTo="/app" />
-      </div>
+    <div className="-mx-4 flex flex-col h-[calc(100dvh-7rem)]">
       <div className="flex-1 min-h-0">
         <IndividualCategorySearchPanel tradeGroups={tradeGroups} groupsLoading={loading} />
       </div>

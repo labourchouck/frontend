@@ -10,7 +10,7 @@ const DEFAULT_BUTTON_CLASS =
   'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/70 bg-white text-slate-600 shadow-sm transition hover:border-brand/25 hover:text-brand hover:shadow-md'
 
 /** Shared notification bell + dropdown inbox, reused across every panel's header. */
-export function NotificationBell({ buttonClassName, iconClassName = 'h-5 w-5', align = 'right' }) {
+export function NotificationBell({ buttonClassName, iconClassName = 'h-5 w-5', align = 'right', popupRightOffset = 'right-0' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const navigate = useNavigate()
@@ -72,7 +72,7 @@ export function NotificationBell({ buttonClassName, iconClassName = 'h-5 w-5', a
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? undefined : { opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-[calc(100%+0.5rem)] z-50 w-[min(calc(100vw-2rem),22rem)] origin-top-right`}
+            className={`absolute ${align === 'right' ? popupRightOffset : 'left-0'} top-[calc(100%+0.5rem)] z-50 w-[min(calc(100vw-2rem),22rem)] origin-top-right`}
           >
             <GlassPanel className="max-h-[70vh] overflow-hidden p-0 shadow-xl ring-1 ring-slate-200/60">
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">

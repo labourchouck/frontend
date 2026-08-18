@@ -5,6 +5,7 @@ import { getCategoryImageUrl } from '../../lib/labourCategoryDisplay.js'
 import { BookingTypeSheet } from '../../components/app/booking/BookingTypeSheet.jsx'
 import { readBookingDraft, writeBookingDraft } from '../../lib/individualBookingDraft.js'
 import { buildBookingFlowPath } from '../../lib/bookingFlowNavigation.js'
+import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 
 export function AppSubCategoryServicePage() {
   const { id } = useParams()
@@ -51,17 +52,20 @@ export function AppSubCategoryServicePage() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="flex items-center gap-3 px-4 py-3">
+      <header className="sticky top-0 z-30 px-3 pt-3">
+        <GlassPanel className="flex items-center gap-3 px-3 py-2.5">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="p-1 -ml-1 text-slate-500 hover:text-slate-700"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/70 bg-white/90 text-slate-700 shadow-sm transition hover:border-brand/30 hover:text-slate-900 active:scale-95"
+            aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-bold text-slate-900 truncate">{cat.name}</h1>
-        </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-extrabold tracking-tight text-slate-900">{cat.name}</h1>
+          </div>
+        </GlassPanel>
       </header>
 
       {/* Content */}

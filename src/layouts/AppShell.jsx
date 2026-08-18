@@ -48,7 +48,6 @@ export function AppShell() {
     pathname.startsWith('/app/sub-category/') ||
     pathname.startsWith('/app/active-job') ||
     pathname === '/app/bookings' ||
-    pathname === '/app/search' ||
     pathname === '/app/wallet' ||
     isLabourAppHome ||
     isLabourJobs ||
@@ -391,6 +390,7 @@ export function AppShell() {
                 </button>
                 <NotificationBell
                   buttonClassName="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm transition hover:bg-white/95"
+                  popupRightOffset="-right-12 sm:right-0"
                 />
                 <Link
                   to="/app/profile"

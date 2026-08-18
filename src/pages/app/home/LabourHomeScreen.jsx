@@ -381,26 +381,28 @@ export function LabourHomeScreen({ user }) {
       ) : null}
 
       {/* 1. Header */}
-      <section className="relative px-4 pb-2 pt-[max(0.35rem,env(safe-area-inset-top,0px))]">
+      <section className="relative px-4 pb-2 pt-[max(0.35rem,env(safe-area-inset-top,0px))] z-40">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="relative overflow-hidden rounded-[1.75rem] border border-white/20 bg-linear-to-br from-slate-900 via-slate-800 to-slate-950 text-white shadow-[0_20px_50px_-24px_rgba(0,0,0,0.55)]"
+          className="relative rounded-[1.75rem] shadow-[0_20px_50px_-24px_rgba(0,0,0,0.55)]"
         >
-          <motion.div
-            className="pointer-events-none absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=60')] bg-cover bg-center opacity-25"
-            aria-hidden
-          />
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-slate-950/85 via-slate-900/75 to-brand/30" aria-hidden />
-          <motion.div
-            className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-brand/30 blur-3xl"
-            animate={reduce ? undefined : { scale: [1, 1.12, 1], opacity: [0.35, 0.55, 0.35] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            aria-hidden
-          />
+          <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] border border-white/20 bg-linear-to-br from-slate-900 via-slate-800 to-slate-950">
+            <motion.div
+              className="pointer-events-none absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=60')] bg-cover bg-center opacity-25"
+              aria-hidden
+            />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-slate-950/85 via-slate-900/75 to-brand/30" aria-hidden />
+            <motion.div
+              className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-brand/30 blur-3xl"
+              animate={reduce ? undefined : { scale: [1, 1.12, 1], opacity: [0.35, 0.55, 0.35] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              aria-hidden
+            />
+          </div>
 
-          <motion.div className="relative p-4 sm:p-5">
+          <motion.div className="relative p-4 sm:p-5 text-white">
             <div className="flex items-start justify-between gap-3">
               <button
                 type="button"
