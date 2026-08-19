@@ -27,12 +27,35 @@ export function BroadcastPopup() {
   useEffect(() => {
     if (!socket || !isLabour) return
 
-    const handleBroadcast = (data) => {
+    const handleBroadcast = async (data) => {
       const timeout = Math.floor((data.timeoutMs || 30000) / 1000)
       setIncoming(data)
       setTimeLeft(timeout)
       setError('')
       setResponding(false)
+
+      // Local system notification fallback
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const title = 'New job offer nearby'
+        const body = `₹${data.laborShare || data.basePrice || ''} · ${data.address?.locationText || data.address?.text || 'Near you'}. Open the app to accept!`
+        
+        try {
+          const registration = await navigator.serviceWorker.ready
+          if (registration) {
+            registration.showNotification(title, {
+              body,
+              icon: '/logo.svg',
+              badge: '/favicon.svg',
+              tag: 'BOOKING_RECEIVED',
+              data: { link: '/app' },
+            })
+          } else {
+            new Notification(title, { body, icon: '/logo.svg', badge: '/favicon.svg' })
+          }
+        } catch (err) {
+          console.warn('[BroadcastPopup] Failed to show local notification:', err)
+        }
+      }
     }
 
     socket.on('BOOKING_RECEIVED', handleBroadcast)
