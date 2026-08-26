@@ -74,6 +74,7 @@ import {
   whatsAppSupportUrl,
 } from '../../../lib/labourHomeHelpers.js'
 import { markNotificationRead } from '../../../lib/labourNotifications.js'
+import { updateLabourSchedule } from '../../../api/userLabourApi.js'
 
 function getTimeGreeting() {
   const h = new Date().getHours()
@@ -625,7 +626,6 @@ export function LabourHomeScreen({ user }) {
                     type="button"
                     onClick={async () => {
                       try {
-                        const { updateLabourSchedule } = await import('../../../api/userLabourApi.js')
                         await updateLabourSchedule(schedule)
                         showToast('Time schedule saved successfully')
                         setTimeManagementOpen(false)
