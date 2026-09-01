@@ -97,5 +97,5 @@ export function isBuildMartRoute(pathname) {
 }
 
 export function hideBuildMartShellHeader(pathname) {
-  return pathname.startsWith('/app/buildmart/product/')
+  return pathname.startsWith('/app/buildmart')
 }

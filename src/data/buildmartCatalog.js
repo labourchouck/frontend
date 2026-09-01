@@ -68,16 +68,22 @@ export const BUILDMART_BANNERS = [
 ]
 
 export const BUILDMART_CATEGORIES = [
-  { id: 'cement', label: 'Cement', icon: Container, tone: 'bg-orange-100 text-orange-800 ring-orange-200/80' },
-  { id: 'steel', label: 'Steel', icon: Layers, tone: 'bg-slate-100 text-slate-800 ring-slate-200/80' },
-  { id: 'sand', label: 'Sand', icon: Shovel, tone: 'bg-amber-100 text-amber-900 ring-amber-200/80' },
-  { id: 'bricks', label: 'Bricks', icon: BrickWall, tone: 'bg-rose-100 text-rose-900 ring-rose-200/80' },
-  { id: 'paint', label: 'Paint', icon: Paintbrush, tone: 'bg-sky-100 text-sky-900 ring-sky-200/80' },
-  { id: 'pipes', label: 'Pipes', icon: Pipette, tone: 'bg-cyan-100 text-cyan-900 ring-cyan-200/80' },
-  { id: 'electrical', label: 'Electrical', icon: Zap, tone: 'bg-yellow-100 text-yellow-900 ring-yellow-200/80' },
-  { id: 'tiles', label: 'Tiles', icon: CircleDot, tone: 'bg-violet-100 text-violet-900 ring-violet-200/80' },
-  { id: 'tools', label: 'Tools', icon: Hammer, tone: 'bg-stone-100 text-stone-800 ring-stone-200/80' },
-  { id: 'hardware', label: 'Hardware', icon: Wrench, tone: 'bg-emerald-100 text-emerald-900 ring-emerald-200/80' },
+  { id: 'cement', label: 'Cement', image: 'https://placehold.co/150x150/transparent/0f172a?text=Cement', hasBulkPricesTag: true },
+  { id: 'tiling', label: 'Tiling', image: 'https://placehold.co/150x150/transparent/0f172a?text=Tiling', hasBulkPricesTag: true },
+  { id: 'painting', label: 'Painting', image: 'https://placehold.co/150x150/transparent/0f172a?text=Painting' },
+  { id: 'waterproofing', label: 'Water Proofing', image: 'https://placehold.co/150x150/transparent/0f172a?text=Water+Proofing' },
+  { id: 'plywood', label: 'Plywood, MDF & HDHMR', image: 'https://placehold.co/150x150/transparent/0f172a?text=Plywood' },
+  { id: 'fevicol', label: 'Fevicol', image: 'https://placehold.co/150x150/transparent/0f172a?text=Fevicol' },
+  { id: 'wires', label: 'Wires, MCB & Distribution Boards', image: 'https://placehold.co/150x150/transparent/0f172a?text=Wires' },
+  { id: 'sinks', label: 'Kitchen Sinks & Faucets', image: 'https://placehold.co/150x150/transparent/0f172a?text=Sinks' },
+  { id: 'sanitary', label: 'Sanitary & Bath Fittings', image: 'https://placehold.co/150x150/transparent/0f172a?text=Sanitary' },
+  { id: 'switches', label: 'Switches & Sockets', image: 'https://placehold.co/150x150/transparent/0f172a?text=Switches' },
+  { id: 'hinges', label: 'Hinges, Channels & Handles', image: 'https://placehold.co/150x150/transparent/0f172a?text=Hinges' },
+  { id: 'kitchen-systems', label: 'Kitchen Systems & Accessories', image: 'https://placehold.co/150x150/transparent/0f172a?text=Kitchen+Sys' },
+  { id: 'wardrobe', label: 'Wardrobe & Bed Fittings', image: 'https://placehold.co/150x150/transparent/0f172a?text=Wardrobe' },
+  { id: 'door-locks', label: 'Door Locks & Hardware', image: 'https://placehold.co/150x150/transparent/0f172a?text=Locks' },
+  { id: 'conduits', label: 'Conduits & GI Boxes', image: 'https://placehold.co/150x150/transparent/0f172a?text=Conduits' },
+  { id: 'lighting', label: 'Lighting', image: 'https://placehold.co/150x150/transparent/0f172a?text=Lighting' },
 ]
 
 /** @type {BuildMartProduct[]} */

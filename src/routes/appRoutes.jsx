@@ -13,6 +13,7 @@ import { AppFaqPage } from '../pages/app/AppFaqPage.jsx'
 import { LabourNotificationsPage } from '../pages/app/labour/LabourNotificationsPage.jsx'
 import { IndividualBookingFlowPage } from '../pages/app/booking/IndividualBookingFlowPage.jsx'
 import { BuildMartHomePage } from '../pages/app/buildmart/BuildMartHomePage.jsx'
+import { BuildMartCategoryPage } from '../pages/app/buildmart/BuildMartCategoryPage.jsx'
 import { BuildMartProductPage } from '../pages/app/buildmart/BuildMartProductPage.jsx'
 import { AppIndividualSearchPage } from '../pages/app/AppIndividualSearchPage.jsx'
 import { ServiceCatalog } from '../pages/app/ServiceCatalog.jsx'
@@ -132,6 +133,14 @@ export const appShellChildRoutes = (
       element={
         <RoleRoute allow={BUILDMART_ROLES} allowGuest>
           <BuildMartHomePage />
+        </RoleRoute>
+      }
+    />
+    <Route
+      path="buildmart/category/:categoryId"
+      element={
+        <RoleRoute allow={BUILDMART_ROLES} allowGuest>
+          <BuildMartCategoryPage />
         </RoleRoute>
       }
     />
