@@ -171,6 +171,21 @@ export function AuthEntryPage({ variant = 'b2c' }) {
     try {
       if (mode === 'login') {
         const res = await requestLoginOtp({ phone: p })
+        const loginRole = res.data?.role
+        if (loginRole) {
+          const b2cRoles = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
+          const b2bRoles = [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]
+          if (variant === 'b2c' && b2bRoles.includes(loginRole)) {
+            setBanner({ variant: 'error', message: 'This is a Business account. Please use the B2B sign-in page.' })
+            setBusy(false)
+            return
+          }
+          if (variant === 'b2b' && b2cRoles.includes(loginRole)) {
+            setBanner({ variant: 'error', message: 'This is a Personal/Labour account. Please use the B2C sign-in page.' })
+            setBusy(false)
+            return
+          }
+        }
         setChallengeId(res.data?.challengeId ?? null)
       } else {
         if (role === USER_ROLES.CORPORATE && !companyName.trim()) {
