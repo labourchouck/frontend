@@ -327,7 +327,7 @@ export function IndividualHomeScreen({ user }) {
             </h2>
           </div>
           
-          <div className="absolute bottom-[-7.5rem] right-2 w-[35%] max-w-[125px] pointer-events-none z-10">
+          <div className="absolute bottom-[-3rem] right-1 w-[42%] max-w-[160px] pointer-events-none z-30">
             <img 
               src="/assets/images/labour_chowck_hero_worker_final.png" 
               alt="LaborChowck Professional" 
