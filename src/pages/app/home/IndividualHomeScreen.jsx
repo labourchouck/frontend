@@ -344,7 +344,7 @@ export function IndividualHomeScreen({ user }) {
             aria-label="Instant Booking"
           >
             <TypewriterText text="Instant" className="text-left text-[15px] font-extrabold uppercase tracking-wider text-slate-800 z-10" />
-            <span className="text-[11px] font-bold text-brand bg-brand/10 px-1.5 py-0.5 rounded-sm mt-1 z-10">Book in 60s</span>
+            <span className="text-[11px] font-bold text-brand bg-brand/10 px-1.5 py-0.5 rounded-sm mt-1 z-10">Book in 30 min</span>
             
             <div className="absolute bottom-1 right-1 h-12 w-12 flex items-center justify-center opacity-90 group-hover:scale-110 transition-transform duration-300">
               <Lottie animationData={instantAnimation} loop={true} className="h-full w-full object-contain" />

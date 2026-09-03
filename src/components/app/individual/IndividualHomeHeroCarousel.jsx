@@ -34,7 +34,7 @@ export function IndividualHomeHeroCarousel({ onBook }) {
   if (loading) {
     return (
       <section className="mb-1 animate-pulse">
-        <article className="lc-home-hero-slide bg-slate-200 !min-h-0 aspect-[16/9]" />
+        <article className="lc-home-hero-slide bg-slate-200 !min-h-0 aspect-[4/1]" />
       </section>
     )
   }
@@ -47,7 +47,7 @@ export function IndividualHomeHeroCarousel({ onBook }) {
 
   return (
     <section aria-label="Offers" className="mb-1">
-      <article className="lc-home-hero-slide !min-h-0 !bg-transparent aspect-[16/9] relative overflow-hidden rounded-[1.25rem]">
+      <article className="lc-home-hero-slide !min-h-0 !bg-transparent aspect-[4/1] relative overflow-hidden rounded-[1.25rem]">
         <img
           key={slide._id}
           src={slide.imageUrl}
