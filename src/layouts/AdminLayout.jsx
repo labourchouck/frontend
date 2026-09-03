@@ -97,7 +97,7 @@ export function AdminLayout() {
           className={`relative z-10 flex min-w-0 items-center gap-2.5 rounded-xl px-1.5 py-1.5 font-extrabold tracking-tight text-slate-900 transition hover:bg-white/80 hover:shadow-sm ${collapsed ? 'md:justify-center' : ''}`}
           title="Dashboard"
         >
-          <img src="/logo-transparent.svg" alt="LabourChowk" className="h-8 w-auto" />
+          <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck" className="h-12 w-auto scale-125 origin-left object-contain" />
           <span className={`min-w-0 truncate ${collapsed ? 'md:sr-only' : ''}`}>
             <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
               Control panel
@@ -138,25 +138,21 @@ export function AdminLayout() {
                     end={Boolean(end)}
                     title={label}
                     className={({ isActive }) =>
-                      `group relative flex items-center gap-3 rounded-xl py-2.5 text-sm font-semibold transition duration-200 md:px-2 ${
-                        collapsed ? 'md:justify-center md:px-0' : 'px-3'
-                      } ${
-                        isActive
-                          ? 'bg-linear-to-r from-brand/12 to-emerald-50/50 text-slate-900 shadow-[inset_0_0_0_1px_rgba(28,175,98,0.12)]'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                      } ${!collapsed && isActive ? 'before:absolute before:left-0 before:top-1/2 before:h-8 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand before:shadow-[2px_0_12px_-2px_rgba(28,175,98,0.5)]' : ''} ${
-                        collapsed && isActive ? 'md:ring-2 md:ring-brand/25 md:ring-offset-2 md:ring-offset-white' : ''
+                      `group relative flex items-center gap-3 rounded-xl py-2.5 text-sm font-semibold transition duration-200 md:px-2 ${collapsed ? 'md:justify-center md:px-0' : 'px-3'
+                      } ${isActive
+                        ? 'bg-linear-to-r from-brand/12 to-emerald-50/50 text-slate-900 shadow-[inset_0_0_0_1px_rgba(28,175,98,0.12)]'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      } ${!collapsed && isActive ? 'before:absolute before:left-0 before:top-1/2 before:h-8 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand before:shadow-[2px_0_12px_-2px_rgba(28,175,98,0.5)]' : ''} ${collapsed && isActive ? 'md:ring-2 md:ring-brand/25 md:ring-offset-2 md:ring-offset-white' : ''
                       }`
                     }
                   >
                     {({ isActive }) => (
                       <>
                         <span
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 transition ${
-                            isActive
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 transition ${isActive
                               ? 'bg-white text-brand ring-brand/25 shadow-[0_4px_14px_-8px_rgba(28,175,98,0.35)]'
                               : 'bg-white text-slate-500 ring-slate-200/85 group-hover:text-brand group-hover:ring-brand/20'
-                          }`}
+                            }`}
                         >
                           <Icon className="h-[18px] w-[18px]" aria-hidden />
                         </span>

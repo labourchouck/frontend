@@ -77,7 +77,7 @@ export function BuildMartSearchBar({ onSearch }) {
   }
 
   return (
-    <div className="mx-4 mt-3 mb-2">
+    <div className="mx-4 mt-5 mb-2">
       <div className={`relative flex h-12 w-full items-center rounded-2xl border bg-white px-3.5 shadow-xs transition ${
         listening 
           ? 'border-red-400 ring-2 ring-red-100' 

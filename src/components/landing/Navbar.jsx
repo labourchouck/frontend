@@ -10,7 +10,7 @@ import { USER_ROLES } from '../../constants/userRoles.js'
 import { writeBootRole } from '../../lib/bootPersona.js'
 
 const links = [
-  { href: '#problem', label: 'Why LabourChowck' },
+  { href: '#problem', label: 'Why LaborChowck' },
   { href: '#how-it-works', label: 'How it works' },
   { href: '#services', label: 'Services' },
   { href: '#features', label: 'Trust' },
@@ -68,23 +68,17 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background,box-shadow] duration-300 ${
-        scrolled
-          ? 'border-b border-slate-200/90 bg-white/90 shadow-sm shadow-slate-200/50 backdrop-blur-xl'
-          : 'border-b border-transparent bg-transparent'
-      }`}
+      className={`fixed inset-x-0 top-0 z-50 transition-[background,box-shadow] duration-300 ${scrolled
+        ? 'border-b border-slate-200/90 bg-white/90 shadow-sm shadow-slate-200/50 backdrop-blur-xl'
+        : 'border-b border-transparent bg-transparent'
+        }`}
     >
       <Container className="flex h-16 items-center justify-between gap-4 md:h-[4.25rem]">
         <a
           href="#hero"
           className="flex items-center gap-2 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-bright to-brand text-white shadow-[0_8px_30px_-8px_rgba(28,175,98,0.45)]">
-            <HardHat className="h-5 w-5" strokeWidth={2} aria-hidden />
-          </span>
-          <span className="text-sm font-extrabold tracking-tight text-slate-900 sm:text-base">
-            {SITE.name}
-          </span>
+          <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck Logo" className="h-16 w-auto scale-[1.35] origin-left object-contain" />
         </a>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">

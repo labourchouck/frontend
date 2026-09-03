@@ -28,10 +28,10 @@ export function CorporateRequestDetailPage() {
 
   const [ratingState, setRatingState] = useState({ id: null, rating: 5, comment: '' })
   const [selectedAttendanceReqId, setSelectedAttendanceReqId] = useState(null)
-  
+
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [createdInvoiceId, setCreatedInvoiceId] = useState(null)
-  
+
   const [isInitializingRazorpay, setIsInitializingRazorpay] = useState(false)
 
   const loadRazorpay = () => {
@@ -80,7 +80,7 @@ export function CorporateRequestDetailPage() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
         amount: initRes.order?.amount,
         currency: initRes.order?.currency,
-        name: 'LabourChowk',
+        name: 'LaborChowk',
         description: `Payment for Request #${request?.reference}`,
         order_id: initRes.order?.id,
         handler: async function (response) {
@@ -256,7 +256,7 @@ export function CorporateRequestDetailPage() {
                 </div>
                 <span className="text-xs font-semibold text-slate-500">{item.labourers?.length || item.quantity} Labour(s)</span>
               </div>
-              
+
               <div className="px-4 py-2 space-y-2">
                 {(item.labourers || []).map((labour, lIdx) => (
                   <div key={lIdx} className="flex justify-between items-center text-xs text-slate-600">
@@ -352,7 +352,7 @@ export function CorporateRequestDetailPage() {
                   const categoryName = crew.category || crew.categoryName || ''
                   const serviceName = serv?.name || crew.serviceName || categoryName || 'Labour'
                   const adminPrice = Number(crew.adminPrice ?? serv?.adminPrice ?? serv?.price ?? 0)
-  
+
                   return (
                     <li key={crew._id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">
                       <div>
@@ -385,7 +385,7 @@ export function CorporateRequestDetailPage() {
         onClose={() => setSelectedAttendanceReqId(null)}
       />
 
-      <BookingReviewModal 
+      <BookingReviewModal
         open={showReviewModal}
         bookingId={request?._id}
         revieweeId={data?.allocation?.vendorId?._id || request?.preferredVendorId?._id}

@@ -254,7 +254,7 @@ export function AppShell() {
                       {drawerInitials}
                     </span>
                     <div className="min-w-0">
-                      <img src="/logo-transparent.svg" alt="LabourChowk" className="h-4 w-auto mb-1" />
+                      <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck" className="h-10 w-auto mb-1 scale-125 origin-left object-contain" />
                       <p className="truncate text-sm font-extrabold text-slate-900">Menu</p>
                       <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
                         {ROLE_LABELS[user?.role] || 'Account'}
@@ -297,8 +297,8 @@ export function AppShell() {
                       <>
                         <span
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 transition ${isActive
-                              ? 'bg-white text-brand ring-brand/25'
-                              : 'bg-white text-slate-500 ring-slate-200/80 group-hover:text-brand group-hover:ring-brand/15'
+                            ? 'bg-white text-brand ring-brand/25'
+                            : 'bg-white text-slate-500 ring-slate-200/80 group-hover:text-brand group-hover:ring-brand/15'
                             }`}
                         >
                           <Icon className="h-[18px] w-[18px]" aria-hidden />
@@ -429,8 +429,8 @@ export function AppShell() {
                 </div>
                 <motion.div
                   className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-inner ring-1 sm:flex ${onBuildMart
-                      ? 'buildmart-gradient text-white ring-orange-300/30'
-                      : 'bg-linear-to-br from-brand/15 to-brand-muted/60 text-brand ring-brand/15'
+                    ? 'buildmart-gradient text-white ring-orange-300/30'
+                    : 'bg-linear-to-br from-brand/15 to-brand-muted/60 text-brand ring-brand/15'
                     }`}
                   aria-hidden
                 >
@@ -443,10 +443,10 @@ export function AppShell() {
 
         <main
           className={`relative z-10 flex-1 px-4 pb-32 ${hideShellHeader
-              ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]'
-              : isIndividualAppHome
-                ? 'pt-0'
-                : 'pt-4'
+            ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]'
+            : isIndividualAppHome
+              ? 'pt-0'
+              : 'pt-4'
             }`}
         >
           <AppPageTransition />

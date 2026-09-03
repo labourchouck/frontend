@@ -1,10 +1,10 @@
 /** Dummy marketing copy & structured content for LabourChowck landing */
 
 export const SITE = {
-  name: 'LabourChowck',
+  name: 'LaborChowck',
   tagline: 'India’s trusted on-demand construction workforce',
-  url: 'https://labourchowck.com',
-  contactEmail: 'hello@labourchowck.com',
+  url: 'https://laborchowck.com',
+  contactEmail: 'hello@laborchowck.com',
   phone: '+91 98765 43210',
 }
 
@@ -303,7 +303,7 @@ export const testimonials = [
     name: 'Ananya Sharma',
     role: 'Homeowner, Gurugram',
     quote:
-      'We needed masons and helpers for a 10-day renovation. Booking on LabourChowck took minutes and the crew showed up on time—something that rarely happened with our old contacts.',
+      'We needed masons and helpers for a 10-day renovation. Booking on LaborChowck took minutes and the crew showed up on time—something that rarely happened with our old contacts.',
     rating: 5,
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya',
   },

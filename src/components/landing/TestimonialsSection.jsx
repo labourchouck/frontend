@@ -19,7 +19,7 @@ export function TestimonialsSection() {
           titleId="testimonials-heading"
           eyebrow="Stories from the field"
           title="Real crews. Real sites. Real outcomes."
-          subtitle="From Gurugram renovations to Hyderabad electrical contracts—teams use LabourChowck when timelines and trust both matter."
+          subtitle="From Gurugram renovations to Hyderabad electrical contracts—teams use LaborChowck when timelines and trust both matter."
           align="center"
         />
 
@@ -51,9 +51,8 @@ export function TestimonialsSection() {
                       {Array.from({ length: 5 }).map((_, j) => (
                         <Star
                           key={j}
-                          className={`h-4 w-4 ${
-                            j < t.rating ? 'fill-brand text-brand' : 'text-slate-300'
-                          }`}
+                          className={`h-4 w-4 ${j < t.rating ? 'fill-brand text-brand' : 'text-slate-300'
+                            }`}
                           aria-hidden
                         />
                       ))}

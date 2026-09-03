@@ -113,7 +113,7 @@ export function IndividualBookingFlowPage() {
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
   const markerInstance = useRef(null)
-  
+
   const [activeSubscription, setActiveSubscription] = useState(null)
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false)
   const [subscriptionModalMsg, setSubscriptionModalMsg] = useState('')
@@ -320,16 +320,16 @@ export function IndividualBookingFlowPage() {
     if (!isToday) return timeSlots
 
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
-    
+
     return timeSlots.filter(slot => {
       const match = slot.match(/(\d+):(\d+) (AM|PM)/)
       if (!match) return true
-      let [ , h, m, ampm ] = match
+      let [, h, m, ampm] = match
       h = parseInt(h, 10)
       m = parseInt(m, 10)
       if (ampm === 'PM' && h < 12) h += 12
       if (ampm === 'AM' && h === 12) h = 0
-      
+
       const slotMinutes = h * 60 + m
       return slotMinutes > currentMinutes + 30
     })
@@ -341,7 +341,7 @@ export function IndividualBookingFlowPage() {
       initMaps()
       return
     }
-    
+
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
     if (!apiKey) return
 
@@ -361,18 +361,18 @@ export function IndividualBookingFlowPage() {
       setMapsLoaded(true)
 
       if (mapRef.current && !mapInstance.current) {
-        const currentPos = { 
-          lat: draft.lat || 28.7041, 
-          lng: draft.lng || 77.1025 
+        const currentPos = {
+          lat: draft.lat || 28.7041,
+          lng: draft.lng || 77.1025
         }
-        
+
         mapInstance.current = new window.google.maps.Map(mapRef.current, {
           center: currentPos,
           zoom: 15,
           disableDefaultUI: true,
           zoomControl: true,
         })
-        
+
         markerInstance.current = new window.google.maps.Marker({
           position: currentPos,
           map: mapInstance.current,
@@ -384,7 +384,7 @@ export function IndividualBookingFlowPage() {
           const pos = markerInstance.current.getPosition()
           const lat = pos.lat()
           const lng = pos.lng()
-          
+
           const geocoder = new window.google.maps.Geocoder()
           geocoder.geocode({ location: pos }, (results, status) => {
             if (status === 'OK' && results[0]) {
@@ -624,7 +624,7 @@ export function IndividualBookingFlowPage() {
       <div className="pb-8">
         <AppStackScreenHeader title="Matching labour" onBack={() => goStep('summary')} />
         <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
-        
+
         <div className="px-4 mt-6">
           <div className="lc-booking-flow-card">
             <p className="lc-booking-flow-label mb-2">Booking Details</p>
@@ -832,7 +832,7 @@ export function IndividualBookingFlowPage() {
                     if (activeBooking?.paymentMethod !== 'ONLINE') {
                       await bookingsApi.updatePaymentMethod(activeBookingId, 'ONLINE')
                     }
-                    
+
                     // load Razorpay
                     let rzpLoaded = window.Razorpay
                     if (!rzpLoaded) {
@@ -861,7 +861,7 @@ export function IndividualBookingFlowPage() {
                       key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB',
                       amount: order.amount,
                       currency: order.currency,
-                      name: 'LabourChowck',
+                      name: 'LaborChowck',
                       description: `Payment for Booking`,
                       order_id: order.id,
                       handler: async function (response) {
@@ -958,7 +958,7 @@ export function IndividualBookingFlowPage() {
                 {/* Decorative background blob */}
                 <div className="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-brand/10 blur-3xl" aria-hidden />
                 <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden />
-                
+
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -1064,13 +1064,13 @@ export function IndividualBookingFlowPage() {
               ) : (
                 <div className="relative w-full">
                   <div className="w-full rounded-xl border border-slate-200 overflow-hidden focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20 [&>gmp-place-autocomplete]:w-full [&>gmp-place-autocomplete]:block">
-                    <gmp-place-autocomplete 
-                      id="work-location" 
-                      name="workLocation" 
+                    <gmp-place-autocomplete
+                      id="work-location"
+                      name="workLocation"
                       ref={autocompleteRef}
                     ></gmp-place-autocomplete>
                   </div>
-                  
+
                   {forceInput && (
                     <input
                       id="work-location-display"
@@ -1085,9 +1085,9 @@ export function IndividualBookingFlowPage() {
                   )}
                 </div>
               )}
-              <div 
-                ref={mapRef} 
-                className="mt-3 h-48 w-full rounded-xl bg-slate-100 ring-1 ring-black/5 overflow-hidden" 
+              <div
+                ref={mapRef}
+                className="mt-3 h-48 w-full rounded-xl bg-slate-100 ring-1 ring-black/5 overflow-hidden"
               />
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
@@ -1144,60 +1144,60 @@ export function IndividualBookingFlowPage() {
             {draft.bookingType !== 'instant' && (
               <motion.div>
                 <FieldLabel>Working duration</FieldLabel>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'few_hours', label: 'Few hours' },
-                  { id: 'multi_day', label: 'Multi day' },
-                ].map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() =>
-                      syncDraft({
-                        durationKind: d.id,
-                        durationDays: durationKindToDays(d.id, draft.durationDays),
-                      })
-                    }
-                    className="lc-booking-chip"
-                    data-active={draft.durationKind === d.id ? 'true' : 'false'}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
-              {draft.durationKind === 'multi_day' ? (
-                <div className="mt-2 space-y-1.5">
-                  <label htmlFor="duration-days" className="text-[11px] font-bold uppercase text-slate-500">
-                    Number of days
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="duration-days"
-                      name="durationDays"
-                      aria-label="Number of days"
-                      type="number"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      min={2}
-                      max={30}
-                      value={draft.durationDays === undefined ? 2 : draft.durationDays}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        syncDraft({ durationDays: val === '' ? '' : Number(val) })
-                      }}
-                      onBlur={(e) => {
-                        const val = Number(e.target.value)
-                        if (!val || val < 2) syncDraft({ durationDays: 2 })
-                        else if (val > 30) syncDraft({ durationDays: 30 })
-                      }}
-                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 pr-12 text-sm font-bold text-black outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-                    />
-                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
-                      days
-                    </span>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'few_hours', label: 'Few hours' },
+                    { id: 'multi_day', label: 'Multi day' },
+                  ].map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() =>
+                        syncDraft({
+                          durationKind: d.id,
+                          durationDays: durationKindToDays(d.id, draft.durationDays),
+                        })
+                      }
+                      className="lc-booking-chip"
+                      data-active={draft.durationKind === d.id ? 'true' : 'false'}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
                 </div>
-              ) : null}
+                {draft.durationKind === 'multi_day' ? (
+                  <div className="mt-2 space-y-1.5">
+                    <label htmlFor="duration-days" className="text-[11px] font-bold uppercase text-slate-500">
+                      Number of days
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="duration-days"
+                        name="durationDays"
+                        aria-label="Number of days"
+                        type="number"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        min={2}
+                        max={30}
+                        value={draft.durationDays === undefined ? 2 : draft.durationDays}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          syncDraft({ durationDays: val === '' ? '' : Number(val) })
+                        }}
+                        onBlur={(e) => {
+                          const val = Number(e.target.value)
+                          if (!val || val < 2) syncDraft({ durationDays: 2 })
+                          else if (val > 30) syncDraft({ durationDays: 30 })
+                        }}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-2.5 pr-12 text-sm font-bold text-black outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                      />
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                        days
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
               </motion.div>
             )}
 
@@ -1276,122 +1276,120 @@ export function IndividualBookingFlowPage() {
               <span className="text-sm font-semibold text-slate-500">Loading billing details...</span>
             </div>
           ) : (
-          <motion.div className="space-y-4">
-            <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
-              <div className="flex justify-between gap-2">
-                <span className="lc-booking-flow-muted">Service</span>
-                <span className="text-right font-bold text-black">
-                  <span className="lc-booking-highlight-title block text-base">{draft.categoryName}</span>
-                  {draft.groupName ? <span className="text-xs font-semibold">{draft.groupName}</span> : null}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="lc-booking-flow-muted">Booking</span>
-                <span className="font-bold capitalize text-black">{draft.bookingType}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="lc-booking-flow-muted">When</span>
-                <span className="font-bold text-black">
-                  {draft.bookingType === 'instant'
-                    ? 'ASAP'
-                    : `${draft.serviceDate} · ${draft.timeSlot}`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="lc-booking-flow-muted">Duration</span>
-                <span className="font-bold text-black">{durationKindLabel(draft.durationKind)}</span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="shrink-0 lc-booking-flow-muted">Workers</span>
-                <span className="text-right font-bold text-black">
-                  Flash Broadcast Match
-                </span>
-              </div>
-              <p className="flex items-start gap-2 font-medium text-black">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
-                {draft.address}
-              </p>
-              <div className="border-t border-slate-200 pt-3">
-                <div className="flex justify-between font-semibold text-black">
-                  <span>Service fee</span>
-                  <span>{formatInr(calculatedBill.basePrice)}</span>
+            <motion.div className="space-y-4">
+              <div className="lc-booking-flow-card space-y-3 text-sm lc-booking-flow-body">
+                <div className="flex justify-between gap-2">
+                  <span className="lc-booking-flow-muted">Service</span>
+                  <span className="text-right font-bold text-black">
+                    <span className="lc-booking-highlight-title block text-base">{draft.categoryName}</span>
+                    {draft.groupName ? <span className="text-xs font-semibold">{draft.groupName}</span> : null}
+                  </span>
                 </div>
-                <div className="mt-1 flex justify-between lc-booking-flow-muted">
-                  <span>Platform fee</span>
-                  <span>{formatInr(calculatedBill.platformFee)}</span>
+                <div className="flex justify-between">
+                  <span className="lc-booking-flow-muted">Booking</span>
+                  <span className="font-bold capitalize text-black">{draft.bookingType}</span>
                 </div>
-                <div className="flex justify-between lc-booking-flow-muted">
-                  <span>Taxes</span>
-                  <span>{formatInr(calculatedBill.taxes)}</span>
+                <div className="flex justify-between">
+                  <span className="lc-booking-flow-muted">When</span>
+                  <span className="font-bold text-black">
+                    {draft.bookingType === 'instant'
+                      ? 'ASAP'
+                      : `${draft.serviceDate} · ${draft.timeSlot}`}
+                  </span>
                 </div>
-                <div className="mt-2 flex justify-between text-base font-extrabold text-black">
-                  <span>Total</span>
-                  <span>{formatInr(calculatedBill.totalAmount)}</span>
+                <div className="flex justify-between">
+                  <span className="lc-booking-flow-muted">Duration</span>
+                  <span className="font-bold text-black">{durationKindLabel(draft.durationKind)}</span>
                 </div>
-                {activeSubscription ? (
-                  <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-emerald-900 border border-emerald-100">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span className="font-bold text-sm">Active Plan: {activeSubscription.snapshotPlanDetails?.name || activeSubscription.plan?.name}</span>
-                    </div>
-                    <div className="text-xs font-medium">
-                      Bookings Used: <span className="font-bold">{activeSubscription.bookingsUsed}</span> / {activeSubscription.snapshotPlanDetails?.allowedBookings || activeSubscription.plan?.allowedBookings}
-                    </div>
+                <div className="flex justify-between gap-2">
+                  <span className="shrink-0 lc-booking-flow-muted">Workers</span>
+                  <span className="text-right font-bold text-black">
+                    Flash Broadcast Match
+                  </span>
+                </div>
+                <p className="flex items-start gap-2 font-medium text-black">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
+                  {draft.address}
+                </p>
+                <div className="border-t border-slate-200 pt-3">
+                  <div className="flex justify-between font-semibold text-black">
+                    <span>Service fee</span>
+                    <span>{formatInr(calculatedBill.basePrice)}</span>
                   </div>
-                ) : (
-                  <div className="mt-4 rounded-xl bg-orange-50 p-3 text-orange-900 border border-orange-100 flex items-center justify-between">
-                    <span className="text-sm font-semibold">Get a plan to book labour easily</span>
-                    <button
-                      onClick={() => navigate('/app/subscriptions')}
-                      className="text-xs font-bold bg-orange-500 text-white px-3 py-1.5 rounded-lg"
-                    >
-                      View Plans
-                    </button>
+                  <div className="mt-1 flex justify-between lc-booking-flow-muted">
+                    <span>Platform fee</span>
+                    <span>{formatInr(calculatedBill.platformFee)}</span>
                   </div>
-                )}
+                  <div className="flex justify-between lc-booking-flow-muted">
+                    <span>Taxes</span>
+                    <span>{formatInr(calculatedBill.taxes)}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between text-base font-extrabold text-black">
+                    <span>Total</span>
+                    <span>{formatInr(calculatedBill.totalAmount)}</span>
+                  </div>
+                  {activeSubscription ? (
+                    <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-emerald-900 border border-emerald-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span className="font-bold text-sm">Active Plan: {activeSubscription.snapshotPlanDetails?.name || activeSubscription.plan?.name}</span>
+                      </div>
+                      <div className="text-xs font-medium">
+                        Bookings Used: <span className="font-bold">{activeSubscription.bookingsUsed}</span> / {activeSubscription.snapshotPlanDetails?.allowedBookings || activeSubscription.plan?.allowedBookings}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-xl bg-orange-50 p-3 text-orange-900 border border-orange-100 flex items-center justify-between">
+                      <span className="text-sm font-semibold">Get a plan to book labour easily</span>
+                      <button
+                        onClick={() => navigate('/app/subscriptions')}
+                        className="text-xs font-bold bg-orange-500 text-white px-3 py-1.5 rounded-lg"
+                      >
+                        View Plans
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="lc-booking-flow-card space-y-3">
-              <p className="lc-booking-flow-label font-bold text-slate-800">Payment Method</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => syncDraft({ paymentMethod: 'CASH' })}
-                  className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 font-bold transition-all ${
-                    (draft.paymentMethod || 'CASH') === 'CASH'
-                      ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-slate-200 text-slate-500 hover:border-brand/30 hover:bg-slate-50'
-                  }`}
-                >
-                  <IndianRupee className="h-5 w-5" />
-                  Cash
-                </button>
-                <button
-                  type="button"
-                  onClick={() => syncDraft({ paymentMethod: 'ONLINE' })}
-                  className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 font-bold transition-all ${
-                    draft.paymentMethod === 'ONLINE'
-                      ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-slate-200 text-slate-500 hover:border-brand/30 hover:bg-slate-50'
-                  }`}
-                >
-                  <Zap className="h-5 w-5" />
-                  Online
-                </button>
+              <div className="lc-booking-flow-card space-y-3">
+                <p className="lc-booking-flow-label font-bold text-slate-800">Payment Method</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => syncDraft({ paymentMethod: 'CASH' })}
+                    className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 font-bold transition-all ${(draft.paymentMethod || 'CASH') === 'CASH'
+                        ? 'border-brand bg-brand/5 text-brand'
+                        : 'border-slate-200 text-slate-500 hover:border-brand/30 hover:bg-slate-50'
+                      }`}
+                  >
+                    <IndianRupee className="h-5 w-5" />
+                    Cash
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => syncDraft({ paymentMethod: 'ONLINE' })}
+                    className={`flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 font-bold transition-all ${draft.paymentMethod === 'ONLINE'
+                        ? 'border-brand bg-brand/5 text-brand'
+                        : 'border-slate-200 text-slate-500 hover:border-brand/30 hover:bg-slate-50'
+                      }`}
+                  >
+                    <Zap className="h-5 w-5" />
+                    Online
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-2">
-              <button type="button" className="lc-booking-btn-secondary flex-1" onClick={() => goStep('details')}>
-                Edit details
-              </button>
-              <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking} disabled={isCreating}>
-                {isCreating ? 'Sending req...' : 'Send req'}
-                <CheckCircle2 className="h-4 w-4" aria-hidden />
-              </BookingPrimaryButton>
-            </div>
-          </motion.div>
+              <div className="flex gap-2">
+                <button type="button" className="lc-booking-btn-secondary flex-1" onClick={() => goStep('details')}>
+                  Edit details
+                </button>
+                <BookingPrimaryButton type="button" className="flex-1" onClick={confirmBooking} disabled={isCreating}>
+                  {isCreating ? 'Sending req...' : 'Send req'}
+                  <CheckCircle2 className="h-4 w-4" aria-hidden />
+                </BookingPrimaryButton>
+              </div>
+            </motion.div>
           )
         ) : null}
 

@@ -303,7 +303,7 @@ export function AuthEntryPage() {
       </div>
       <MobileShell transparent className="relative z-10 overflow-x-hidden pb-4 min-h-screen">
         <div className="px-6 pt-12 pb-3 flex flex-col items-start">
-          <img src="/logo-white.svg" alt="Labour Chowk" className="-ml-3 h-[52px] w-auto mb-16 drop-shadow-sm" />
+          <img src="/assets/images/labour_chowck_logo_white.png" alt="Labour Chowk" className="-ml-4 h-[110px] w-auto mb-8 drop-shadow-sm object-contain" />
           <h1 className="text-[32px] font-bold tracking-tight text-brand mt-4">
             {step === 'otp' ? 'Verification' : mode === 'login' ? 'Hi there!' : 'Welcome!'}
           </h1>

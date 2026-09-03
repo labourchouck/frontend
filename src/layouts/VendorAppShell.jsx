@@ -103,7 +103,7 @@ export function VendorAppShell() {
                       {drawerInitials}
                     </span>
                     <div className="min-w-0">
-                      <img src="/logo-transparent.svg" alt="LabourChowk" className="h-4 w-auto mb-1" />
+                      <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck" className="h-10 w-auto mb-1 scale-125 origin-left object-contain" />
                       <p className="truncate text-sm font-extrabold text-slate-900">Menu</p>
                       <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
                         {ROLE_LABELS[user?.role] || 'Vendor'}
@@ -133,21 +133,19 @@ export function VendorAppShell() {
                     end={Boolean(end)}
                     onClick={() => setDrawerOpen(false)}
                     className={({ isActive }) =>
-                      `group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
-                        isActive
-                          ? 'bg-linear-to-r from-brand/10 to-white text-slate-900 shadow-[inset_0_0_0_1px_rgba(28,175,98,0.12)] before:absolute before:left-0 before:top-1/2 before:h-9 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand'
-                          : 'text-slate-700 hover:bg-slate-50'
+                      `group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${isActive
+                        ? 'bg-linear-to-r from-brand/10 to-white text-slate-900 shadow-[inset_0_0_0_1px_rgba(28,175,98,0.12)] before:absolute before:left-0 before:top-1/2 before:h-9 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand'
+                        : 'text-slate-700 hover:bg-slate-50'
                       }`
                     }
                   >
                     {({ isActive }) => (
                       <>
                         <span
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 ${
-                            isActive
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 ${isActive
                               ? 'bg-white text-brand ring-brand/25'
                               : 'bg-white text-slate-500 ring-slate-200/80 group-hover:text-brand'
-                          }`}
+                            }`}
                         >
                           <Icon className="h-[18px] w-[18px]" aria-hidden />
                         </span>
@@ -218,11 +216,10 @@ export function VendorAppShell() {
         ) : null}
 
         <main
-          className={`relative z-10 min-w-0 flex-1 overflow-y-auto overscroll-contain overflow-x-hidden pb-28 ${
-            hideShellHeader
+          className={`relative z-10 min-w-0 flex-1 overflow-y-auto overscroll-contain overflow-x-hidden pb-28 ${hideShellHeader
               ? 'px-0 pt-[max(0.25rem,env(safe-area-inset-top,0px))]'
               : 'px-4 pt-4'
-          }`}
+            }`}
         >
           <AppPageTransition />
         </main>

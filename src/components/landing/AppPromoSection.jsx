@@ -45,8 +45,8 @@ export function AppPromoSection() {
             <SectionHeading
               titleId="app-heading"
               eyebrow="Mobile apps"
-              title="Carry LabourChowck in your pocket"
-              subtitle="Book crews on-site, approve attendance, and help labour partners get paid faster—with notifications tuned for noisy, dusty environments."
+              title="Carry LaborChowck in your pocket"
+              subtitle="Book crews on-site, approve attendance, and help labor partners get paid faster—with notifications tuned for noisy, dusty environments."
             />
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <ButtonLink
@@ -85,7 +85,7 @@ export function AppPromoSection() {
               <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-brand/20 blur-3xl" />
               <div className="flex flex-wrap items-end justify-center gap-6">
                 <PhoneMock label="Hirer app" accent="from-brand-bright to-brand" />
-                <PhoneMock label="Labour app" accent="from-surface-800 to-surface-950" />
+                <PhoneMock label="Labor app" accent="from-surface-800 to-surface-950" />
               </div>
             </div>
           </Reveal>

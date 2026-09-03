@@ -79,7 +79,7 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.12 }}
             >
-              LabourChowck connects homeowners, contractors, and enterprises with Aadhaar-verified
+              LaborChowck connects homeowners, contractors, and enterprises with Aadhaar-verified
               skilled & unskilled workers—transparent pricing, digital payments, and backup support
               when your site cannot wait.
             </motion.p>
