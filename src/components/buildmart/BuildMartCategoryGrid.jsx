@@ -47,7 +47,7 @@ export function BuildMartCategoryGrid() {
             <img
               src={category.icon || category.image}
               alt={category.label}
-              className="h-full w-full object-cover p-2 mix-blend-multiply"
+              className="h-full w-full object-cover mix-blend-multiply"
               loading="lazy"
             />
           </div>
