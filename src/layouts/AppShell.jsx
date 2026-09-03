@@ -355,7 +355,7 @@ export function AppShell() {
         {!hideShellHeader ? (
           <header
             ref={headerRef}
-            className={`sticky top-0 z-30 ${isIndividualAppHome ? 'bg-brand px-4 pb-1 pt-3' : 'px-3 pt-3'
+            className={`sticky top-0 z-30 ${isIndividualAppHome ? 'bg-brand px-4 pb-3.5 pt-3' : 'px-3 pt-3'
               }`}
           >
             {isIndividualAppHome ? (
@@ -363,7 +363,7 @@ export function AppShell() {
                 <button
                   type="button"
                   onClick={() => setDrawerOpen(true)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition active:scale-95 hover:bg-white/25"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand shadow-sm transition active:scale-95 hover:bg-white/95"
                   aria-label="Open menu"
                 >
                   <Menu className="h-5 w-5" />

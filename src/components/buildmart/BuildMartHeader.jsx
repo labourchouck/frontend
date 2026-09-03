@@ -44,21 +44,21 @@ export function BuildMartHeader({ onOpenDrawer }) {
             <Menu className="h-6 w-6" />
           </button>
           
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1">
-              <span className="flex h-5 items-center rounded bg-green-600 px-1.5 text-[10px] font-bold text-white">
-                60 Mins
-              </span>
-              <span className="text-[10px] text-slate-500">Deliver To</span>
+          <div className="flex items-center gap-2">
+            <span className="flex h-[34px] items-center rounded-lg bg-[#00A64C] px-2.5 text-xs font-bold text-white tracking-wide">
+              60 Mins
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[11px] text-slate-500 font-medium">Deliver To</span>
+              <button 
+                onClick={() => setLocationModalOpen(true)}
+                className="flex items-center gap-0.5 text-sm font-bold text-slate-800 truncate max-w-[120px] -mt-0.5"
+              >
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                <span className="truncate">{individualLocationTitle}</span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              </button>
             </div>
-            <button 
-              onClick={() => setLocationModalOpen(true)}
-              className="flex items-center gap-0.5 text-sm font-bold text-slate-800 truncate max-w-[120px]"
-            >
-              <MapPin className="h-3 w-3 shrink-0 text-slate-500" />
-              <span className="truncate">{individualLocationTitle}</span>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-            </button>
           </div>
         </div>
 

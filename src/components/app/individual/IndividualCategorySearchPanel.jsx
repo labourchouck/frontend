@@ -27,7 +27,7 @@ function SwiggyGroupTile({ label, imageSrc, active, onClick }) {
         <img
           src={imageSrc}
           alt=""
-          className="lc-img-reveal h-full w-full object-cover"
+          className="lc-img-reveal h-full w-full object-cover scale-[1.15]"
           loading="lazy"
           decoding="async"
           onLoad={(e) => e.currentTarget.classList.add('lc-img-loaded')}
@@ -47,8 +47,8 @@ function SkillCard({ category, active, showGroupName, onClick }) {
       className="lc-search-skill-card"
       data-active={active ? 'true' : 'false'}
     >
-      <div className="relative aspect-[4/3] bg-slate-100">
-        <img src={img} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+      <div className="relative aspect-[4/3] bg-white overflow-hidden">
+        <img src={img} alt="" className="h-full w-full object-cover scale-[1.15] transition-transform duration-300 group-hover:scale-[1.20]" loading="lazy" decoding="async" />
       </div>
       <div className="px-2.5 py-2">
         <p className="line-clamp-2 text-xs font-bold leading-snug text-slate-900">{category.name}</p>

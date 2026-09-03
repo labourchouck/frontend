@@ -32,6 +32,7 @@ const TypewriterText = ({ text, className }) => {
 import instantAnimation from '../../../assets/lotties/booking (1).json'
 import scheduleAnimation from '../../../assets/lotties/schedule.json'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
+import { IndividualHomeCategoryGrid } from '../../../components/app/individual/IndividualHomeCategoryGrid.jsx'
 import { IndividualHomeCategoryRail } from '../../../components/app/individual/IndividualHomeCategoryRail.jsx'
 import { IndividualHomeHeroCarousel } from '../../../components/app/individual/IndividualHomeHeroCarousel.jsx'
 import { IndividualHomeRecentlyBooked } from '../../../components/app/individual/IndividualHomeRecentlyBooked.jsx'
@@ -312,22 +313,88 @@ export function IndividualHomeScreen({ user }) {
 
   return (
     <div
-      className="-mx-4 flex flex-col pb-2"
+      className="-mx-4 flex flex-col pb-6"
       aria-label={user?.fullName ? `Home for ${user.fullName}` : 'Discover workers home'}
     >
-      <div className="relative z-10 bg-brand px-4 pb-3">
-        <IndividualHomeCategoryRail
-          groups={tradeGroups}
-          loading={groupsLoading}
-          selectedGroupId={selectedGroupId}
-          onSelectGroup={(id) => navigate(id ? `/app/search?groupId=${id}` : '/app/search')}
-          onBrand
-        />
+      {/* 1. Header Background Extension with Text, Image, & Buttons */}
+      <div className="bg-brand px-4 pb-8 pt-6 rounded-b-[2.5rem] relative z-0 flex flex-col min-h-[300px]">
+        
+        {/* Top area with Text & Image */}
+        <div className="flex-1 flex items-start relative mt-4">
+          <div className="w-[60%] relative z-10 text-white">
+            <h2 className="text-[1.5rem] sm:text-[1.85rem] font-extrabold leading-[1.2] tracking-tight">
+              Your trusted <br/> partner for 100+ <br/> expert services
+            </h2>
+          </div>
+          
+          <div className="absolute bottom-[-3rem] right-[1rem] w-[75%] h-[175%] pointer-events-none [mask-image:linear-gradient(to_left,black_85%,transparent)] z-0">
+            <img 
+              src="/assets/images/labour_chowck_hero_worker_final.png" 
+              alt="LaborChowck Professional" 
+              className="w-full h-full object-contain object-bottom object-right scale-110" 
+            />
+          </div>
+        </div>
+
+        {/* 2. Instant & Schedule Buttons (Now inside the green section) */}
+        <div className="relative z-20 mx-1 grid grid-cols-2 gap-3 pt-12 pb-2">
+          <button
+            onClick={() => navigate('/app/search')}
+            className="group relative flex flex-col items-start justify-start rounded-2xl bg-gradient-to-b from-white to-slate-50/90 p-4 min-h-[110px] border border-slate-200/90 shadow-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md hover:border-brand/40 overflow-hidden"
+            aria-label="Instant Booking"
+          >
+            <TypewriterText text="Instant" className="text-left text-[15px] font-extrabold uppercase tracking-wider text-slate-800 z-10" />
+            <span className="text-[11px] font-bold text-brand bg-brand/10 px-1.5 py-0.5 rounded-sm mt-1 z-10">Book in 60s</span>
+            
+            <div className="absolute bottom-1 right-1 h-12 w-12 flex items-center justify-center opacity-90 group-hover:scale-110 transition-transform duration-300">
+              <Lottie animationData={instantAnimation} loop={true} className="h-full w-full object-contain" />
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/app/search')}
+            className="group relative flex flex-col items-start justify-start rounded-2xl bg-gradient-to-b from-white to-slate-50/90 p-4 min-h-[110px] border border-slate-200/90 shadow-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md hover:border-brand/40 overflow-hidden"
+            aria-label="Schedule Booking"
+          >
+            <TypewriterText text="Schedule" className="text-left text-[15px] font-extrabold uppercase tracking-wider text-slate-800 z-10" />
+            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-sm mt-1 z-10">Pick date/time</span>
+            
+            <div className="absolute bottom-1 right-1 h-12 w-12 flex items-center justify-center opacity-90 group-hover:scale-110 transition-transform duration-300">
+              <Lottie animationData={scheduleAnimation} loop={true} className="h-full w-full object-contain" />
+            </div>
+          </button>
+        </div>
       </div>
 
-      <section className="lc-individual-home-sheet space-y-6">
-        <IndividualHomeHeroCarousel onBook={goSearch} />
+      <section className="lc-individual-home-sheet space-y-6 pt-4 relative z-10 px-4">
 
+        {/* 3. Explore Services (with 'Find a skill' text button on the right) */}
+        <IndividualHomeWorkerCarousel
+          title="Explore services"
+          workers={nearbyLabours}
+          loading={laboursLoading}
+          error={laboursErr}
+          emptyAction="Find a skill"
+          onSelectWorker={openDetail}
+          onEmptyAction={goSearch}
+        />
+
+        {/* 4. Promotional Banner Carousel (Moved above All Categories) */}
+        <div className="py-2">
+          <IndividualHomeHeroCarousel onBook={goSearch} />
+        </div>
+
+        {/* 5. All Categories in Square Shape (Grid on screen, not horizontal) */}
+        <IndividualHomeCategoryGrid
+          groups={tradeGroups}
+          loading={groupsLoading}
+          onSelectCategory={(group) => navigate('/app/services')}
+          title="All Categories"
+          emptyAction="Find a skill"
+          onEmptyAction={goSearch}
+        />
+
+        {/* 5. Active Plan (if subscribed) */}
         {activeSubscription && (() => {
           const planName = activeSubscription.snapshotPlanDetails?.name || activeSubscription.plan?.name
           const allowed = activeSubscription.snapshotPlanDetails?.allowedBookings || activeSubscription.plan?.allowedBookings || 1
@@ -335,7 +402,7 @@ export function IndividualHomeScreen({ user }) {
           const progress = Math.min(100, Math.round((used / allowed) * 100))
 
           return (
-            <div className="mx-4 overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm shadow-brand/5 relative">
+            <div className="overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm shadow-brand/5 relative">
               <button 
                 onClick={() => setShowSubscriptionDetails(!showSubscriptionDetails)}
                 className="w-full flex items-center justify-between p-3.5 focus:outline-none"
@@ -394,47 +461,20 @@ export function IndividualHomeScreen({ user }) {
           )
         })()}
 
+        {/* 6. Recently Booked (if any) */}
         <IndividualHomeRecentlyBooked
           bookings={recentBookings}
           loading={bookingsLoading}
           formatDay={formatBookingDay}
         />
 
-        <div className="mx-2 flex items-stretch justify-center gap-2 py-2">
-          <button
-            onClick={() => navigate('/app/search')}
-            className="group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 p-2 border border-slate-200 shadow-sm shadow-emerald-500/15 transition-all active:scale-95 hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/30 hover:border-emerald-200"
-            aria-label="Instant Booking"
-          >
-            <TypewriterText text="Instant" className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-700" />
-            <Lottie animationData={instantAnimation} loop={true} className="h-16 w-16 object-contain" />
-          </button>
-
-          <button
-            onClick={() => navigate('/app/search')}
-            className="group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-slate-50 p-2 border border-slate-200 shadow-sm shadow-emerald-500/15 transition-all active:scale-95 hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/30 hover:border-emerald-200"
-            aria-label="Schedule Booking"
-          >
-            <TypewriterText text="Schedule" className="text-center text-[11px] font-bold uppercase tracking-wider text-slate-700" />
-            <Lottie animationData={scheduleAnimation} loop={true} className="h-14 w-14 object-contain" />
-          </button>
-        </div>
-
-        <IndividualHomeWorkerCarousel
-          title="Explore services"
-          workers={nearbyLabours}
-          loading={laboursLoading}
-          error={laboursErr}
-          emptyAction="Find a skill"
-          onSelectWorker={openDetail}
-          onEmptyAction={goSearch}
-        />
-
+        {/* 7. Products Carousel */}
         <IndividualHomeProductCarousel
           products={products}
           loading={productsLoading}
         />
 
+        {/* 8. Detailed Trade Group Services */}
         <IndividualHomeServiceSections
           tradeGroups={tradeGroups}
           loading={groupsLoading}

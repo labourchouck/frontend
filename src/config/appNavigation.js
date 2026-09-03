@@ -26,7 +26,7 @@ const byRole = {
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
       { id: 'book', to: '/app/my-bookings', label: 'Bookings', icon: CalendarClock },
       { id: 'search', to: '/app/search', label: 'Search', icon: Search, center: true },
-      { id: 'buildmart', to: '/app/buildmart', label: 'Mart', icon: Package, premium: true },
+      { id: 'buildmart', to: '/app/buildmart', label: 'Mart', icon: Package },
       { id: 'profile', to: '/app/profile', label: 'Profile', icon: UserRound },
     ],
     drawerNav: [
@@ -47,7 +47,7 @@ const byRole = {
     bottomNav: [
       { id: 'home', to: '/app', label: 'Home', icon: Home, end: true },
       { id: 'jobs', to: '/app/jobs', label: 'Jobs', icon: HardHat },
-      { id: 'buildmart', to: '/app/buildmart', label: 'Materials', icon: Package, premium: true },
+      { id: 'buildmart', to: '/app/buildmart', label: 'Materials', icon: Package },
       { id: 'earnings', to: '/app/earnings', label: 'Earnings', icon: IndianRupee },
       { id: 'profile', to: '/app/profile', label: 'Profile', icon: UserRound },
     ],
