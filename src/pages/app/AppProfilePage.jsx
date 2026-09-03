@@ -366,7 +366,7 @@ export function AppProfilePage() {
 
   const handleSignOut = async () => {
     await logout()
-    navigate('/auth', { replace: true })
+    navigate('/b2c/auth', { replace: true })
   }
 
   const handleDeleteAccount = useCallback(async () => {
@@ -375,7 +375,7 @@ export function AppProfilePage() {
     try {
       await deleteCurrentUser()
       await logout()
-      navigate('/auth', { replace: true })
+      navigate('/b2c/auth', { replace: true })
     } catch (err) {
       setDeleteErr(err instanceof ApiError ? err.message : 'Could not delete account')
       setDeletingAccount(false)
@@ -659,32 +659,6 @@ export function AppProfilePage() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section>
-        <AppSectionHeader title="Notifications" className="mb-3 px-0.5" />
-        <button
-          type="button"
-          onClick={() => void handleTestPush()}
-          disabled={testingPush}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-brand/25 bg-brand/8 py-3.5 text-sm font-bold text-brand shadow-sm transition hover:bg-brand/12 active:scale-[0.99] disabled:opacity-60"
-        >
-          {testingPush ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          ) : (
-            <BellRing className="h-4 w-4" aria-hidden />
-          )}
-          {testingPush ? 'Sending test notification…' : 'Test push notification'}
-        </button>
-        {pushTestResult ? (
-          <p
-            className={`mt-2 px-1 text-xs font-medium ${
-              pushTestResult.ok ? 'text-emerald-700' : 'text-rose-700'
-            }`}
-          >
-            {pushTestResult.text}
-          </p>
-        ) : null}
       </section>
 
       <button

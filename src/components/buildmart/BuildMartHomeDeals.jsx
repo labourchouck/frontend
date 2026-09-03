@@ -88,7 +88,7 @@ export function BuildMartHomeDeals() {
             onClick={() => setSelectedCategoryId('all')}
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
               selectedCategoryId === 'all'
-                ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-900'
+                ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-600'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
@@ -200,7 +200,7 @@ export function BuildMartHomeDeals() {
                 </div>
 
                 {/* Action Button */}
-                <div className="mt-3 flex items-center justify-center gap-1 rounded-xl bg-slate-900 py-1.5 text-xs font-bold text-white transition group-hover:bg-emerald-600 shadow-xs">
+                <div className="mt-3 flex items-center justify-center gap-1 rounded-xl bg-emerald-600 py-1.5 text-xs font-bold text-white transition group-hover:bg-emerald-700 shadow-xs">
                   <span>View Details</span>
                   <ChevronRight className="h-3.5 w-3.5" />
                 </div>

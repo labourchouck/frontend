@@ -64,7 +64,9 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           {bootRoutes}
-          <Route path="/auth" element={<AuthEntryPage />} />
+          <Route path="/b2b/auth" element={<AuthEntryPage variant="b2b" />} />
+          <Route path="/b2c/auth" element={<AuthEntryPage variant="b2c" />} />
+          <Route path="/auth" element={<Navigate to="/b2c/auth" replace />} />
 
           <Route
             path="/app"

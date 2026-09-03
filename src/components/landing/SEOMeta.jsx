@@ -39,7 +39,7 @@ export function SEOMeta() {
   return (
     <Helmet>
       <html lang="en" />
-      <title>LabourChowck — Book Trusted Construction Labour in Minutes</title>
+      <title>LaborChowck — Book Trusted Construction Labour in Minutes</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={SITE.url} />
 

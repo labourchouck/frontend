@@ -77,7 +77,7 @@ export function AppSubscriptionPage() {
   const handleSubscribe = async (plan) => {
     try {
       setProcessingId(plan._id)
-      
+
       const res = await loadRazorpay()
       if (!res) {
         showToast('Razorpay SDK failed to load. Are you online?', 'error')
@@ -92,7 +92,7 @@ export function AppSubscriptionPage() {
         key: keyId,
         amount: order.amount,
         currency: order.currency,
-        name: 'LabourChowck',
+        name: 'LaborChowck',
         description: `Subscription: ${plan.name}`,
         order_id: order.id,
         handler: async function (response) {
@@ -167,7 +167,7 @@ export function AppSubscriptionPage() {
                 {/* Decorative background blob */}
                 <div className="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-brand/10 blur-3xl" aria-hidden />
                 <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden />
-                
+
                 <button
                   onClick={() => {
                     setSuccessModalOpen(false)
@@ -234,7 +234,7 @@ export function AppSubscriptionPage() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan, idx) => {
             const isCurrent = activeSubscription?.plan?._id === plan._id
-            
+
             return (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -248,12 +248,12 @@ export function AppSubscriptionPage() {
                     RECOMMENDED
                   </div>
                 )}
-                
+
                 <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-black text-slate-900">₹{plan.price}</span>
                 </div>
-                
+
                 <div className="mt-4 inline-block rounded-xl bg-brand/10 px-3 py-1 text-sm font-bold text-brand">
                   Up to {plan.allowedBookings} Bookings
                 </div>
@@ -272,11 +272,10 @@ export function AppSubscriptionPage() {
                 <button
                   onClick={() => handleSubscribe(plan)}
                   disabled={isCurrent || processingId === plan._id}
-                  className={`group mt-8 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold transition ${
-                    isCurrent
+                  className={`group mt-8 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold transition ${isCurrent
                       ? 'bg-brand text-white shadow-lg shadow-brand/30'
                       : 'bg-slate-900 text-white hover:bg-slate-800'
-                  } disabled:opacity-70`}
+                    } disabled:opacity-70`}
                 >
                   {processingId === plan._id ? (
                     <Loader2 className="h-5 w-5 animate-spin" />

@@ -15,20 +15,18 @@ export function BuildMartHeader({ onOpenDrawer }) {
     return () => window.removeEventListener('lc-app-user-location-changed', onLoc)
   }, [])
 
-  const { individualLocationTitle } = useMemo(() => {
+  const individualLocationTitle = useMemo(() => {
     const addr = appLocation?.address?.trim()
     const la = appLocation?.lat
     const ln = appLocation?.lng
-    
-    // For a short display, just take the first part of the address or "Set Location"
+
     if (addr) {
-      const parts = addr.split(',')
-      return parts[0].trim() || 'Location'
+      return addr
     }
     if (la != null && ln != null) {
-      return `${la.toFixed(2)}, ${ln.toFixed(2)}`
+      return 'Current location'
     }
-    return 'Set Location'
+    return 'Your location'
   }, [appLocation])
 
   return (
@@ -43,31 +41,31 @@ export function BuildMartHeader({ onOpenDrawer }) {
           >
             <Menu className="h-6 w-6" />
           </button>
-          
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1">
-              <span className="flex h-5 items-center rounded bg-green-600 px-1.5 text-[10px] font-bold text-white">
-                60 Mins
-              </span>
-              <span className="text-[10px] text-slate-500">Deliver To</span>
+
+          <div className="flex items-center gap-2">
+            <span className="flex h-[34px] items-center rounded-lg bg-[#00A64C] px-2.5 text-xs font-bold text-white tracking-wide">
+              60 Mins
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[11px] text-slate-500 font-medium">Deliver To</span>
+              <button
+                onClick={() => setLocationModalOpen(true)}
+                className="flex items-center gap-0.5 text-sm font-bold text-slate-800 truncate max-w-[120px] -mt-0.5"
+              >
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                <span className="truncate">{individualLocationTitle}</span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              </button>
             </div>
-            <button 
-              onClick={() => setLocationModalOpen(true)}
-              className="flex items-center gap-0.5 text-sm font-bold text-slate-800 truncate max-w-[120px]"
-            >
-              <MapPin className="h-3 w-3 shrink-0 text-slate-500" />
-              <span className="truncate">{individualLocationTitle}</span>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-            </button>
           </div>
         </div>
 
         {/* Right section (Logo) */}
         <div className="flex items-center">
-          <img src="/logo-transparent.svg" alt="LabourChowk" className="h-6 w-auto" />
+          <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck" className="h-10 w-auto scale-125 origin-left object-contain" />
         </div>
       </header>
-      
+
       <AppUserLocationModal
         open={locationModalOpen}
         onClose={() => setLocationModalOpen(false)}

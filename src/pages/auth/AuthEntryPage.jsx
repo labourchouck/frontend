@@ -92,7 +92,7 @@ function AuthField({ label, hint, children }) {
 const inputClass =
   'w-full border-b-2 border-slate-200 bg-transparent py-2 text-base font-semibold text-slate-900 transition-colors focus:border-brand focus:outline-none placeholder:text-slate-300'
 
-export function AuthEntryPage() {
+export function AuthEntryPage({ variant = 'b2c' }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { applySession } = useAuth()
@@ -101,7 +101,7 @@ export function AuthEntryPage() {
 
   const [mode, setMode] = useState('login')
   const [step, setStep] = useState('form')
-  const [role, setRole] = useState(location.state?.defaultRole || USER_ROLES.INDIVIDUAL)
+  const [role, setRole] = useState(location.state?.defaultRole || (variant === 'b2b' ? USER_ROLES.CORPORATE : USER_ROLES.INDIVIDUAL))
   const [phone, setPhone] = useState('')
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')
@@ -178,6 +178,21 @@ export function AuthEntryPage() {
     try {
       if (mode === 'login') {
         const res = await requestLoginOtp({ phone: p })
+        const loginRole = res.data?.role
+        if (loginRole) {
+          const b2cRoles = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
+          const b2bRoles = [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]
+          if (variant === 'b2c' && b2bRoles.includes(loginRole)) {
+            setBanner({ variant: 'error', message: 'This is a Business account. Please use the B2B sign-in page.' })
+            setBusy(false)
+            return
+          }
+          if (variant === 'b2b' && b2cRoles.includes(loginRole)) {
+            setBanner({ variant: 'error', message: 'This is a Personal/Labour account. Please use the B2C sign-in page.' })
+            setBusy(false)
+            return
+          }
+        }
         setChallengeId(res.data?.challengeId ?? null)
       } else {
         if (role === USER_ROLES.CORPORATE && !companyName.trim()) {
@@ -313,7 +328,7 @@ export function AuthEntryPage() {
       </div>
       <MobileShell transparent className="relative z-10 overflow-x-hidden pb-4 min-h-screen">
         <div className="px-6 pt-12 pb-3 flex flex-col items-start">
-          <img src="/logo-white.svg" alt="Labour Chowk" className="-ml-3 h-[52px] w-auto mb-16 drop-shadow-sm" />
+          <img src="/assets/images/labour_chowck_logo_white.png" alt="Labour Chowk" className="-ml-4 h-[110px] w-auto mb-8 drop-shadow-sm object-contain" />
           <h1 className="text-[32px] font-bold tracking-tight text-brand mt-4">
             {step === 'otp' ? 'Verification' : mode === 'login' ? 'Hi there!' : 'Welcome!'}
           </h1>
@@ -339,7 +354,7 @@ export function AuthEntryPage() {
                 <div className="px-6 mb-3">
                   <p className="mb-2 text-[12px] font-medium text-slate-400">I am a</p>
                   <div className="grid grid-cols-2 gap-3">
-                    {ROLE_OPTIONS.map((opt) => {
+                    {ROLE_OPTIONS.filter(opt => variant === 'b2b' ? [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR].includes(opt.role) : [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR].includes(opt.role)).map((opt) => {
                       const Icon = opt.icon
                       const active = role === opt.role
                       return (

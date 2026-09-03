@@ -28,7 +28,7 @@ export function HowItWorks() {
           titleId="how-heading"
           eyebrow="How it works"
           title="From first tap to boots on your site"
-          subtitle="Whether you are staffing a high-rise pour or picking up daily helper shifts near home, LabourChowck keeps the journey simple and documented."
+          subtitle="Whether you are staffing a high-rise pour or picking up daily helper shifts near home, LaborChowck keeps the journey simple and documented."
           align="center"
         />
 
@@ -38,9 +38,8 @@ export function HowItWorks() {
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`relative flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-                tab === t.id ? 'text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`relative flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${tab === t.id ? 'text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               {tab === t.id ? (
                 <motion.span

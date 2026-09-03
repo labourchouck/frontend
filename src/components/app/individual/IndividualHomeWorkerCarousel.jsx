@@ -1,21 +1,34 @@
-import { Star } from 'lucide-react'
+import { ChevronRight, Star } from 'lucide-react'
 import { AppListSkeleton } from '../../app-ui/feedback/AppListSkeleton.jsx'
 import { hashSeed } from '../../../lib/discoverLabourDummyUi.js'
-import skillImg from '../../../assets/skill.png'
 
 export function IndividualHomeWorkerCarousel({
   title = 'Explore services',
-  workers,
+  workers = [],
   loading,
   error,
-  emptyAction,
+  emptyAction = 'Find a skill',
   onSelectWorker,
   onEmptyAction,
 }) {
+  if (!loading && !error && (!workers || workers.length === 0)) {
+    return null
+  }
+
   return (
-    <section className="mb-6" aria-label={title}>
-      <div className="lc-home-section-head">
-        <h3>{title}</h3>
+    <section className="mb-2" aria-label={title}>
+      <div className="lc-home-section-head flex items-center justify-between">
+        <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">{title}</h3>
+        {onEmptyAction ? (
+          <button
+            type="button"
+            onClick={onEmptyAction}
+            className="flex items-center gap-0.5 text-xs sm:text-sm font-bold text-brand transition-colors hover:text-brand-dark active:scale-95"
+          >
+            {emptyAction}
+            <ChevronRight className="h-4 w-4 shrink-0 text-brand" />
+          </button>
+        ) : null}
       </div>
 
       {error ? (
@@ -26,25 +39,7 @@ export function IndividualHomeWorkerCarousel({
 
       {loading ? <AppListSkeleton rows={1} className="h-44" /> : null}
 
-      {!loading && !error && workers.length === 0 ? (
-        <div className="relative w-full overflow-hidden rounded-2xl bg-slate-50 shadow-sm">
-          <img src={skillImg} alt="Explore Skills" className="w-full h-auto object-contain" />
-          {emptyAction ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button
-                type="button"
-                onClick={onEmptyAction}
-                className="rounded-xl-
-                . bg-[#22a159] rounded-xl px-4 py-2 text-base font-bold text-white shadow-md hover:bg-[#1e8d4e] transition-colors"
-              >
-                {emptyAction}
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {!loading && workers.length > 0 ? (
+      {!loading && workers && workers.length > 0 ? (
         <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
           {workers.map((l) => {
             const ui = l._ui

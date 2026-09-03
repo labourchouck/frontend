@@ -21,7 +21,7 @@ export function PageSkeleton({ visible }) {
           transition={{ duration: 0.45 }}
           role="status"
           aria-live="polite"
-          aria-label="Loading LabourChowck"
+          aria-label="Loading LaborChowck"
         >
           <div className="w-full max-w-md space-y-6 px-6">
             <div className="flex items-center gap-3">

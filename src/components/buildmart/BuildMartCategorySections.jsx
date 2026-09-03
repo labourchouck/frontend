@@ -168,7 +168,7 @@ export function BuildMartCategorySections() {
                     </div>
 
                     {/* Action Button */}
-                    <div className="mt-3 flex items-center justify-center gap-1 rounded-xl bg-slate-900 py-1.5 text-xs font-bold text-white transition group-hover:bg-emerald-600 shadow-xs">
+                    <div className="mt-3 flex items-center justify-center gap-1 rounded-xl bg-emerald-600 py-1.5 text-xs font-bold text-white transition group-hover:bg-emerald-700 shadow-xs">
                       <span>View Details</span>
                       <ChevronRight className="h-3.5 w-3.5" />
                     </div>

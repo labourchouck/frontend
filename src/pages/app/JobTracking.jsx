@@ -89,7 +89,7 @@ export function JobTracking() {
             const b = res.data?.booking
             if (b) setBooking(b)
           })
-          .catch(() => {})
+          .catch(() => { })
       }
     }
 
@@ -174,7 +174,7 @@ export function JobTracking() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB', // fallback
         amount: order.amount,
         currency: order.currency,
-        name: 'LabourChowck',
+        name: 'LaborChowck',
         description: `Payment for Booking`,
         order_id: order.id,
         handler: async function (response) {
@@ -245,8 +245,8 @@ export function JobTracking() {
       <GlassPanel className="border-brand/20 bg-brand/5 px-4 py-3 text-center">
         <p className="text-xs font-bold uppercase tracking-wider text-brand">Current Status</p>
         <p className="mt-1 text-lg font-extrabold text-slate-900">
-          {booking.type === 'SCHEDULED' && booking.status === 'CREATED' 
-            ? 'Scheduled (Awaiting Worker)' 
+          {booking.type === 'SCHEDULED' && booking.status === 'CREATED'
+            ? 'Scheduled (Awaiting Worker)'
             : BOOKING_STEPS[currentStepIndex]?.label || booking.status}
         </p>
       </GlassPanel>
@@ -311,11 +311,10 @@ export function JobTracking() {
                 className="flex items-center gap-4"
               >
                 <span
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black shadow-sm transition ${
-                    done
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black shadow-sm transition ${done
                       ? 'bg-brand text-white shadow-brand/30'
                       : 'bg-slate-100 text-slate-400'
-                  } ${isCurrent ? 'ring-4 ring-brand/20' : ''}`}
+                    } ${isCurrent ? 'ring-4 ring-brand/20' : ''}`}
                 >
                   {done ? <Check className="h-4 w-4" /> : i + 1}
                 </span>
@@ -507,7 +506,7 @@ export function JobTracking() {
               {/* Decorative background blob */}
               <div className="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-brand/10 blur-3xl" aria-hidden />
               <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" aria-hidden />
-              
+
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}

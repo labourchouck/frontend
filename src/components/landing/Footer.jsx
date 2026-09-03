@@ -39,10 +39,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-white">
-              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-bright to-brand text-white">
-                <HardHat className="h-5 w-5" aria-hidden />
-              </span>
-              <span className="text-lg font-extrabold tracking-tight">{SITE.name}</span>
+              <img src="/assets/images/labour_chowck_logo.png" alt="LabourChowck Logo" className="h-20 w-auto object-contain" />
             </div>
             <p className="text-sm leading-relaxed">
               Verified construction labour, on demand—built for India’s contractors, builders, and

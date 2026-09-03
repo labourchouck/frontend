@@ -17,7 +17,7 @@ import { apiRequest } from '../../api/http.js'
 
 export function AdminDashboardPage() {
   const reduce = useReducedMotion()
-  
+
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -41,33 +41,33 @@ export function AdminDashboardPage() {
   ).slice(0, 6)
 
   const QUICK_STATS = [
-    { 
-      label: 'Active bookings', 
-      value: stats?.bookings?.active ?? '—', 
-      hint: 'Currently in progress', 
-      icon: ClipboardList, 
-      tone: 'from-brand/20 to-emerald-50' 
+    {
+      label: 'Active bookings',
+      value: stats?.bookings?.active ?? '—',
+      hint: 'Currently in progress',
+      icon: ClipboardList,
+      tone: 'from-brand/20 to-emerald-50'
     },
-    { 
-      label: 'Workers on roster', 
-      value: stats?.users?.labourers ?? '—', 
-      hint: 'Registered workforce', 
-      icon: Users, 
-      tone: 'from-sky-500/15 to-slate-50' 
+    {
+      label: 'Workers on roster',
+      value: stats?.users?.labourers ?? '—',
+      hint: 'Registered workforce',
+      icon: Users,
+      tone: 'from-sky-500/15 to-slate-50'
     },
-    { 
-      label: 'Corporate accounts', 
-      value: stats?.users?.corporates ?? '—', 
-      hint: 'B2B Partners', 
-      icon: Shield, 
-      tone: 'from-violet-500/15 to-slate-50' 
+    {
+      label: 'Corporate accounts',
+      value: stats?.users?.corporates ?? '—',
+      hint: 'B2B Partners',
+      icon: Shield,
+      tone: 'from-violet-500/15 to-slate-50'
     },
-    { 
-      label: 'Skill categories', 
-      value: stats?.system?.categories ?? '—', 
-      hint: 'Platform managed', 
-      icon: Layers, 
-      tone: 'from-amber-500/15 to-amber-50/50' 
+    {
+      label: 'Skill categories',
+      value: stats?.system?.categories ?? '—',
+      hint: 'Platform managed',
+      icon: Layers,
+      tone: 'from-amber-500/15 to-amber-50/50'
     },
   ]
 
@@ -80,7 +80,7 @@ export function AdminDashboardPage() {
       >
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">Control centre</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 md:text-base">
-          Super panel for LabourChowck — users, workforce, bookings, allocation, attendance, billing, and analytics per
+          Super panel for LaborChowck — users, workforce, bookings, allocation, attendance, billing, and analytics per
           your Work Scope. Use the sidebar to jump into each module.
         </p>
       </motion.div>
@@ -95,9 +95,9 @@ export function AdminDashboardPage() {
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-             <GlassPanel key={i} className="h-28 flex items-center justify-center p-5 bg-slate-50/50 animate-pulse">
-                <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
-             </GlassPanel>
+            <GlassPanel key={i} className="h-28 flex items-center justify-center p-5 bg-slate-50/50 animate-pulse">
+              <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
+            </GlassPanel>
           ))}
         </div>
       ) : (
