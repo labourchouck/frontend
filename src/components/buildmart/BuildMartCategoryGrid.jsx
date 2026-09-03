@@ -52,7 +52,7 @@ export function BuildMartCategoryGrid() {
             />
           </div>
           <span className="text-center text-[10px] font-bold leading-tight text-slate-800">
-            {category.label}
+            {category.label || category.name}
           </span>
         </Link>
       ))}
