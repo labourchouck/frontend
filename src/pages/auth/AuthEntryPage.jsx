@@ -46,8 +46,15 @@ const ROLE_OPTIONS = [
   },
 ]
 
+export const HARDCODED_TEST_ACCOUNTS = {
+  '1111111111': { otp: '123456', role: USER_ROLES.INDIVIDUAL, label: 'User', title: 'Customer / User' },
+  '2222222222': { otp: '123456', role: USER_ROLES.LABOUR, label: 'Labour', title: 'Labour' },
+  '3333333333': { otp: '123456', role: USER_ROLES.CONTRACTOR, label: 'Vendor', title: 'Vendor / Contractor' },
+  '4444444444': { otp: '123456', role: USER_ROLES.CORPORATE, label: 'Corporate', title: 'Corporate' },
+}
+
 function isValidIndianMobile(digits) {
-  return digits.length === 10 && /^[6-9]\d{9}$/.test(digits)
+  return digits.length === 10 && (/^[6-9]\d{9}$/.test(digits) || Boolean(HARDCODED_TEST_ACCOUNTS[digits]))
 }
 
 const OTP_BYPASS_HINT = import.meta.env.VITE_OTP_BYPASS_HINT === 'true'
@@ -197,9 +204,12 @@ export function AuthEntryPage() {
       }
       setOtpCells(Array(6).fill(''))
       setStep('otp')
+      const testAcc = p ? HARDCODED_TEST_ACCOUNTS[p] : null
       setBanner({
         variant: 'success',
-        message: OTP_BYPASS_HINT && p
+        message: testAcc
+          ? `Hardcoded Test Account (${testAcc.label}): Enter OTP ${testAcc.otp}`
+          : OTP_BYPASS_HINT && p
           ? `Demo OTP: enter the last 6 digits of ${p} (${demoOtpFromPhone(p)}).`
           : 'OTP sent. Check SMS — in development it may appear in the server terminal.',
       })
@@ -410,6 +420,34 @@ export function AuthEntryPage() {
                       }}
                     />
                   </div>
+
+                  {mode === 'login' ? (
+                    <div className="pt-2.5">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                        Quick Test Logins (OTP: 123456)
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(HARDCODED_TEST_ACCOUNTS).map(([num, info]) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => {
+                              setPhoneDigits(num)
+                              clearOtpError()
+                            }}
+                            className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-xs transition-all ${
+                              phone === num
+                                ? 'border-brand bg-brand/10 font-bold text-brand shadow-sm shadow-brand/10'
+                                : 'border-slate-200 bg-white/70 text-slate-700 hover:border-brand/30 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="font-semibold">{info.label}</span>
+                            <span className="font-mono text-[11px] text-slate-500">{num}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </AuthField>
 
                 {mode === 'register' ? (
@@ -515,7 +553,23 @@ export function AuthEntryPage() {
                 <p className="text-[14px] font-medium text-slate-500">
                   Code sent to <span className="font-bold text-slate-900">+91 {phone}</span>
                 </p>
-                {OTP_BYPASS_HINT && p ? (
+                {HARDCODED_TEST_ACCOUNTS[phone] ? (
+                  <div className="rounded-2xl border border-brand/25 bg-brand/5 p-3 text-center space-y-1.5 shadow-sm">
+                    <p className="text-[13px] font-bold text-brand">
+                      {HARDCODED_TEST_ACCOUNTS[phone].title} Test Account — OTP: <span className="font-mono tracking-wider">{HARDCODED_TEST_ACCOUNTS[phone].otp}</span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpCells(HARDCODED_TEST_ACCOUNTS[phone].otp.split(''))
+                        clearOtpError()
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-brand underline decoration-brand/50 hover:text-brand-active hover:decoration-brand"
+                    >
+                      Auto-fill OTP ({HARDCODED_TEST_ACCOUNTS[phone].otp})
+                    </button>
+                  </div>
+                ) : OTP_BYPASS_HINT && p ? (
                   <p className="rounded-xl border border-brand/20 bg-brand/5 px-3 py-2 text-[13px] font-semibold text-brand">
                     Demo: OTP is {demoOtpFromPhone(p)}
                   </p>
