@@ -327,11 +327,11 @@ export function IndividualHomeScreen({ user }) {
             </h2>
           </div>
           
-          <div className="absolute bottom-[-3rem] right-[1rem] w-[75%] h-[175%] pointer-events-none [mask-image:linear-gradient(to_left,black_85%,transparent)] z-0">
+          <div className="absolute bottom-[-7.5rem] right-2 w-[35%] max-w-[125px] pointer-events-none z-10">
             <img 
               src="/assets/images/labour_chowck_hero_worker_final.png" 
               alt="LaborChowck Professional" 
-              className="w-full h-full object-contain object-bottom object-right scale-110" 
+              className="w-full h-auto object-contain object-bottom" 
             />
           </div>
         </div>
