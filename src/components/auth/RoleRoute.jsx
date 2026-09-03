@@ -11,7 +11,7 @@ export function RoleRoute({ allow, allowGuest, children }) {
 
   if (!isAuthenticated) {
     if (allowGuest) return children
-    return <Navigate to="/auth" replace state={{ from: location.pathname + location.search }} />
+    return <Navigate to="/b2c/auth" replace state={{ from: location.pathname + location.search }} />
   }
 
   if (!allow?.length || !user?.role || !allow.includes(user.role)) {

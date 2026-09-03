@@ -245,12 +245,12 @@ export function VendorProfilePage() {
   const handleDeleteAccount = async () => {
     await vendorApi.deleteAccount()
     await logout()
-    navigate('/auth', { replace: true })
+    navigate('/b2b/auth', { replace: true })
   }
 
   const handleSignOut = async () => {
     await logout()
-    navigate('/auth', { replace: true })
+    navigate('/b2b/auth', { replace: true })
   }
 
   const handleFetchLocation = () => {

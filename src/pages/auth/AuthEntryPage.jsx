@@ -85,7 +85,7 @@ function AuthField({ label, hint, children }) {
 const inputClass =
   'w-full border-b-2 border-slate-200 bg-transparent py-2 text-base font-semibold text-slate-900 transition-colors focus:border-brand focus:outline-none placeholder:text-slate-300'
 
-export function AuthEntryPage() {
+export function AuthEntryPage({ variant = 'b2c' }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { applySession } = useAuth()
@@ -94,7 +94,7 @@ export function AuthEntryPage() {
 
   const [mode, setMode] = useState('login')
   const [step, setStep] = useState('form')
-  const [role, setRole] = useState(location.state?.defaultRole || USER_ROLES.INDIVIDUAL)
+  const [role, setRole] = useState(location.state?.defaultRole || (variant === 'b2b' ? USER_ROLES.CORPORATE : USER_ROLES.INDIVIDUAL))
   const [phone, setPhone] = useState('')
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')
@@ -329,7 +329,7 @@ export function AuthEntryPage() {
                 <div className="px-6 mb-3">
                   <p className="mb-2 text-[12px] font-medium text-slate-400">I am a</p>
                   <div className="grid grid-cols-2 gap-3">
-                    {ROLE_OPTIONS.map((opt) => {
+                    {ROLE_OPTIONS.filter(opt => variant === 'b2b' ? [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR].includes(opt.role) : [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR].includes(opt.role)).map((opt) => {
                       const Icon = opt.icon
                       const active = role === opt.role
                       return (

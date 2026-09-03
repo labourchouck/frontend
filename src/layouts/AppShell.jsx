@@ -318,7 +318,7 @@ export function AppShell() {
                 </Link>
                 {isGuest ? (
                   <Link
-                    to="/auth"
+                    to="/b2c/auth"
                     onClick={() => setDrawerOpen(false)}
                     className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/5 py-3 text-sm font-semibold text-brand shadow-sm transition hover:bg-brand/10"
                   >
@@ -330,7 +330,7 @@ export function AppShell() {
                     type="button"
                     onClick={() => {
                       logout()
-                      navigate('/auth', { replace: true })
+                      navigate('/b2c/auth', { replace: true })
                     }}
                     className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800 shadow-sm transition hover:bg-rose-50/90"
                   >

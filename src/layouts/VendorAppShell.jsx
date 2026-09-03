@@ -166,7 +166,7 @@ export function VendorAppShell() {
                   type="button"
                   onClick={() => {
                     logout()
-                    navigate('/auth', { replace: true })
+                    navigate('/b2b/auth', { replace: true })
                   }}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800"
                 >

@@ -252,7 +252,7 @@ export function Checkout() {
 
   const handleSubmit = useCallback(async () => {
     if (isGuest) {
-      navigate('/auth', { replace: true, state: { from: location.pathname + location.search } })
+      navigate('/b2c/auth', { replace: true, state: { from: location.pathname + location.search } })
       return
     }
     if (!address.trim()) {

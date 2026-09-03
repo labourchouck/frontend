@@ -77,7 +77,7 @@ export function AdminLoginPage() {
         {message ? <p className="mt-4 text-sm text-amber-300">{message}</p> : null}
 
         <p className="mt-8 text-center text-sm text-slate-400">
-          <Link to="/auth" className="text-brand-bright">
+          <Link to="/b2c/auth" className="text-brand-bright">
             Mobile OTP login
           </Link>
           {' · '}

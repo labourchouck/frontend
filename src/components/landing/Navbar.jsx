@@ -95,10 +95,16 @@ export function Navbar() {
 
         <div className="hidden items-center gap-2 lg:flex">
           <Link
-            to="/auth"
+            to="/b2c/auth"
             className="rounded-xl px-3 py-2 text-sm font-semibold text-brand hover:bg-brand-muted/50"
           >
-            Sign in
+            Sign in (B2C)
+          </Link>
+          <Link
+            to="/b2b/auth"
+            className="rounded-xl px-3 py-2 text-sm font-semibold text-brand hover:bg-brand-muted/50"
+          >
+            Sign in (B2B)
           </Link>
           <ButtonLink href="/app" variant="secondary" className="!py-2.5 !text-xs" onClick={handleRegisterLabour}>
             Register as Labour
@@ -146,11 +152,18 @@ export function Navbar() {
               ))}
               <div className="mt-3 flex flex-col gap-2">
                 <Link
-                  to="/auth"
+                  to="/b2c/auth"
                   className="rounded-2xl border border-brand/30 bg-brand-muted py-3 text-center text-sm font-semibold text-brand"
                   onClick={() => setOpen(false)}
                 >
-                  Sign in / Register
+                  Sign in (B2C)
+                </Link>
+                <Link
+                  to="/b2b/auth"
+                  className="rounded-2xl border border-brand/30 bg-brand-muted py-3 text-center text-sm font-semibold text-brand"
+                  onClick={() => setOpen(false)}
+                >
+                  Sign in (B2B)
                 </Link>
                 <ButtonLink href="/app" variant="primary" onClick={(e) => { setOpen(false); handleHireLabour(e); }}>
                   Hire Labour

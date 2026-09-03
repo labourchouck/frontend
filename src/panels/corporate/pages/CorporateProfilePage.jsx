@@ -107,14 +107,14 @@ export function CorporateProfilePage() {
 
   const handleLogout = () => {
     logout().finally(() => {
-      navigate('/auth')
+      navigate('/b2b/auth')
     })
   }
 
   const handleDeleteAccount = async () => {
     await apiRequest('/users/me', { method: 'DELETE' })
     logout().finally(() => {
-      navigate('/auth')
+      navigate('/b2b/auth')
     })
   }
 

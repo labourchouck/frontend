@@ -535,7 +535,7 @@ export function IndividualBookingFlowPage() {
   const confirmBooking = async () => {
     if (!validateDetails()) return
     if (!realUser) {
-      navigate('/auth', { replace: true, state: { from: location.pathname + location.search } })
+      navigate('/b2c/auth', { replace: true, state: { from: location.pathname + location.search } })
       return
     }
     writeAppUserLocation({ address: draft.address.trim(), lat: draft.lat, lng: draft.lng })
