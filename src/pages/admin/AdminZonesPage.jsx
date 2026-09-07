@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Map, AlertTriangle, CheckCircle2, Loader2, Target, Users, BookOpen } from 'lucide-react'
+import { Map, AlertTriangle, CheckCircle2, Loader2, Target } from 'lucide-react'
 import { adminZonesApi } from '../../api/adminZonesApi.js'
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
@@ -30,20 +30,6 @@ function SettingsSection({ icon: Icon, title, description, children, accent = 'b
   )
 }
 
-function StatCard({ icon: Icon, label, value, description, accent = 'brand' }) {
-  return (
-    <GlassPanel className="p-5 flex items-start gap-4">
-      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-${accent}/10 text-${accent}`}>
-        <Icon className="h-6 w-6" aria-hidden />
-      </span>
-      <div>
-        <p className="text-sm font-semibold text-slate-500">{label}</p>
-        <p className="mt-1 text-2xl font-extrabold text-slate-900">{value}</p>
-        {description && <p className="mt-1 text-xs text-slate-400">{description}</p>}
-      </div>
-    </GlassPanel>
-  )
-}
 
 function Toast({ message, variant = 'success' }) {
   if (!message) return null
@@ -72,7 +58,6 @@ export function AdminZonesPage() {
 
   const [bookingBroadcastRadius, setBookingBroadcastRadius] = useState('')
   const [b2bBroadcastRadius, setB2bBroadcastRadius] = useState('')
-  const [stats, setStats] = useState(null)
 
   const showToast = useCallback((message, variant = 'success') => {
     setToast({ message, variant })
@@ -83,10 +68,9 @@ export function AdminZonesPage() {
     let cancelled = false
     
     Promise.all([
-      adminZonesApi.getZoneSettings(),
-      adminZonesApi.getZoneStatistics().catch(() => ({ data: {} })) // Prevent UI block if stats fail
+      adminZonesApi.getZoneSettings()
     ])
-    .then(([settingsRes, statsRes]) => {
+    .then(([settingsRes]) => {
       if (cancelled) return
       
       if (settingsRes.data?.bookingBroadcastRadius != null) {
@@ -94,10 +78,6 @@ export function AdminZonesPage() {
       }
       if (settingsRes.data?.b2bBroadcastRadius != null) {
         setB2bBroadcastRadius(String(settingsRes.data.b2bBroadcastRadius))
-      }
-      
-      if (statsRes.data?.data) {
-        setStats(statsRes.data.data)
       }
     })
     .catch((err) => {
@@ -161,9 +141,8 @@ export function AdminZonesPage() {
         </div>
       </motion.div>
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* Left Column: Settings */}
-        <div className="lg:col-span-5 space-y-6">
+      <div className="flex justify-start">
+        <div className="w-full max-w-xl space-y-6">
           <SettingsSection
             icon={Target}
             title="Individuals -> Labour Radius"
@@ -218,46 +197,6 @@ export function AdminZonesPage() {
           >
             Save All Settings
           </AppPrimaryButton>
-        </div>
-
-        {/* Right Column: Statistics */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="flex items-center justify-between">
-             <h2 className="text-lg font-extrabold text-slate-900">Broadcast Statistics</h2>
-          </div>
-          
-          {stats ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <StatCard
-                icon={BookOpen}
-                label="Total Bookings"
-                value={stats.totalBookings || 0}
-                description="Bookings processed by the system"
-              />
-              <StatCard
-                icon={Users}
-                label="Eligible Labourers"
-                value={stats.totalEligibleLabourers || 0}
-                description="Total labourers matched across bookings"
-              />
-              <StatCard
-                icon={Map}
-                label="Average Radius"
-                value={stats.avgRadius ? `${stats.avgRadius.toFixed(1)} km` : 'N/A'}
-                description="Average distance from customer to labourer"
-              />
-              <StatCard
-                icon={CheckCircle2}
-                label="Success Rate"
-                value={stats.broadcastSuccessRate ? `${stats.broadcastSuccessRate.toFixed(1)}%` : '0%'}
-                description="Percentage of successful broadcasts"
-              />
-            </div>
-          ) : (
-            <GlassPanel className="p-8 text-center">
-              <p className="text-sm font-semibold text-slate-500">No statistics available yet.</p>
-            </GlassPanel>
-          )}
         </div>
       </div>
     </div>

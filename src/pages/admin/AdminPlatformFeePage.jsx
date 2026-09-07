@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Landmark, TrendingUp, Calendar, Download, Search, Filter, X, ChevronLeft, ChevronRight, UserCircle, Wrench, Wallet, Percent, HandCoins, Settings, Save } from 'lucide-react'
 import { adminBookingsApi } from '../../api/adminBookingsApi.js'
+import { adminWorkforceApi } from '../../api/adminWorkforceApi.js'
 import { adminSettingsApi } from '../../api/adminSettingsApi.js'
 
 export function AdminPlatformFeePage() {
@@ -21,22 +22,73 @@ export function AdminPlatformFeePage() {
   const [isEditingSettings, setIsEditingSettings] = useState(false)
   const [feeType, setFeeType] = useState('fixed')
   const [feeValue, setFeeValue] = useState(0)
+  const [b2bFeeType, setB2bFeeType] = useState('fixed')
+  const [b2bFeeValue, setB2bFeeValue] = useState(0)
   const [savingSettings, setSavingSettings] = useState(false)
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await adminBookingsApi.getAllBookings({ limit: 5000 })
-        const all = res?.data?.bookings || res?.bookings || res || []
-        setBookings(Array.isArray(all) ? all : [])
+        const [bookingsRes, requestsRes, settingsRes] = await Promise.all([
+          adminBookingsApi.getAllBookings({ limit: 5000 }),
+          adminWorkforceApi.getAllRequests({ limit: 5000 }).catch(() => ({ data: { requests: [] } })),
+          adminSettingsApi.getSettings()
+        ])
         
-        const settingsRes = await adminSettingsApi.getSettings()
         const fetchedSettings = settingsRes?.data?.settings || settingsRes?.settings
         if (fetchedSettings) {
           setSettings(fetchedSettings)
           setFeeType(fetchedSettings.platformFee?.type || 'fixed')
           setFeeValue(fetchedSettings.platformFee?.value || 0)
+          setB2bFeeType(fetchedSettings.b2bPlatformFee?.type || 'fixed')
+          setB2bFeeValue(fetchedSettings.b2bPlatformFee?.value || 0)
         }
+
+        const allBookings = bookingsRes?.data?.bookings || bookingsRes?.bookings || []
+        const allRequests = requestsRes?.data?.requests || requestsRes?.requests || []
+
+        const normalized = [
+          ...allBookings.map(b => ({
+            ...b,
+            type: 'B2C',
+            customerName: b.userId?.fullName || b.user?.name || b.customer?.name || 'N/A',
+            laborName: b.laborId?.fullName || b.labor?.name || b.provider?.name || 'N/A',
+            serviceName: b.serviceId?.name || b.service?.name || b.category?.name || b.workCategory || 'Service',
+            isPaid: b.paymentStatus?.toUpperCase() === 'PAID',
+            platformFee: (() => {
+              let fee = b.platformFee || 0
+              if (fetchedSettings?.platformFee?.isActive) {
+                if (fetchedSettings.platformFee.type === 'fixed') {
+                  fee = Number(fetchedSettings.platformFee.value) || 0
+                } else {
+                  fee = ((b.basePrice || 0) * (Number(fetchedSettings.platformFee.value) || 0)) / 100
+                }
+              }
+              return Math.round(fee)
+            })()
+          })),
+          ...allRequests.map(r => ({
+            ...r,
+            type: 'B2B',
+            customerName: r.clientId?.fullName || r.clientId?.companyName || 'N/A',
+            laborName: r.preferredVendorId?.contractorProfile?.businessName || r.preferredVendorId?.fullName || 'N/A',
+            serviceName: r.lines?.[0]?.serviceName || r.lines?.[0]?.categoryName || 'B2B Request',
+            isPaid: r.paymentStatus?.toUpperCase() === 'PAID',
+            platformFee: (() => {
+              let fee = r.platformFee || 0
+              if (fetchedSettings?.b2bPlatformFee?.isActive) {
+                if (fetchedSettings.b2bPlatformFee.type === 'fixed') {
+                  fee = Number(fetchedSettings.b2bPlatformFee.value) || 0
+                } else {
+                  fee = ((r.basePriceTotal || r.totalAmount || 0) * (Number(fetchedSettings.b2bPlatformFee.value) || 0)) / 100
+                }
+              }
+              return Math.round(fee)
+            })()
+          }))
+        ]
+        
+        setBookings(normalized)
       } catch (err) {
         console.error('Failed to fetch bookings:', err)
       } finally {
@@ -50,8 +102,8 @@ export function AdminPlatformFeePage() {
   const filteredBookings = useMemo(() => {
     const now = new Date()
     return bookings.filter(b => {
-      if (b.paymentMethod !== 'ONLINE' || b.status !== 'COMPLETED') return false
-      if (!b.platformFee) return false
+      // Allow any booking/request with a PAID/COMPLETED status
+      if (!b.isPaid) return false
 
       // Date Filter
       const bDate = new Date(b.createdAt)
@@ -67,10 +119,10 @@ export function AdminPlatformFeePage() {
       // Search Filter
       if (searchTerm) {
         const lowerSearch = searchTerm.toLowerCase()
-        const idMatch = b._id?.toLowerCase().includes(lowerSearch)
-        const userMatch = b.user?.name?.toLowerCase().includes(lowerSearch) || b.customer?.name?.toLowerCase().includes(lowerSearch)
-        const laborMatch = b.labor?.name?.toLowerCase().includes(lowerSearch) || b.provider?.name?.toLowerCase().includes(lowerSearch)
-        const serviceMatch = b.service?.name?.toLowerCase().includes(lowerSearch) || b.category?.name?.toLowerCase().includes(lowerSearch)
+        const idMatch = b._id?.toLowerCase().includes(lowerSearch) || b.reference?.toLowerCase().includes(lowerSearch)
+        const userMatch = b.customerName?.toLowerCase().includes(lowerSearch)
+        const laborMatch = b.laborName?.toLowerCase().includes(lowerSearch)
+        const serviceMatch = b.serviceName?.toLowerCase().includes(lowerSearch)
         if (!idMatch && !userMatch && !laborMatch && !serviceMatch) return false
       }
 
@@ -98,7 +150,7 @@ export function AdminPlatformFeePage() {
     const now = new Date()
     
     bookings.forEach(b => {
-      if (b.paymentMethod === 'ONLINE' && b.status === 'COMPLETED') {
+      if (b.isPaid) {
         const fee = b.platformFee || 0
         allTime += fee
         
@@ -120,11 +172,11 @@ export function AdminPlatformFeePage() {
     
     const headers = ['Booking ID', 'Date', 'Customer Name', 'Labour Name', 'Service', 'Total Amount', 'Platform Fee', 'Commission', 'Labour Share']
     const rows = filteredBookings.map(b => [
-      b._id,
+      b.reference || b._id,
       new Date(b.createdAt).toLocaleDateString(),
-      b.user?.name || b.customer?.name || 'N/A',
-      b.labor?.name || b.provider?.name || 'N/A',
-      b.service?.name || b.category?.name || b.workCategory || 'N/A',
+      b.customerName,
+      b.laborName,
+      b.serviceName,
       b.totalAmount || 0,
       b.platformFee || 0,
       b.commissionAmount || 0,
@@ -149,11 +201,17 @@ export function AdminPlatformFeePage() {
   const handleSaveSettings = async () => {
     setSavingSettings(true)
     try {
-      await adminSettingsApi.updatePlatformFees({ type: feeType, value: Number(feeValue), isActive: true })
+      await Promise.all([
+        adminSettingsApi.updatePlatformFees({ type: feeType, value: Number(feeValue), isActive: true, bookingType: 'B2C' }),
+        adminSettingsApi.updatePlatformFees({ type: b2bFeeType, value: Number(b2bFeeValue), isActive: true, bookingType: 'B2B' })
+      ])
+      
       setSettings(prev => ({
         ...prev,
-        platformFee: { ...prev?.platformFee, type: feeType, value: Number(feeValue) }
+        platformFee: { ...prev?.platformFee, type: feeType, value: Number(feeValue) },
+        b2bPlatformFee: { ...prev?.b2bPlatformFee, type: b2bFeeType, value: Number(b2bFeeValue) }
       }))
+      
       setIsEditingSettings(false)
     } catch (err) {
       console.error('Failed to update platform fee settings', err)
@@ -170,7 +228,10 @@ export function AdminPlatformFeePage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
             Platform Fee Ledger
             <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
-              {settings?.platformFee?.type === 'percentage' ? `${settings.platformFee.value}%` : `₹${settings?.platformFee?.value || 0}`}
+              B2C: {settings?.platformFee?.type === 'percentage' ? `${settings.platformFee.value}%` : `₹${settings?.platformFee?.value || 0}`}
+            </span>
+            <span className="inline-flex rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-bold text-indigo-800">
+              B2B: {settings?.b2bPlatformFee?.type === 'percentage' ? `${settings.b2bPlatformFee.value}%` : `₹${settings?.b2bPlatformFee?.value || 0}`}
             </span>
           </h1>
           <p className="text-sm text-slate-500">Analytics and history of platform fees collected.</p>
@@ -273,18 +334,18 @@ export function AdminPlatformFeePage() {
                       className="hover:bg-emerald-50/50 cursor-pointer transition-colors"
                     >
                       <td className="px-6 py-4">
-                        <p className="font-bold text-slate-900">#{b._id.slice(-6)}</p>
+                        <p className="font-bold text-slate-900">{(b.reference || `#${b._id.slice(-6)}`).toUpperCase()}</p>
                         <p className="text-xs text-slate-400">{new Date(b.createdAt).toLocaleString()}</p>
                       </td>
                       <td className="px-6 py-4 font-medium text-slate-700">
-                        {b.user?.name || b.customer?.name || 'N/A'}
+                        {b.customerName}
                       </td>
                       <td className="px-6 py-4 font-medium text-slate-700">
-                        {b.labor?.name || b.provider?.name || 'N/A'}
+                        {b.laborName}
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                          {b.service?.name || b.category?.name || b.workCategory || 'Service'}
+                          {b.serviceName}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -341,8 +402,8 @@ export function AdminPlatformFeePage() {
           >
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
               <div>
-                <h3 className="font-bold text-slate-900">Booking Breakdown</h3>
-                <p className="text-xs font-semibold text-slate-500">#{selectedBooking._id}</p>
+                <h3 className="font-bold text-slate-900">{selectedBooking.type === 'B2B' ? 'B2B Request Breakdown' : 'Booking Breakdown'}</h3>
+                <p className="text-xs font-semibold text-slate-500">{selectedBooking.reference || `#${selectedBooking._id}`}</p>
               </div>
               <button 
                 onClick={() => setSelectedBooking(null)}
@@ -358,15 +419,15 @@ export function AdminPlatformFeePage() {
                   <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
                     <UserCircle className="h-3.5 w-3.5" /> Customer
                   </p>
-                  <p className="font-semibold text-slate-900">{selectedBooking.user?.name || selectedBooking.customer?.name || 'N/A'}</p>
-                  <p className="text-xs text-slate-500">{selectedBooking.user?.phone || 'No phone'}</p>
+                  <p className="font-semibold text-slate-900">{selectedBooking.customerName}</p>
+                  <p className="text-xs text-slate-500">{selectedBooking.userId?.phone || selectedBooking.clientId?.phone || 'No phone'}</p>
                 </div>
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                   <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    <Wrench className="h-3.5 w-3.5" /> Labour
+                    <Wrench className="h-3.5 w-3.5" /> {selectedBooking.type === 'B2B' ? 'Contractor' : 'Labour'}
                   </p>
-                  <p className="font-semibold text-slate-900">{selectedBooking.labor?.name || selectedBooking.provider?.name || 'N/A'}</p>
-                  <p className="text-xs text-slate-500">{selectedBooking.labor?.phone || 'No phone'}</p>
+                  <p className="font-semibold text-slate-900">{selectedBooking.laborName}</p>
+                  <p className="text-xs text-slate-500">{selectedBooking.laborId?.phone || selectedBooking.preferredVendorId?.phone || 'No phone'}</p>
                 </div>
               </div>
 
@@ -439,38 +500,78 @@ export function AdminPlatformFeePage() {
             </div>
             
             <div className="p-6 space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-bold text-slate-700">Fee Type</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setFeeType('fixed')}
-                    className={`rounded-xl border p-3 text-sm font-bold transition ${feeType === 'fixed' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    Fixed Amount (₹)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFeeType('percentage')}
-                    className={`rounded-xl border p-3 text-sm font-bold transition ${feeType === 'percentage' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    Percentage (%)
-                  </button>
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                <h4 className="font-bold text-emerald-700 text-xs uppercase tracking-wider">Individuals (B2C) Fee</h4>
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">Fee Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFeeType('fixed')}
+                      className={`rounded-xl border p-2 text-xs font-bold transition ${feeType === 'fixed' ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Fixed (₹)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFeeType('percentage')}
+                      className={`rounded-xl border p-2 text-xs font-bold transition ${feeType === 'percentage' ? 'border-emerald-500 bg-emerald-100 text-emerald-800' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Percent (%)
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                    {feeType === 'fixed' ? 'Amount (₹)' : 'Percentage (%)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step={feeType === 'percentage' ? "0.1" : "1"}
+                    value={feeValue}
+                    onChange={(e) => setFeeValue(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+                  />
                 </div>
               </div>
-              
-              <div>
-                <label className="mb-1.5 block text-sm font-bold text-slate-700">
-                  {feeType === 'fixed' ? 'Amount (₹)' : 'Percentage (%)'}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step={feeType === 'percentage' ? "0.1" : "1"}
-                  value={feeValue}
-                  onChange={(e) => setFeeValue(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
-                />
+
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-4">
+                <h4 className="font-bold text-indigo-700 text-xs uppercase tracking-wider">Corporate (B2B) Fee</h4>
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">Fee Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setB2bFeeType('fixed')}
+                      className={`rounded-xl border p-2 text-xs font-bold transition ${b2bFeeType === 'fixed' ? 'border-indigo-500 bg-indigo-100 text-indigo-800' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Fixed (₹)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setB2bFeeType('percentage')}
+                      className={`rounded-xl border p-2 text-xs font-bold transition ${b2bFeeType === 'percentage' ? 'border-indigo-500 bg-indigo-100 text-indigo-800' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Percent (%)
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                    {b2bFeeType === 'fixed' ? 'Amount (₹)' : 'Percentage (%)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step={b2bFeeType === 'percentage' ? "0.1" : "1"}
+                    value={b2bFeeValue}
+                    onChange={(e) => setB2bFeeValue(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                  />
+                </div>
               </div>
             </div>
             
