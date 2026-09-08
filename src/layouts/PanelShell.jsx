@@ -180,7 +180,7 @@ export function PanelShell({
 
         <main
           className={`relative z-10 flex-1 px-4 pb-32 print:p-0 ${
-            hideShellHeader ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))] print:pt-0' : 'pt-4'
+            hideShellHeader ? 'pt-0 print:pt-0' : 'pt-4'
           }`}
         >
           <AppPageTransition />
