@@ -95,7 +95,7 @@ export function VendorHomeScreen({ user }) {
   }
 
   const hero = (
-    <section className="relative px-4 pb-2">
+    <section className="relative px-4 pb-2 mt-2">
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -107,7 +107,7 @@ export function VendorHomeScreen({ user }) {
         />
         <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-slate-950/85 via-slate-900/75 to-brand/30" aria-hidden />
 
-        <div className="relative p-4 sm:p-5">
+        <div className="relative p-4 sm:p-5 pt-2 sm:pt-3 pb-4 sm:pb-5">
           <div className="flex items-start justify-between gap-3">
             <button
               type="button"
@@ -132,14 +132,14 @@ export function VendorHomeScreen({ user }) {
             </Link>
           </div>
 
-          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-stretch">
+          <div className="mt-2 flex flex-row items-stretch gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold text-white/75">
                 {vendorTimeGreeting()}
                 {firstName ? `, ${firstName}` : ''} 👋
               </p>
-              <h1 className="mt-0.5 line-clamp-2 text-lg font-extrabold leading-tight sm:text-xl">{businessName}</h1>
-              <p className="mt-0.5 text-xs text-white/70">Contractor · workforce supply</p>
+              <h1 className="mt-0.5 line-clamp-2 text-base font-extrabold leading-tight sm:text-xl">{businessName}</h1>
+              <p className="mt-0.5 text-[10px] text-white/70">Contractor · workforce supply</p>
               {verified ? (
                 <span className="mt-2 inline-flex max-w-full items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-100">
                   <ShieldCheck className="h-2.5 w-2.5 shrink-0" aria-hidden />
@@ -156,20 +156,19 @@ export function VendorHomeScreen({ user }) {
               )}
             </div>
 
-            <div className="flex w-full shrink-0 flex-row gap-3 sm:w-auto sm:min-w-[8.5rem] sm:flex-col">
-              <div className="flex min-w-0 flex-1 flex-col justify-between rounded-2xl border border-emerald-400/35 bg-linear-to-br from-emerald-500/25 to-white/10 p-3 backdrop-blur-md sm:flex-none">
+            <div className="flex w-[110px] shrink-0 flex-col sm:w-[130px]">
+              <div className="flex min-h-full min-w-0 flex-1 flex-col justify-between rounded-xl border border-emerald-400/35 bg-linear-to-br from-emerald-500/25 to-white/10 p-2.5 backdrop-blur-md">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-100/90">This month</p>
-                  <p className="mt-0.5 break-words font-mono text-base font-black tabular-nums text-white sm:text-lg">
+                  <p className="text-[8px] font-bold uppercase tracking-wider text-emerald-100/90">This month</p>
+                  <p className="mt-0.5 break-words font-mono text-sm font-black tabular-nums text-white sm:text-base">
                     {formatVendorInr(stats.earningsMonth ?? 0)}
                   </p>
-                  <p className="mt-0.5 text-[9px] text-white/55">{stats.crewCount ?? 0} crew linked</p>
                 </div>
                 <Link
                   to="/vendor/earnings"
-                  className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl bg-linear-to-r from-brand-bright to-brand py-2 text-[10px] font-black text-white shadow-md"
+                  className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg bg-linear-to-r from-brand-bright to-brand py-1.5 text-[10px] font-black text-white shadow-md"
                 >
-                  <Wallet className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <Wallet className="h-3 w-3 shrink-0" aria-hidden />
                   Payouts
                 </Link>
               </div>
@@ -284,32 +283,32 @@ export function VendorHomeScreen({ user }) {
           )}
 
           {activeSubscription ? (
-            <div className="flex flex-col gap-3 rounded-3xl border border-orange-200/80 buildmart-gradient-soft p-4 shadow-sm mb-4">
+            <div className="flex flex-col gap-3 rounded-3xl border border-brand/20 bg-emerald-50/50 p-4 shadow-sm mb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#7a280e]/10">
-                  <ShoppingCart className="h-5 w-5 text-[#7a280e]" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10">
+                  <ShoppingCart className="h-5 w-5 text-brand" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-bold text-[#7a280e]">{activeSubscription.plan?.name} Active</h3>
-                  <p className="text-xs font-medium text-[#7a280e]/80">
+                  <h3 className="text-base font-bold text-slate-900">{activeSubscription.plan?.name} Active</h3>
+                  <p className="text-xs font-medium text-slate-600">
                     Valid till {new Date(activeSubscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
               </div>
               <div className="flex gap-2 mt-2">
-                <Link to="/vendor/mart" className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#7a280e] py-2 text-xs font-bold text-white transition hover:bg-[#c45c26] shadow-sm">
+                <Link to="/vendor/mart" className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-brand py-2 text-xs font-bold text-white transition hover:opacity-90 shadow-sm">
                   Go to App Mart
                 </Link>
-                <Link to="/vendor/mart/subscription" className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-[#7a280e]/30 bg-white/50 text-[#7a280e] py-2 text-xs font-bold transition hover:bg-white shadow-sm">
+                <Link to="/vendor/mart/subscription" className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-brand/30 bg-white/50 text-brand py-2 text-xs font-bold transition hover:bg-white shadow-sm">
                   Upgrade Plan
                 </Link>
               </div>
             </div>
           ) : (
             <Link to="/vendor/mart/subscription" className="block">
-              <div className="flex items-center gap-4 rounded-3xl border border-white/10 buildmart-gradient p-4 buildmart-glow transition-all hover:-translate-y-0.5 hover:shadow-xl">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                  <ShoppingCart className="h-5 w-5 text-white" />
+              <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-linear-to-r from-brand-bright to-brand p-4 shadow-lg shadow-brand/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand/30">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                  <ShoppingCart className="h-5 w-5 text-brand" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-bold text-white">App Mart</h3>

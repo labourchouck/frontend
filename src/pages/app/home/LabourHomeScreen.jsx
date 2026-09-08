@@ -382,7 +382,7 @@ export function LabourHomeScreen({ user }) {
       ) : null}
 
       {/* 1. Header */}
-      <section className="relative px-4 pb-2 pt-[max(0.35rem,env(safe-area-inset-top,0px))] z-40">
+      <section className="relative px-4 pb-2 mt-2 z-40">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

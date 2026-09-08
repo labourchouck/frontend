@@ -370,19 +370,19 @@ export function VendorProfilePage() {
       </GlassPanel>
 
       {activeSubscription && (
-        <GlassPanel className="flex flex-col gap-3 border-orange-200/80 buildmart-gradient-soft p-5">
+        <GlassPanel className="flex flex-col gap-3 border-orange-200/80 bg-slate-50 p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#7a280e]/10">
-              <ShoppingCart className="h-5 w-5 text-[#7a280e]" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10">
+              <ShoppingCart className="h-5 w-5 text-brand" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-extrabold text-[#7a280e]">{activeSubscription.plan?.name} Active</p>
-              <p className="text-xs font-medium text-[#7a280e]/80">
+              <p className="text-sm font-extrabold text-brand">{activeSubscription.plan?.name} Active</p>
+              <p className="text-xs font-medium text-brand/80">
                 Valid till {new Date(activeSubscription.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             </div>
           </div>
-          <Link to="/vendor/mart/subscription" className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#7a280e] py-2.5 text-sm font-bold text-white transition hover:bg-[#c45c26]">
+          <Link to="/vendor/mart/subscription" className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand py-2.5 text-sm font-bold text-white transition hover:bg-brand-bright">
             Upgrade Plan
           </Link>
         </GlassPanel>

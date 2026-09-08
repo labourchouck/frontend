@@ -158,9 +158,14 @@ function CorporateRequestsTab() {
                       <tr className="group hover:bg-slate-50/50 transition-colors duration-200">
                         <td className="p-5 align-top">
                           <p className="font-extrabold text-slate-900 group-hover:text-brand transition-colors">{r.reference}</p>
-                          <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeStyle(r.status)}`}>
-                            {r.status?.replace('_', ' ')}
-                          </span>
+                          <div className="mt-2 flex flex-col items-start gap-1.5">
+                            <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeStyle(r.status)}`}>
+                              {r.status?.replace('_', ' ')}
+                            </span>
+                            <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${r.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                              Pay: {r.paymentStatus || 'PENDING'}
+                            </span>
+                          </div>
                         </td>
                         <td className="p-4 align-top">
                           <p className="font-semibold text-slate-800">
@@ -322,11 +327,16 @@ function CorporateRequestsTab() {
                       
                       {/* ID & Status */}
                       <div className="flex-1">
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                           <p className="font-extrabold text-slate-900 text-lg">{r.reference}</p>
-                          <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeStyle(r.status)}`}>
-                            {r.status?.replace('_', ' ')}
-                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusBadgeStyle(r.status)}`}>
+                              {r.status?.replace('_', ' ')}
+                            </span>
+                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${r.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                              Pay: {r.paymentStatus || 'PENDING'}
+                            </span>
+                          </div>
                         </div>
                         
                         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -709,6 +719,12 @@ function IndividualBookingsTab() {
                   </p>
                   <p className="mt-1 text-xs font-bold text-slate-700">
                     Status: {b.status}
+                  </p>
+                  <p className="mt-1 text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    Payment Status: 
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wider ${b.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                      {b.paymentStatus || 'PENDING'}
+                    </span>
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">

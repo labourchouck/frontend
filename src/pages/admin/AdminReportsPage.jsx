@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, FileText, CheckCircle, Clock, XCircle, Loader2, IndianRupee, AlertCircle } from 'lucide-react'
+import { Users, FileText, CheckCircle, Clock, XCircle, Loader2, IndianRupee, AlertCircle, Wallet, Briefcase, Building2, Percent, Coins, Receipt } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { getDashboardStats } from '../../api/adminReportsApi.js'
 
@@ -16,7 +16,7 @@ export function AdminReportsPage() {
     try {
       setLoading(true)
       const res = await getDashboardStats()
-      setStats(res.data?.stats)
+      setStats(res?.stats || res?.data?.stats)
       setError('')
     } catch (err) {
       setError('Failed to load dashboard statistics')
@@ -92,6 +92,44 @@ export function AdminReportsPage() {
           <p className="text-xs text-gray-400 mt-2">Out of {stats?.complaints?.total || 0} total</p>
         </GlassPanel>
       </div>
+
+      {/* Comprehensive Revenue Breakdown */}
+      <GlassPanel className="p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+          <Wallet className="w-5 h-5 text-green-600" />
+          Detailed Revenue Breakdown
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><Users className="w-4 h-4 text-blue-500"/> User Subs (B2C)</p>
+            <p className="text-xl font-bold text-gray-900">₹{stats?.finance?.breakdown?.b2cSubRev?.toLocaleString() || 0}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><Building2 className="w-4 h-4 text-purple-500"/> Corporate Subs (B2B)</p>
+            <p className="text-xl font-bold text-gray-900">₹{stats?.finance?.breakdown?.b2bSubRev?.toLocaleString() || 0}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><Briefcase className="w-4 h-4 text-emerald-500"/> Mart Subs (Vendors)</p>
+            <p className="text-xl font-bold text-gray-900">₹{stats?.finance?.breakdown?.martSubRev?.toLocaleString() || 0}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><FileText className="w-4 h-4 text-orange-500"/> Base Prices (B2C+B2B)</p>
+            <p className="text-xl font-bold text-gray-900">₹{((stats?.finance?.breakdown?.b2cBaseTotal || 0) + (stats?.finance?.breakdown?.b2bBaseTotal || 0)).toLocaleString()}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><Receipt className="w-4 h-4 text-indigo-500"/> Platform Fees</p>
+            <p className="text-xl font-bold text-gray-900">₹{stats?.finance?.breakdown?.platformFeeTotal?.toLocaleString() || 0}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><Percent className="w-4 h-4 text-rose-500"/> Commission Fees</p>
+            <p className="text-xl font-bold text-gray-900">₹{stats?.finance?.breakdown?.commissionFeeTotal?.toLocaleString() || 0}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><Coins className="w-4 h-4 text-amber-500"/> Total GST Collected</p>
+            <p className="text-xl font-bold text-gray-900">₹{stats?.finance?.breakdown?.gstTotal?.toLocaleString() || 0}</p>
+          </div>
+        </div>
+      </GlassPanel>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         {/* Booking Status Breakdown */}

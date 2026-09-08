@@ -37,7 +37,6 @@ export const ADMIN_LABOUR_HUB_PATHS = new Set([
   '/admin/services',
   '/admin/users',
   '/admin/bookings',
-  '/admin/allocations',
   '/admin/attendance',
 ])
 
@@ -89,7 +88,6 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/mart/enquiries', label: 'Quote Leads', icon: MessageSquare },
       { to: '/admin/mart-subscriptions', label: 'Mart Subscriptions', icon: Package },
       { to: '/admin/bookings', label: 'Bookings & requests', icon: ClipboardList },
-      { to: '/admin/allocations', label: 'Workforce allocation', icon: Network },
       { to: '/admin/attendance', label: 'Attendance', icon: Clock },
       { to: '/admin/complaints', label: 'Complaints', icon: MessageSquare },
       { to: '/admin/zones', label: 'Manage Radius', icon: Map },
@@ -99,7 +97,6 @@ export const ADMIN_NAV_SECTIONS = [
     title: 'Finance',
     items: [
       { to: '/admin/billing', label: 'Payments & billing', icon: Wallet },
-      { to: '/admin/pricing', label: 'Pricing & rates', icon: BadgeIndianRupee },
       { to: '/admin/platform-fee', label: 'Platform Fee', icon: HandCoins },
       { to: '/admin/commission-fee', label: 'Commission Fee', icon: HandCoins },
       { to: '/admin/labour-wallet', label: 'Labour Wallet', icon: Wallet },
@@ -143,7 +140,6 @@ const ROUTE_TITLES = [
   { prefix: '/admin/privacy-policy', title: 'Privacy Policy' },
   { prefix: '/admin/faq', title: 'FAQs' },
   { prefix: '/admin/reports', title: 'Reports & analytics' },
-  { prefix: '/admin/pricing', title: 'Pricing & rates' },
   { prefix: '/admin/platform-fee', title: 'Platform Fee' },
   { prefix: '/admin/commission-fee', title: 'Commission Fee' },
   { prefix: '/admin/labour-wallet', title: 'Labour Wallet' },
@@ -152,7 +148,6 @@ const ROUTE_TITLES = [
   { prefix: '/admin/billing', title: 'Payments & billing' },
   { prefix: '/admin/reviews', title: 'Reviews & Ratings' },
   { prefix: '/admin/attendance', title: 'Attendance' },
-  { prefix: '/admin/allocations', title: 'Workforce allocation' },
   { prefix: '/admin/mart/enquiries', title: 'Quote Leads' },
   { prefix: '/admin/mart/reviews', title: 'Product Reviews' },
   { prefix: '/admin/mart-subscriptions', title: 'Mart Subscriptions' },

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Percent, Download, Search, Filter, X, ChevronLeft, ChevronRight, UserCircle, Wrench, Wallet, HandCoins, Trophy, Briefcase, Settings, Save } from 'lucide-react'
 import { adminBookingsApi } from '../../api/adminBookingsApi.js'
+import { adminWorkforceApi } from '../../api/adminWorkforceApi.js'
 import { adminSettingsApi } from '../../api/adminSettingsApi.js'
 
 export function AdminCommissionFeePage() {
@@ -26,22 +27,77 @@ export function AdminCommissionFeePage() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await adminBookingsApi.getAllBookings({ limit: 5000 })
-        const all = res?.data?.bookings || res?.bookings || res || []
-        setBookings(Array.isArray(all) ? all : [])
+        const [bookingsRes, requestsRes, settingsRes, amountsRes] = await Promise.all([
+          adminBookingsApi.getAllBookings({ limit: 5000 }),
+          adminWorkforceApi.getAllRequests({ limit: 5000 }).catch(() => ({ data: { requests: [] } })),
+          adminSettingsApi.getSettings(),
+          adminSettingsApi.getCommissionFeeAmounts()
+        ])
 
-        const settingsRes = await adminSettingsApi.getSettings()
         const fetchedSettings = settingsRes?.data?.settings || settingsRes?.settings
         if (fetchedSettings) {
           setSettings(fetchedSettings)
           setCommissionValue(fetchedSettings.commission?.globalPercentage || 0)
         }
 
-        const amountsRes = await adminSettingsApi.getCommissionFeeAmounts()
         const fetchedAmounts = amountsRes?.data || amountsRes
         if (fetchedAmounts) {
           setActualAmounts(fetchedAmounts)
         }
+
+        const allBookings = bookingsRes?.data?.bookings || bookingsRes?.bookings || []
+        const allRequests = requestsRes?.data?.requests || requestsRes?.requests || []
+
+        const normalized = [
+          ...allBookings.map(b => ({
+            ...b,
+            type: 'B2C',
+            customerName: b.userId?.fullName || b.user?.name || b.customer?.name || 'N/A',
+            laborName: b.laborId?.fullName || b.labor?.name || b.provider?.name || 'N/A',
+            serviceName: b.serviceId?.name || b.service?.name || b.category?.name || b.workCategory || 'Service',
+            isPaid: b.paymentStatus?.toUpperCase() === 'PAID',
+            // Dynamic platform fee — mirrors AdminPlatformFeePage.jsx exactly
+            platformFee: (() => {
+              let fee = b.platformFee || 0
+              if (fetchedSettings?.platformFee?.isActive) {
+                fee = fetchedSettings.platformFee.type === 'fixed'
+                  ? Number(fetchedSettings.platformFee.value) || 0
+                  : ((b.basePrice || 0) * (Number(fetchedSettings.platformFee.value) || 0)) / 100
+              }
+              return Math.round(fee)
+            })(),
+            commissionAmount: (() => {
+              if (fetchedSettings?.commission?.isActive === false) return 0
+              const pct = Number(fetchedSettings?.commission?.globalPercentage || 10)
+              return Math.round(((b.basePrice || b.totalAmount || 0) * pct) / 100)
+            })()
+          })),
+          ...allRequests.map(r => ({
+            ...r,
+            type: 'B2B',
+            customerName: r.clientId?.fullName || r.clientId?.companyName || 'N/A',
+            laborName: r.preferredVendorId?.contractorProfile?.businessName || r.preferredVendorId?.fullName || 'N/A',
+            serviceName: r.lines?.[0]?.serviceName || r.lines?.[0]?.categoryName || 'B2B Request',
+            isPaid: r.paymentStatus?.toUpperCase() === 'PAID',
+            // Dynamic B2B platform fee — mirrors AdminPlatformFeePage.jsx exactly
+            platformFee: (() => {
+              let fee = r.platformFee || 0
+              if (fetchedSettings?.b2bPlatformFee?.isActive) {
+                fee = fetchedSettings.b2bPlatformFee.type === 'fixed'
+                  ? Number(fetchedSettings.b2bPlatformFee.value) || 0
+                  : ((r.totalAmount || 0) * (Number(fetchedSettings.b2bPlatformFee.value) || 0)) / 100
+              }
+              return Math.round(fee)
+            })(),
+            commissionAmount: (() => {
+              if (fetchedSettings?.commission?.isActive === false) return 0
+              const pct = Number(fetchedSettings?.commission?.globalPercentage || 10)
+              return Math.round(((r.totalAmount || 0) * pct) / 100)
+            })()
+          }))
+        ]
+        
+        setBookings(normalized)
       } catch (err) {
         console.error('Failed to fetch bookings:', err)
       } finally {
@@ -55,8 +111,7 @@ export function AdminCommissionFeePage() {
   const filteredBookings = useMemo(() => {
     const now = new Date()
     return bookings.filter(b => {
-      if (b.paymentMethod !== 'ONLINE' || b.status !== 'COMPLETED') return false
-      if (!b.commissionAmount) return false
+      if (!b.isPaid) return false
 
       // Date Filter
       const bDate = new Date(b.createdAt)
@@ -73,9 +128,9 @@ export function AdminCommissionFeePage() {
       if (searchTerm) {
         const lowerSearch = searchTerm.toLowerCase()
         const idMatch = b._id?.toLowerCase().includes(lowerSearch)
-        const userMatch = b.user?.name?.toLowerCase().includes(lowerSearch) || b.customer?.name?.toLowerCase().includes(lowerSearch)
-        const laborMatch = b.labor?.name?.toLowerCase().includes(lowerSearch) || b.provider?.name?.toLowerCase().includes(lowerSearch)
-        const serviceMatch = b.service?.name?.toLowerCase().includes(lowerSearch) || b.category?.name?.toLowerCase().includes(lowerSearch)
+        const userMatch = b.customerName?.toLowerCase().includes(lowerSearch)
+        const laborMatch = b.laborName?.toLowerCase().includes(lowerSearch)
+        const serviceMatch = b.serviceName?.toLowerCase().includes(lowerSearch)
         if (!idMatch && !userMatch && !laborMatch && !serviceMatch) return false
       }
 
@@ -100,16 +155,20 @@ export function AdminCommissionFeePage() {
     let allTime = 0
     let currentMonth = 0
     let validCount = 0
+    let platformFeeTotal = 0
+    let baseTotal = 0
     
     const now = new Date()
     const labourMap = new Map()
     const serviceMap = new Map()
     
     bookings.forEach(b => {
-      if (b.paymentMethod === 'ONLINE' && b.status === 'COMPLETED' && b.commissionAmount) {
+      if (b.isPaid && b.commissionAmount) {
         const fee = b.commissionAmount
         allTime += fee
         validCount++
+        platformFeeTotal += (b.platformFee || 0)
+        baseTotal += (b.basePrice || b.totalAmount || 0)
         
         const bDate = new Date(b.createdAt)
         if (bDate.getMonth() === now.getMonth() && bDate.getFullYear() === now.getFullYear()) {
@@ -117,11 +176,11 @@ export function AdminCommissionFeePage() {
         }
 
         // Group by Labourer
-        const labourName = b.labor?.name || b.provider?.name || 'Unknown Labourer'
+        const labourName = b.laborName || 'Unknown Labourer'
         labourMap.set(labourName, (labourMap.get(labourName) || 0) + fee)
 
         // Group by Service
-        const serviceName = b.service?.name || b.category?.name || b.workCategory || 'Unknown Service'
+        const serviceName = b.serviceName || 'Unknown Service'
         serviceMap.set(serviceName, (serviceMap.get(serviceName) || 0) + fee)
       }
     })
@@ -140,7 +199,7 @@ export function AdminCommissionFeePage() {
       .slice(0, 5)
 
     return { 
-      metrics: { allTime, currentMonth, filteredTotal, average },
+      metrics: { allTime, currentMonth, filteredTotal, average, platformFeeTotal, baseTotal },
       topLabourers: topLabourersArray,
       topServices: topServicesArray
     }
@@ -152,11 +211,11 @@ export function AdminCommissionFeePage() {
     
     const headers = ['Booking ID', 'Date', 'Customer Name', 'Labour Name', 'Service', 'Total Amount', 'Platform Fee', 'Commission', 'Labour Share']
     const rows = filteredBookings.map(b => [
-      b._id,
+      b.reference || b._id,
       new Date(b.createdAt).toLocaleDateString(),
-      b.user?.name || b.customer?.name || 'N/A',
-      b.labor?.name || b.provider?.name || 'N/A',
-      b.service?.name || b.category?.name || b.workCategory || 'N/A',
+      b.customerName,
+      b.laborName,
+      b.serviceName,
       b.totalAmount || 0,
       b.platformFee || 0,
       b.commissionAmount || 0,
@@ -229,21 +288,21 @@ export function AdminCommissionFeePage() {
         <div className="overflow-hidden rounded-2xl border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-blue-800/70">Total Commission</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-blue-700">₹{loading ? '...' : (actualAmounts.commissionAmount || 0).toLocaleString('en-IN')}</span>
+            <span className="text-3xl font-black text-blue-700">₹{loading ? '...' : metrics.allTime.toLocaleString('en-IN')}</span>
           </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-800/70">Platform Fees</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-indigo-700">₹{loading ? '...' : (actualAmounts.platformFeesAmount || 0).toLocaleString('en-IN')}</span>
+            <span className="text-3xl font-black text-indigo-700">₹{loading ? '...' : metrics.platformFeeTotal.toLocaleString('en-IN')}</span>
           </div>
         </div>
         
         <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-wider text-emerald-800/70">Service Amount</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-emerald-800/70">Service Amount (Base)</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-emerald-700">₹{loading ? '...' : (actualAmounts.serviceAmount || 0).toLocaleString('en-IN')}</span>
+            <span className="text-3xl font-black text-emerald-700">₹{loading ? '...' : metrics.baseTotal.toLocaleString('en-IN')}</span>
           </div>
         </div>
 
@@ -367,18 +426,18 @@ export function AdminCommissionFeePage() {
                       className="hover:bg-blue-50/50 cursor-pointer transition-colors"
                     >
                       <td className="px-6 py-4">
-                        <p className="font-bold text-slate-900">#{b._id.slice(-6)}</p>
+                        <p className="font-bold text-slate-900">{(b.reference || `#${b._id.slice(-6)}`).toUpperCase()}</p>
                         <p className="text-xs text-slate-400">{new Date(b.createdAt).toLocaleString()}</p>
                       </td>
                       <td className="px-6 py-4 font-medium text-slate-700">
-                        {b.user?.name || b.customer?.name || 'N/A'}
+                        {b.customerName}
                       </td>
                       <td className="px-6 py-4 font-medium text-slate-700">
-                        {b.labor?.name || b.provider?.name || 'N/A'}
+                        {b.laborName}
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                          {b.service?.name || b.category?.name || b.workCategory || 'Service'}
+                          {b.serviceName}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -435,8 +494,8 @@ export function AdminCommissionFeePage() {
           >
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
               <div>
-                <h3 className="font-bold text-slate-900">Booking Breakdown</h3>
-                <p className="text-xs font-semibold text-slate-500">#{selectedBooking._id}</p>
+                <h3 className="font-bold text-slate-900">{selectedBooking.type === 'B2B' ? 'B2B Request Breakdown' : 'Booking Breakdown'}</h3>
+                <p className="text-xs font-semibold text-slate-500">{selectedBooking.reference || `#${selectedBooking._id}`}</p>
               </div>
               <button 
                 onClick={() => setSelectedBooking(null)}
@@ -452,15 +511,15 @@ export function AdminCommissionFeePage() {
                   <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
                     <UserCircle className="h-3.5 w-3.5" /> Customer
                   </p>
-                  <p className="font-semibold text-slate-900">{selectedBooking.user?.name || selectedBooking.customer?.name || 'N/A'}</p>
-                  <p className="text-xs text-slate-500">{selectedBooking.user?.phone || 'No phone'}</p>
+                  <p className="font-semibold text-slate-900">{selectedBooking.customerName}</p>
+                  <p className="text-xs text-slate-500">{selectedBooking.userId?.phone || selectedBooking.clientId?.phone || 'No phone'}</p>
                 </div>
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                   <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    <Wrench className="h-3.5 w-3.5" /> Labour
+                    <Wrench className="h-3.5 w-3.5" /> {selectedBooking.type === 'B2B' ? 'Contractor' : 'Labour'}
                   </p>
-                  <p className="font-semibold text-slate-900">{selectedBooking.labor?.name || selectedBooking.provider?.name || 'N/A'}</p>
-                  <p className="text-xs text-slate-500">{selectedBooking.labor?.phone || 'No phone'}</p>
+                  <p className="font-semibold text-slate-900">{selectedBooking.laborName}</p>
+                  <p className="text-xs text-slate-500">{selectedBooking.laborId?.phone || selectedBooking.preferredVendorId?.phone || 'No phone'}</p>
                 </div>
               </div>
 

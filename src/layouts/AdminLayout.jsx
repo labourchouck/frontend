@@ -309,15 +309,14 @@ export function AdminLayout() {
                         )}
                       </div>
                       <div className="p-2">
-                        <button
-                          type="button"
+                        <Link
+                          to="/admin/profile"
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                           onClick={() => setProfileOpen(false)}
                         >
                           <User className="h-4 w-4 text-slate-400" aria-hidden />
                           Profile settings
-                          <span className="ml-auto text-[10px] font-bold uppercase text-slate-400">Soon</span>
-                        </button>
+                        </Link>
                         <button
                           type="button"
                           onClick={handleLogout}

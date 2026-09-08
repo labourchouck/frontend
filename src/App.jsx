@@ -24,10 +24,8 @@ import { AdminMartPage } from './pages/admin/AdminMartPage.jsx'
 import { AdminMartProductReviewsPage } from './pages/admin/AdminMartProductReviewsPage.jsx'
 import { AdminBuildMartLeadsPage } from './pages/admin/AdminMartEnquiriesPage.jsx'
 import { AdminBookingsPage } from './pages/admin/AdminBookingsPage.jsx'
-import { AdminAllocationsPage } from './pages/admin/AdminAllocationsPage.jsx'
 import { AdminAttendancePage } from './pages/admin/AdminAttendancePage.jsx'
 import { AdminBillingPage } from './pages/admin/AdminBillingPage.jsx'
-import { AdminPricingPage } from './pages/admin/AdminPricingPage.jsx'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage.jsx'
 import { AdminModulePlaceholder } from './components/admin/AdminModulePlaceholder.jsx'
 import { AdminReportsPage } from './pages/admin/AdminReportsPage.jsx'
@@ -146,10 +144,8 @@ function App() {
             <Route path="mart/reviews" element={<AdminMartProductReviewsPage />} />
             <Route path="mart/enquiries" element={<AdminBuildMartLeadsPage />} />
             <Route path="bookings" element={<AdminBookingsPage />} />
-            <Route path="allocations" element={<AdminAllocationsPage />} />
             <Route path="attendance" element={<AdminAttendancePage />} />
             <Route path="billing" element={<AdminBillingPage />} />
-            <Route path="pricing" element={<AdminPricingPage />} />
             <Route path="banners" element={<AdminBannersPage />} />
             <Route path="complaints" element={<AdminComplaintsPage />} />
             <Route path="profile" element={<AdminProfilePage />} />

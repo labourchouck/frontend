@@ -103,7 +103,7 @@ export function VendorMartSubscriptionPage() {
           contact: user?.phone || ''
         },
         theme: {
-          color: '#7a280e'
+          color: '#10b981'
         }
       }
 
@@ -126,11 +126,11 @@ export function VendorMartSubscriptionPage() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="h-[100dvh] overflow-y-auto overscroll-none buildmart-gradient-soft pb-20"
+      className="h-[100dvh] overflow-y-auto overscroll-none bg-slate-50 pb-20"
     >
       <VendorPageLayout>
         {/* Header Section */}
-        <div className="relative -mx-4 -mt-4 overflow-hidden rounded-b-[2.5rem] bg-gradient-to-b from-[#7a280e] to-[#c45c26] px-4 pb-12 pt-8 text-white shadow-2xl">
+        <div className="relative -mx-4 -mt-4 overflow-hidden rounded-b-[2.5rem] bg-linear-to-br from-slate-900 via-slate-800 to-slate-950 px-4 pb-12 pt-8 text-white shadow-2xl">
 
           <div className="relative mb-6 flex items-center justify-between">
             <Link to="/vendor" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 ring-1 ring-white/20">
@@ -139,8 +139,8 @@ export function VendorMartSubscriptionPage() {
           </div>
 
           <div className="relative flex flex-col items-center text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-tr from-amber-400 to-orange-500 p-1 shadow-lg shadow-orange-500/40">
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-[#7a280e]/40 backdrop-blur-md">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-tr from-brand-bright to-brand p-1 shadow-lg shadow-brand/40">
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-900/40 backdrop-blur-md">
                 <ShoppingCart className="h-7 w-7 text-white" />
               </div>
             </div>
@@ -150,15 +150,15 @@ export function VendorMartSubscriptionPage() {
             </p>
           </div>
 
-          <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/20 blur-3xl" />
-          <div className="pointer-events-none absolute -right-10 top-20 h-40 w-40 rounded-full bg-orange-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -right-10 top-20 h-40 w-40 rounded-full bg-brand/20 blur-3xl" />
         </div>
 
         {/* Pricing Cards Section */}
         <section className="relative z-10 -mt-6 px-2 space-y-6">
           {loading ? (
             <div className="flex justify-center py-10">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#7a280e] border-t-transparent"></div>
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent"></div>
             </div>
           ) : plans.length === 0 ? (
             <div className="flex justify-center py-10 text-slate-500 font-medium">
@@ -178,10 +178,10 @@ export function VendorMartSubscriptionPage() {
                     className={`relative overflow-hidden rounded-3xl p-0.5 transition-all duration-300 ${isSelected ? 'scale-[1.02] shadow-xl' : 'scale-100 shadow-md hover:scale-[1.01]'}`}
                   >
                     {/* Outer glowing border for selected state */}
-                    <div className={`absolute inset-0 bg-gradient-to-br from-[#7a280e] to-[#c45c26] opacity-100 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0'}`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-br from-brand-bright to-brand opacity-100 transition-opacity duration-300 ${isSelected ? 'opacity-100' : 'opacity-0'}`}></div>
 
                     {plan.recommended && (
-                      <div className="absolute top-0 right-6 rounded-b-lg bg-gradient-to-r from-[#c45c26] to-[#7a280e] px-3 py-1 shadow-md z-20">
+                      <div className="absolute top-0 right-6 rounded-b-lg bg-gradient-to-r from-brand to-brand-bright px-3 py-1 shadow-md z-20">
                         <p className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-white">
                           <Sparkles className="h-3 w-3" /> Most Popular
                         </p>
@@ -198,14 +198,14 @@ export function VendorMartSubscriptionPage() {
                           </h3>
                           <p className="mt-1 text-xs font-medium text-slate-500">{plan.description}</p>
                         </div>
-                        <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-300 ${isSelected ? 'border-transparent bg-[#c45c26]' : 'border-slate-300 bg-transparent'}`}>
+                        <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-300 ${isSelected ? 'border-transparent bg-brand' : 'border-slate-300 bg-transparent'}`}>
                           {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
                         </div>
                       </div>
 
                       {/* Price */}
                       <div className="mb-6 flex items-end gap-1">
-                        <span className={`text-4xl font-black ${isSelected ? 'text-[#c45c26]' : 'text-slate-900'}`}>
+                        <span className={`text-4xl font-black ${isSelected ? 'text-brand' : 'text-slate-900'}`}>
                           {plan.price}
                         </span>
                         <span className="mb-1 text-sm font-medium text-slate-500">
@@ -217,7 +217,7 @@ export function VendorMartSubscriptionPage() {
                       <ul className="mb-8 flex-1 space-y-3">
                         {plan.features.map((feature, i) => (
                           <li key={i} className="flex items-start gap-3">
-                            <CheckCircle2 className={`h-5 w-5 shrink-0 ${isSelected ? 'text-[#c45c26]' : 'text-slate-400'}`} />
+                            <CheckCircle2 className={`h-5 w-5 shrink-0 ${isSelected ? 'text-brand' : 'text-slate-400'}`} />
                             <span className="text-sm font-medium text-slate-700">{feature}</span>
                           </li>
                         ))}
@@ -234,7 +234,7 @@ export function VendorMartSubscriptionPage() {
                           }
                         }}
                         disabled={isProcessing && isSelected}
-                        className={`group flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-lg transition-all active:scale-95 ${isSelected ? 'bg-[#7a280e] hover:bg-[#c45c26]' : 'bg-slate-200 text-slate-500 hover:bg-slate-300 shadow-none'}`}
+                        className={`group flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold text-white shadow-lg transition-all active:scale-95 ${isSelected ? 'bg-brand hover:opacity-90' : 'bg-slate-200 text-slate-500 hover:bg-slate-300 shadow-none'}`}
                       >
                         {isProcessing && isSelected ? (
                           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -267,7 +267,7 @@ export function VendorMartSubscriptionPage() {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-6 left-0 right-0 z-50 mx-auto flex w-max max-w-[90%] items-center gap-2 rounded-full bg-[#7a280e] px-5 py-3 text-sm font-bold text-white shadow-xl ring-1 ring-white/10"
+            className="fixed bottom-6 left-0 right-0 z-50 mx-auto flex w-max max-w-[90%] items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-bold text-white shadow-xl ring-1 ring-white/10"
           >
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             {toastMessage}
