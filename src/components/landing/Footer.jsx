@@ -1,4 +1,3 @@
-import { HardHat } from 'lucide-react'
 import { footerLinks, SITE } from '../../data/landingContent'
 import { Container } from '../ui/Container'
 
@@ -103,13 +102,13 @@ export function Footer() {
               <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Get the app</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <a
-                  href="#app"
+                  href="#cta"
                   className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white hover:border-brand/50"
                 >
                   Google Play
                 </a>
                 <a
-                  href="#app"
+                  href="#cta"
                   className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white hover:border-brand/50"
                 >
                   App Store

@@ -390,13 +390,15 @@ export const faqs = [
 
 export const footerLinks = {
   product: [
+    { label: 'Hire Labour', href: '#labour' },
+    { label: 'Corporate', href: '#corporate' },
+    { label: 'BuildMart', href: '#buildmart' },
+    { label: 'Vendors', href: '#vendor' },
     { label: 'How it works', href: '#how-it-works' },
-    { label: 'Services', href: '#services' },
-    { label: 'Safety', href: '#safety' },
     { label: 'FAQ', href: '#faq' },
   ],
   company: [
-    { label: 'About', href: '#problem' },
+    { label: 'About', href: '#ecosystem' },
     { label: 'Careers', href: '#footer' },
     { label: 'Press', href: '#footer' },
   ],

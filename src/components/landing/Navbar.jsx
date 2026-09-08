@@ -1,52 +1,28 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { HardHat, Menu, X } from 'lucide-react'
+import { Briefcase, HardHat, Menu, PackageSearch, Store, X } from 'lucide-react'
 import { ButtonLink } from '../ui/ButtonLink'
 import { Container } from '../ui/Container'
-import { SITE } from '../../data/landingContent'
-import { useAuth } from '../../hooks/useAuth.js'
-import { USER_ROLES } from '../../constants/userRoles.js'
-import { writeBootRole } from '../../lib/bootPersona.js'
+import { useLandingCta } from '../../hooks/useLandingCta.js'
 
 const links = [
-  { href: '#problem', label: 'Why LaborChowck' },
+  { href: '#labour', label: 'Hire Labour', Icon: HardHat },
+  { href: '#corporate', label: 'Corporate', Icon: Briefcase },
+  { href: '#buildmart', label: 'BuildMart', Icon: PackageSearch },
+  { href: '#vendor', label: 'Vendors', Icon: Store },
   { href: '#how-it-works', label: 'How it works' },
-  { href: '#services', label: 'Services' },
-  { href: '#features', label: 'Trust' },
-  { href: '#testimonials', label: 'Stories' },
   { href: '#faq', label: 'FAQ' },
 ]
+
+const SECTION_IDS = ['labour', 'corporate', 'buildmart', 'vendor', 'how-it-works', 'faq']
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [active, setActive] = useState('')
   const reduce = useReducedMotion()
-  const { user, logout } = useAuth()
-
-  const handleHireLabour = (e) => {
-    if (e && e.preventDefault) e.preventDefault()
-    if (user && user.role === USER_ROLES.INDIVIDUAL) {
-      window.location.href = '/app'
-      return
-    }
-    logout().finally(() => {
-      writeBootRole(USER_ROLES.INDIVIDUAL)
-      window.location.href = '/app'
-    })
-  }
-
-  const handleRegisterLabour = (e) => {
-    if (e && e.preventDefault) e.preventDefault()
-    if (user && user.role === USER_ROLES.LABOUR) {
-      window.location.href = '/app'
-      return
-    }
-    logout().finally(() => {
-      writeBootRole(USER_ROLES.LABOUR)
-      window.location.href = '/app'
-    })
-  }
+  const cta = useLandingCta()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -56,29 +32,52 @@ export function Navbar() {
   }, [])
 
   useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined
+    const els = SECTION_IDS.map((id) => document.getElementById(id)).filter(Boolean)
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+        if (visible[0]) setActive(visible[0].target.id)
+      },
+      { rootMargin: '-40% 0px -50% 0px', threshold: [0, 0.2, 0.5] },
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     return () => {
       document.body.style.overflow = ''
     }
   }, [open])
 
-  const linkClass = scrolled
-    ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-    : 'text-slate-700 hover:bg-white/60 hover:text-slate-900'
+  const linkClass = (href) => {
+    const isActive = active && href === `#${active}`
+    if (isActive) return 'bg-brand/10 text-brand'
+    return scrolled
+      ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+      : 'text-slate-700 hover:bg-white/70 hover:text-slate-900'
+  }
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background,box-shadow] duration-300 ${scrolled
-        ? 'border-b border-slate-200/90 bg-white/90 shadow-sm shadow-slate-200/50 backdrop-blur-xl'
-        : 'border-b border-transparent bg-transparent'
-        }`}
+      className={`fixed inset-x-0 top-0 z-50 transition-[background,box-shadow] duration-300 ${
+        scrolled
+          ? 'border-b border-slate-200/90 bg-white/90 shadow-sm shadow-slate-200/50 backdrop-blur-xl'
+          : 'border-b border-transparent bg-transparent'
+      }`}
     >
       <Container className="flex h-16 items-center justify-between gap-4 md:h-[4.25rem]">
         <a
           href="#hero"
           className="flex items-center gap-2 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck Logo" className="h-16 w-auto scale-[1.35] origin-left object-contain" />
+          <img
+            src="/assets/images/labour_chowck_logo.png"
+            alt="LaborChowck"
+            className="h-16 w-auto origin-left scale-[1.35] object-contain"
+          />
         </a>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
@@ -86,30 +85,26 @@ export function Navbar() {
             <a
               key={l.href}
               href={l.href}
-              className={`rounded-xl px-3 py-2 text-sm font-medium transition ${linkClass}`}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition ${linkClass(l.href)}`}
+              aria-current={active && l.href === `#${active}` ? 'true' : undefined}
             >
+              {l.Icon ? <l.Icon className="h-4 w-4 opacity-80" aria-hidden /> : null}
               {l.label}
             </a>
           ))}
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link
-            to="/b2c/auth"
-            className="rounded-xl px-3 py-2 text-sm font-semibold text-brand hover:bg-brand-muted/50"
-          >
-            Sign in (B2C)
+          <Link to="/b2c/auth" className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+            Sign in
           </Link>
           <Link
             to="/b2b/auth"
-            className="rounded-xl px-3 py-2 text-sm font-semibold text-brand hover:bg-brand-muted/50"
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
           >
-            Sign in (B2B)
+            Business login
           </Link>
-          <ButtonLink href="/app" variant="secondary" className="!py-2.5 !text-xs" onClick={handleRegisterLabour}>
-            Register as Labour
-          </ButtonLink>
-          <ButtonLink href="/app" variant="primary" className="!py-2.5 !text-xs" onClick={handleHireLabour}>
+          <ButtonLink href="/app" variant="primary" className="!py-2.5 !text-xs" onClick={cta.hireLabour}>
             Hire Labour
           </ButtonLink>
         </div>
@@ -130,7 +125,7 @@ export function Navbar() {
         {open ? (
           <motion.div
             id="mobile-menu"
-            className="border-t border-slate-200 bg-white shadow-lg backdrop-blur-xl lg:hidden"
+            className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-slate-200 bg-white shadow-lg backdrop-blur-xl lg:hidden"
             initial={reduce ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -141,36 +136,53 @@ export function Navbar() {
                 <motion.a
                   key={l.href}
                   href={l.href}
-                  className="rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   onClick={() => setOpen(false)}
                   initial={reduce ? false : { opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.04 * i }}
                 >
+                  {l.Icon ? <l.Icon className="h-4 w-4 text-brand" aria-hidden /> : null}
                   {l.label}
                 </motion.a>
               ))}
               <div className="mt-3 flex flex-col gap-2">
-                <Link
-                  to="/b2c/auth"
-                  className="rounded-2xl border border-brand/30 bg-brand-muted py-3 text-center text-sm font-semibold text-brand"
-                  onClick={() => setOpen(false)}
+                <ButtonLink
+                  href="/app"
+                  variant="primary"
+                  onClick={(e) => {
+                    setOpen(false)
+                    cta.hireLabour(e)
+                  }}
                 >
-                  Sign in (B2C)
-                </Link>
-                <Link
-                  to="/b2b/auth"
-                  className="rounded-2xl border border-brand/30 bg-brand-muted py-3 text-center text-sm font-semibold text-brand"
-                  onClick={() => setOpen(false)}
-                >
-                  Sign in (B2B)
-                </Link>
-                <ButtonLink href="/app" variant="primary" onClick={(e) => { setOpen(false); handleHireLabour(e); }}>
                   Hire Labour
                 </ButtonLink>
-                <ButtonLink href="/app" variant="secondary" onClick={(e) => { setOpen(false); handleRegisterLabour(e); }}>
+                <ButtonLink
+                  href="/app"
+                  variant="secondary"
+                  onClick={(e) => {
+                    setOpen(false)
+                    cta.registerLabour(e)
+                  }}
+                >
                   Register as Labour
                 </ButtonLink>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    to="/b2c/auth"
+                    className="rounded-2xl border border-slate-200 py-3 text-center text-sm font-semibold text-slate-800"
+                    onClick={() => setOpen(false)}
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/b2b/auth"
+                    className="rounded-2xl border border-brand/30 bg-brand-muted py-3 text-center text-sm font-semibold text-slate-800"
+                    onClick={() => setOpen(false)}
+                  >
+                    Business login
+                  </Link>
+                </div>
               </div>
             </Container>
           </motion.div>

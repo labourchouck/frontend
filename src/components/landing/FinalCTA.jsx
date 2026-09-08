@@ -48,11 +48,11 @@ export function FinalCTA() {
               </div>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <ButtonLink href="#services" variant="primary" className="!py-4 !text-base">
+              <ButtonLink href="#labour" variant="primary" className="!py-4 !text-base">
                 Book Now
               </ButtonLink>
-              <ButtonLink href="#app" variant="secondary" className="!py-4 !text-base">
-                Become a Labour Partner
+              <ButtonLink href="#vendor" variant="secondary" className="!py-4 !text-base">
+                Become a Vendor Partner
               </ButtonLink>
             </div>
           </div>
