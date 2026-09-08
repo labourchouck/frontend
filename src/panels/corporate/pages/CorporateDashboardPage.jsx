@@ -155,13 +155,7 @@ export function CorporateDashboardPage() {
   return (
     <>
       {/* Custom Header Block */}
-      <div 
-        className="-mx-4 bg-[#1caf62] px-4 pb-10"
-        style={{
-          marginTop: 'calc(0px - max(0.5rem, env(safe-area-inset-top, 0px)))',
-          paddingTop: 'calc(max(0.5rem, env(safe-area-inset-top, 0px)) + 0.5rem)'
-        }}
-      >
+      <div className="-mx-4 -mt-2 bg-[#1caf62] px-4 pt-4 pb-10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <button
