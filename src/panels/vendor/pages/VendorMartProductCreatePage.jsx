@@ -41,7 +41,7 @@ function CustomSelect({ value, onChange, options }) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full min-w-0 items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+        className="flex w-full min-w-0 items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
       >
         <span>{selectedOption?.label}</span>
         <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -66,7 +66,7 @@ function CustomSelect({ value, onChange, options }) {
                   }}
                   className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
                     value === option.value
-                      ? 'bg-bm-orange/10 text-bm-terracotta'
+                      ? 'bg-brand/10 text-brand-bright'
                       : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
@@ -185,11 +185,11 @@ export function VendorMartProductCreatePage() {
   }
 
   return (
-    <div className="fixed top-0 left-1/2 z-20 h-dvh w-full max-w-lg -translate-x-1/2 overflow-y-auto overflow-x-hidden overscroll-none bg-slate-50 pb-28 selection:bg-bm-orange/20 selection:text-bm-terracotta shadow-2xl">
+    <div className="fixed top-0 left-1/2 z-20 h-dvh w-full max-w-lg -translate-x-1/2 overflow-y-auto overflow-x-hidden overscroll-none bg-slate-50 pb-28 selection:bg-brand/20 selection:text-brand-bright shadow-2xl">
       <VendorPageLayout>
         
         {/* Dynamic Header */}
-        <div className="relative -mx-4 -mt-4 mb-8 overflow-hidden rounded-b-[2.5rem] bg-gradient-to-b from-[#7a280e] to-[#c45c26] px-4 pb-12 pt-8 shadow-xl sm:px-6">
+        <div className="relative -mx-4 -mt-4 mb-8 overflow-hidden rounded-b-[2.5rem] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 px-4 pb-12 pt-8 shadow-xl sm:px-6">
           <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-[80px]" />
           
           <div className="relative z-10 flex items-center justify-between">
@@ -200,7 +200,7 @@ export function VendorMartProductCreatePage() {
               <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
             </Link>
             <div className="flex h-11 items-center rounded-full bg-white/20 px-4 backdrop-blur-md">
-              <span className="text-[10px] font-black uppercase tracking-widest text-orange-100">New Listing</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-100">New Listing</span>
             </div>
           </div>
           
@@ -218,7 +218,7 @@ export function VendorMartProductCreatePage() {
               transition={{ delay: 0.1 }}
               className="mt-2 flex items-center gap-2"
             >
-              <span className="flex h-6 items-center rounded-md bg-white/20 px-2 text-[10px] font-bold uppercase tracking-wider text-orange-50 ring-1 ring-white/30 backdrop-blur-sm">
+              <span className="flex h-6 items-center rounded-md bg-white/20 px-2 text-[10px] font-bold uppercase tracking-wider text-emerald-50 ring-1 ring-white/30 backdrop-blur-sm">
                 {decodedCategory}
               </span>
             </motion.div>
@@ -256,7 +256,7 @@ export function VendorMartProductCreatePage() {
                   <div className="space-y-4">
                     
                     <div className="group">
-                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                         <PackageOpen className="h-3.5 w-3.5" /> Product Name
                       </label>
                       <input
@@ -264,14 +264,14 @@ export function VendorMartProductCreatePage() {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                        className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                         placeholder="e.g. UltraTech Cement 50kg"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="group">
-                        <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                        <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                           <Tag className="h-3.5 w-3.5" /> Brand
                         </label>
                         <input
@@ -279,13 +279,13 @@ export function VendorMartProductCreatePage() {
                           required
                           value={formData.brand}
                           onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
-                          className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                          className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                           placeholder="e.g. UltraTech"
                         />
                       </div>
 
                       <div className="group">
-                        <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                        <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                           <IndianRupee className="h-3.5 w-3.5" /> Price Label
                         </label>
                         <input
@@ -293,14 +293,14 @@ export function VendorMartProductCreatePage() {
                           required
                           value={formData.priceLabel}
                           onChange={(e) => setFormData(prev => ({ ...prev, priceLabel: e.target.value }))}
-                          className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                          className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                           placeholder="e.g. ₹450 / bag"
                         />
                       </div>
                     </div>
 
                     <div className="group">
-                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                         <Info className="h-3.5 w-3.5" /> Availability
                       </label>
                       <CustomSelect
@@ -315,14 +315,14 @@ export function VendorMartProductCreatePage() {
                     </div>
 
                     <div className="group">
-                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                         <PackageOpen className="h-3.5 w-3.5" /> Related Product IDs
                       </label>
                       <input
                         type="text"
                         value={formData.relatedIds}
                         onChange={(e) => setFormData(prev => ({ ...prev, relatedIds: e.target.value }))}
-                        className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                        className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-semibold text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                         placeholder="e.g. pvc-20mm, pvc-25mm (comma separated)"
                       />
                     </div>
@@ -338,40 +338,40 @@ export function VendorMartProductCreatePage() {
                   <div className="space-y-4">
                     
                     <div className="group">
-                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                         <FileText className="h-3.5 w-3.5" /> Short Description
                       </label>
                       <textarea
                         rows={2}
                         value={formData.shortDescription}
                         onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))}
-                        className="w-full min-w-0 resize-none rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                        className="w-full min-w-0 resize-none rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                         placeholder="Brief summary..."
                       />
                     </div>
 
                     <div className="group">
-                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                         <FileText className="h-3.5 w-3.5" /> Full Description
                       </label>
                       <textarea
                         rows={4}
                         value={formData.description}
                         onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                        className="w-full min-w-0 resize-none rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                        className="w-full min-w-0 resize-none rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                         placeholder="Detailed product information..."
                       />
                     </div>
 
                     <div className="group">
-                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-bm-orange">
+                      <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 transition-colors group-focus-within:text-brand">
                         <Truck className="h-3.5 w-3.5" /> Delivery Info
                       </label>
                       <input
                         type="text"
                         value={formData.deliveryInfo}
                         onChange={(e) => setFormData(prev => ({ ...prev, deliveryInfo: e.target.value }))}
-                        className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                        className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                         placeholder="e.g. Delivery in 2-3 business days"
                       />
                     </div>
@@ -407,14 +407,14 @@ export function VendorMartProductCreatePage() {
                             placeholder="Label (e.g. Weight)"
                             value={spec.label}
                             onChange={e => handleSpecChange(i, 'label', e.target.value)}
-                            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm outline-none transition focus:border-bm-orange focus:bg-white"
+                            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm outline-none transition focus:border-brand focus:bg-white"
                           />
                           <input
                             type="text"
                             placeholder="Value (e.g. 50kg)"
                             value={spec.value}
                             onChange={e => handleSpecChange(i, 'value', e.target.value)}
-                            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm outline-none transition focus:border-bm-orange focus:bg-white"
+                            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm outline-none transition focus:border-brand focus:bg-white"
                           />
                           <button type="button" onClick={() => handleRemoveSpec(i)} className="p-2 text-slate-400 hover:text-red-500 shrink-0">
                             <Minus className="h-4 w-4" />
@@ -452,35 +452,35 @@ export function VendorMartProductCreatePage() {
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pr-6">
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">ID (Slug)</label>
-                              <input type="text" placeholder="e.g. pvc-20mm" value={v.id} onChange={e => handleVariantChange(i, 'id', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="text" placeholder="e.g. pvc-20mm" value={v.id} onChange={e => handleVariantChange(i, 'id', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Label</label>
-                              <input type="text" placeholder="e.g. 20mm" value={v.label} onChange={e => handleVariantChange(i, 'label', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="text" placeholder="e.g. 20mm" value={v.label} onChange={e => handleVariantChange(i, 'label', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Size</label>
-                              <input type="text" placeholder="e.g. 20" value={v.size} onChange={e => handleVariantChange(i, 'size', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="text" placeholder="e.g. 20" value={v.size} onChange={e => handleVariantChange(i, 'size', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Unit</label>
-                              <input type="text" placeholder="e.g. mm" value={v.unit} onChange={e => handleVariantChange(i, 'unit', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="text" placeholder="e.g. mm" value={v.unit} onChange={e => handleVariantChange(i, 'unit', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Retail Price (₹)</label>
-                              <input type="number" placeholder="0" value={v.retailPrice} onChange={e => handleVariantChange(i, 'retailPrice', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="number" placeholder="0" value={v.retailPrice} onChange={e => handleVariantChange(i, 'retailPrice', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Contractor Price (₹)</label>
-                              <input type="number" placeholder="0" value={v.contractorPrice} onChange={e => handleVariantChange(i, 'contractorPrice', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="number" placeholder="0" value={v.contractorPrice} onChange={e => handleVariantChange(i, 'contractorPrice', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">Bulk Price (₹)</label>
-                              <input type="number" placeholder="0" value={v.bulkPrice} onChange={e => handleVariantChange(i, 'bulkPrice', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="number" placeholder="0" value={v.bulkPrice} onChange={e => handleVariantChange(i, 'bulkPrice', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                             <div>
                               <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">MOQ</label>
-                              <input type="number" placeholder="0" value={v.moq} onChange={e => handleVariantChange(i, 'moq', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-bm-orange focus:ring-2 focus:ring-bm-orange/10" />
+                              <input type="number" placeholder="0" value={v.moq} onChange={e => handleVariantChange(i, 'moq', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10" />
                             </div>
                           </div>
                         </div>
@@ -506,10 +506,10 @@ export function VendorMartProductCreatePage() {
                       value={imageInput}
                       onChange={(e) => setImageInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage())}
-                      className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-10 pr-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-bm-orange focus:bg-white focus:ring-4 focus:ring-bm-orange/10"
+                      className="w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-10 pr-3.5 text-sm font-medium text-slate-900 outline-none transition hover:bg-slate-100 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                       placeholder="Paste image URL and press Enter..."
                     />
-                    <ImagePlus className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-bm-orange" />
+                    <ImagePlus className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-brand" />
                     <button
                       type="button"
                       onClick={handleAddImage}
@@ -521,16 +521,16 @@ export function VendorMartProductCreatePage() {
                   </div>
                   
                   <div className="mt-4 flex items-center justify-center">
-                    <label className="group flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-4 transition hover:border-bm-orange hover:bg-bm-orange/5">
+                    <label className="group flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-4 transition hover:border-brand hover:bg-brand/5">
                       {uploadingImage ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin text-bm-orange" />
+                          <Loader2 className="h-4 w-4 animate-spin text-brand" />
                           <span className="text-sm font-semibold text-slate-500">Uploading...</span>
                         </>
                       ) : (
                         <>
-                          <Upload className="h-4 w-4 text-slate-400 group-hover:text-bm-orange" />
-                          <span className="text-sm font-semibold text-slate-600 group-hover:text-bm-orange">Or click to upload from device</span>
+                          <Upload className="h-4 w-4 text-slate-400 group-hover:text-brand" />
+                          <span className="text-sm font-semibold text-slate-600 group-hover:text-brand">Or click to upload from device</span>
                         </>
                       )}
                       <input
@@ -553,7 +553,7 @@ export function VendorMartProductCreatePage() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.5 }}
                             key={`${img}-${i}`} 
-                            className="group relative aspect-square overflow-hidden rounded-xl border-2 border-slate-100 bg-slate-50 shadow-sm transition hover:border-bm-orange"
+                            className="group relative aspect-square overflow-hidden rounded-xl border-2 border-slate-100 bg-slate-50 shadow-sm transition hover:border-brand"
                           >
                             <img src={img} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-110" />
                             <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -576,7 +576,7 @@ export function VendorMartProductCreatePage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#7a280e] to-[#c45c26] py-4 font-black text-white shadow-[0_8px_30px_rgb(196,92,38,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgb(196,92,38,0.5)] active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70"
+                  className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 py-4 font-black text-white shadow-brand/30 transition-all hover:-translate-y-0.5 hover:shadow-brand/50 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70"
                 >
                   <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-150%)] transition-transform duration-1000 ease-out group-hover:translate-x-[150%]">
                     <div className="relative h-full w-12 bg-white/20" />

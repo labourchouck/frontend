@@ -99,9 +99,6 @@ export function AdminSettingsPage() {
     }
   }, [rawSettings])
 
-  // Wallet Limit
-  const [walletLimit, setWalletLimit] = useState('')
-
   // GST
   const [gstPercentage, setGstPercentage] = useState('')
 
@@ -129,10 +126,7 @@ export function AdminSettingsPage() {
         const s = res.data?.settings || {}
         setRawSettings(s)
         
-        // Wallet Limit
-        if (s.walletLimit != null) {
-          setWalletLimit(String(s.walletLimit))
-        }
+
         
         // GST Categories
         fetchAdminLabourCategoryTree().then(res => {
@@ -301,33 +295,7 @@ export function AdminSettingsPage() {
           </AppPrimaryButton>
         </SettingsSection>
 
-        {/* Wallet Limit */}
-        <SettingsSection
-          icon={Wallet}
-          title="Wallet Limit"
-          description="Max cash liability a laborer can hold before being blocked"
-        >
-          <div>
-            <label className={labelClass}>Limit Amount (₹)</label>
-            <input
-              className={inputClass + ' mt-1.5'}
-              type="number"
-              min={0}
-              placeholder="e.g. 200"
-              value={walletLimit}
-              onChange={(e) => setWalletLimit(e.target.value)}
-            />
-          </div>
-          <AppPrimaryButton
-            type="button"
-            loading={saving === 'Wallet Limit'}
-            onClick={() => handleSave('Wallet Limit', adminSettingsApi.updateWalletLimit, {
-              walletLimit: Number(walletLimit),
-            })}
-          >
-            Save Wallet Limit
-          </AppPrimaryButton>
-        </SettingsSection>
+
 
         {/* GST */}
         <SettingsSection

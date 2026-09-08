@@ -46,14 +46,14 @@ export function VendorMartProductViewModal({ isOpen, onClose, product }) {
             >
               <div className="flex shrink-0 items-center justify-between border-b border-orange-100/50 bg-white p-4">
                 <h2 className="text-lg font-extrabold tracking-tight text-slate-900">Product Full Details</h2>
-                <button onClick={onClose} className="rounded-full bg-orange-50 p-2 text-bm-orange transition hover:bg-orange-100">
+                <button onClick={onClose} className="rounded-full bg-emerald-50 p-2 text-brand transition hover:bg-orange-100">
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 buildmart-gradient-soft">
+              <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
                 {loading && !details ? (
                   <div className="flex h-32 items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-bm-terracotta" />
+                    <Loader2 className="h-6 w-6 animate-spin text-brand-bright" />
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -81,10 +81,10 @@ export function VendorMartProductViewModal({ isOpen, onClose, product }) {
                           {displayData?.status || 'PENDING'}
                         </span>
                       </div>
-                      <p className="mt-3 text-2xl font-extrabold text-bm-terracotta">{displayData?.priceLabel}</p>
+                      <p className="mt-3 text-2xl font-extrabold text-brand-bright">{displayData?.priceLabel}</p>
                       
                       <div className="mt-4 flex flex-wrap gap-2">
-                        <span className="rounded-lg bg-orange-50 px-3 py-1.5 text-[11px] font-bold uppercase text-bm-orange ring-1 ring-orange-200/50">ID: {displayData?.id}</span>
+                        <span className="rounded-lg bg-emerald-50 px-3 py-1.5 text-[11px] font-bold uppercase text-brand ring-1 ring-orange-200/50">ID: {displayData?.id}</span>
                         <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-[11px] font-bold uppercase text-slate-600 ring-1 ring-slate-200/80">Category: {displayData?.categoryId}</span>
                         <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-[11px] font-bold uppercase text-slate-600 ring-1 ring-slate-200/80">Stock: {displayData?.availability}</span>
                       </div>
@@ -100,23 +100,23 @@ export function VendorMartProductViewModal({ isOpen, onClose, product }) {
                     {/* Descriptions */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-2 text-bm-terracotta">Short Description</h4>
+                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-2 text-brand-bright">Short Description</h4>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium">{displayData?.shortDescription || 'N/A'}</p>
                       </div>
                       <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-2 text-bm-terracotta">Delivery Info</h4>
+                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-2 text-brand-bright">Delivery Info</h4>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium">{displayData?.deliveryInfo || 'N/A'}</p>
                       </div>
                     </div>
                     
                     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-2 text-bm-terracotta">Full Description</h4>
+                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-2 text-brand-bright">Full Description</h4>
                       <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed font-medium">{displayData?.description || 'N/A'}</p>
                     </div>
 
                     {/* Specs */}
                     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-3 text-bm-terracotta">Specifications</h4>
+                      <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-3 text-brand-bright">Specifications</h4>
                       {displayData?.specs?.length > 0 ? (
                         <dl className="divide-y divide-slate-100">
                           {displayData.specs.map((spec, i) => (
@@ -134,8 +134,8 @@ export function VendorMartProductViewModal({ isOpen, onClose, product }) {
                     {/* Variants */}
                     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
                       <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest text-bm-terracotta">Variants</h4>
-                        <span className="inline-flex items-center rounded-xl bg-orange-50 px-2 py-1 text-[10px] font-bold text-bm-orange ring-1 ring-orange-200/50">{displayData?.variantCount || 0} variants</span>
+                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest text-brand-bright">Variants</h4>
+                        <span className="inline-flex items-center rounded-xl bg-emerald-50 px-2 py-1 text-[10px] font-bold text-brand ring-1 ring-orange-200/50">{displayData?.variantCount || 0} variants</span>
                       </div>
                       {displayData?.variants?.length > 0 ? (
                         <div className="space-y-3">
@@ -151,8 +151,8 @@ export function VendorMartProductViewModal({ isOpen, onClose, product }) {
                                   <p className="mt-0.5 text-sm font-extrabold text-slate-900">₹{v.retailPrice || 0}</p>
                                 </div>
                                 <div className="rounded-2xl px-3 py-2.5 bg-gradient-to-br from-orange-50 to-amber-50 ring-1 ring-orange-200/80">
-                                  <p className="text-[10px] font-bold uppercase tracking-wide text-bm-terracotta">Contractor</p>
-                                  <p className="mt-0.5 text-sm font-extrabold text-bm-terracotta">₹{v.contractorPrice || 0}</p>
+                                  <p className="text-[10px] font-bold uppercase tracking-wide text-brand-bright">Contractor</p>
+                                  <p className="mt-0.5 text-sm font-extrabold text-brand-bright">₹{v.contractorPrice || 0}</p>
                                 </div>
                                 <div className="rounded-2xl px-3 py-2.5 bg-white ring-1 ring-slate-200/80">
                                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Bulk</p>
@@ -174,7 +174,7 @@ export function VendorMartProductViewModal({ isOpen, onClose, product }) {
                     {/* All Images */}
                     {displayData?.images?.length > 1 && (
                       <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-3 text-bm-terracotta">All Images</h4>
+                        <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest mb-3 text-brand-bright">All Images</h4>
                         <div className="grid grid-cols-4 gap-3">
                           {displayData.images.map((img, i) => (
                             <a href={img} target="_blank" rel="noopener noreferrer" key={i} className="aspect-square overflow-hidden rounded-2xl bg-slate-100 hover:opacity-90 transition ring-1 ring-slate-200/80">

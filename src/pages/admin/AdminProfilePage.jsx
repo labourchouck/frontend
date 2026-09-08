@@ -23,10 +23,10 @@ export function AdminProfilePage() {
     try {
       setLoading(true)
       const res = await getAdminProfile()
-      if (res.data?.user) {
+      if (res.data) {
         setProfile({
-          fullName: res.data.user.fullName || '',
-          email: res.data.user.email || ''
+          fullName: res.data.fullName || '',
+          email: res.data.email || ''
         })
       }
     } catch (error) {
@@ -44,7 +44,7 @@ export function AdminProfilePage() {
       await updateAdminProfile(profile)
       setProfileMsg({ type: 'success', text: 'Profile updated successfully!' })
     } catch (error) {
-      setProfileMsg({ type: 'error', text: error.response?.data?.message || 'Failed to update profile' })
+      setProfileMsg({ type: 'error', text: error.message || 'Failed to update profile' })
     } finally {
       setProfileSaving(false)
     }
@@ -68,7 +68,7 @@ export function AdminProfilePage() {
       setPasswordMsg({ type: 'success', text: 'Password changed successfully!' })
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (error) {
-      setPasswordMsg({ type: 'error', text: error.response?.data?.message || 'Failed to change password' })
+      setPasswordMsg({ type: 'error', text: error.message || 'Failed to change password' })
     } finally {
       setPasswordSaving(false)
     }
