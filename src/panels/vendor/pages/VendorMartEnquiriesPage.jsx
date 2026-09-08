@@ -24,7 +24,7 @@ const STATUS_OPTIONS = [
 
 function StatusPill({ status }) {
   const tones = {
-    new: 'bg-orange-50 text-orange-900 ring-orange-200/80',
+    new: 'bg-emerald-50 text-orange-900 ring-orange-200/80',
     contacted: 'bg-sky-50 text-sky-900 ring-sky-200/80',
     quoted: 'bg-violet-50 text-violet-900 ring-violet-200/80',
     won: 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
@@ -104,7 +104,7 @@ export function VendorMartEnquiriesPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col buildmart-gradient-soft overflow-hidden overscroll-none">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-slate-50 overflow-hidden overscroll-none">
       <div className="shrink-0 flex items-center justify-between px-4 pt-6 pb-2">
         <div className="flex items-center gap-3">
           <Link to="/vendor/mart" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 border border-slate-200/80">
@@ -183,7 +183,7 @@ export function VendorMartEnquiriesPage() {
                       <StatusPill status={lead.status} />
                     </div>
                     {lead.variantLabel ? (
-                      <p className="text-xs font-bold text-bm-terracotta tracking-wide uppercase">Variant: {lead.variantLabel}</p>
+                      <p className="text-xs font-bold text-brand-bright tracking-wide uppercase">Variant: {lead.variantLabel}</p>
                     ) : null}
                     
                     <div className="bg-slate-50 rounded-2xl p-4 mt-2 ring-1 ring-slate-100">

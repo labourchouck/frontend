@@ -24,7 +24,7 @@ function CategoryCard({ cat }) {
         to={`/vendor/mart/category/${encodeURIComponent(cat._id || cat.id || cat.name || cat.label || 'unknown')}`}
         className="group flex h-full cursor-pointer flex-col items-center gap-2 transition-transform duration-200 hover:-translate-y-1 hover:scale-105 active:scale-95"
       >
-        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-white shadow-md shadow-slate-200/50 transition-all duration-300 group-hover:border-bm-orange/20 group-hover:shadow-xl group-hover:shadow-bm-orange/20 sm:h-24 sm:w-24">
+        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-white shadow-md shadow-slate-200/50 transition-all duration-300 group-hover:border-brand/20 group-hover:shadow-xl group-hover:shadow-brand/20 sm:h-24 sm:w-24">
           {imgSource && !imgError ? (
             <img 
               src={imgSource} 
@@ -33,13 +33,13 @@ function CategoryCard({ cat }) {
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-orange-50 text-bm-terracotta">
+            <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-brand">
               <PackageSearch className="h-8 w-8 opacity-70" />
             </div>
           )}
         </div>
         <div className="flex h-8 w-full items-start justify-center px-1">
-          <p className="line-clamp-2 text-center text-[10px] font-extrabold uppercase leading-tight tracking-wide text-slate-700 transition-colors group-hover:text-bm-terracotta sm:text-[11px]">
+          <p className="line-clamp-2 text-center text-[10px] font-extrabold uppercase leading-tight tracking-wide text-slate-700 transition-colors group-hover:text-brand sm:text-[11px]">
             {displayName}
           </p>
         </div>
@@ -73,14 +73,14 @@ export function VendorMartPage() {
   }, [])
 
   const hero = (
-    <div className="relative overflow-hidden rounded-b-[2rem] bg-gradient-to-b from-[#7a280e] to-[#c45c26] px-4 pb-8 pt-8 text-white shadow-xl">
+    <div className="relative overflow-hidden rounded-b-[2rem] bg-linear-to-br from-slate-900 via-slate-800 to-slate-950 px-4 pb-8 pt-8 text-white shadow-xl">
       <div className="mb-6 flex items-center gap-3">
             <Link to="/vendor" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30">
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
               <h1 className="text-xl font-black text-white shadow-sm">App Mart</h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-orange-200">Categories</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-bright">Categories</p>
             </div>
           </div>
           <div className="absolute right-4 top-9 flex items-center gap-2">
@@ -98,7 +98,7 @@ export function VendorMartPage() {
             </div>
             <input
               type="text"
-              className="block w-full rounded-2xl border-0 bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-slate-900 shadow-lg outline-none ring-2 ring-white/0 placeholder:text-slate-400 focus:ring-orange-300/80"
+              className="block w-full rounded-2xl border-0 bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-slate-900 shadow-lg outline-none ring-2 ring-white/0 placeholder:text-slate-400 focus:ring-brand/80"
               placeholder="Search categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -112,7 +112,7 @@ export function VendorMartPage() {
     <motion.div 
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }}
-      className="min-h-full buildmart-gradient-soft pb-20"
+      className="min-h-full bg-slate-50 pb-20"
     >
       <VendorPageLayout hero={hero}>
         <section className="pb-8 pt-4">

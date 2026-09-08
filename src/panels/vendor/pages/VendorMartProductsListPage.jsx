@@ -25,7 +25,7 @@ export function VendorMartProductsListPage() {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col buildmart-gradient-soft overflow-hidden overscroll-none">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-slate-50 overflow-hidden overscroll-none">
       <div className="shrink-0 flex items-center justify-between px-4 pt-6 pb-2">
         <div className="flex items-center gap-3">
           <Link to="/vendor/mart" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 border border-slate-200/80">
@@ -46,7 +46,7 @@ export function VendorMartProductsListPage() {
           <section className="px-4">
           {loading ? (
             <div className="flex h-40 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-bm-terracotta" />
+              <Loader2 className="h-6 w-6 animate-spin text-brand-bright" />
             </div>
           ) : products.length === 0 ? (
             <GlassPanel className="flex flex-col items-center justify-center py-12 text-center">
@@ -76,7 +76,7 @@ export function VendorMartProductsListPage() {
                         {product.status === 'PENDING' && <Clock className="h-5 w-5 text-amber-500 shrink-0" />}
                         {product.status === 'REJECTED' && <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />}
                       </div>
-                      <p className="mt-2 text-sm font-extrabold text-bm-terracotta">{product.priceLabel}</p>
+                      <p className="mt-2 text-sm font-extrabold text-brand-bright">{product.priceLabel}</p>
                       
                       <div className="mt-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
