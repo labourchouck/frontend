@@ -155,12 +155,18 @@ export function CorporateDashboardPage() {
   return (
     <>
       {/* Custom Header Block */}
-      <div className="-mx-4 -mt-[max(0.5rem,env(safe-area-inset-top,0px))] bg-[#2bb972] px-4 pt-[max(1rem,env(safe-area-inset-top,0.5rem))] pb-10">
+      <div 
+        className="-mx-4 bg-[#1caf62] px-4 pb-10"
+        style={{
+          marginTop: 'calc(0px - max(0.5rem, env(safe-area-inset-top, 0px)))',
+          paddingTop: 'calc(max(0.5rem, env(safe-area-inset-top, 0px)) + 0.5rem)'
+        }}
+      >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <button
               onClick={() => window.dispatchEvent(new Event('lc-open-panel-drawer'))}
-              className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[18px] bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition-all shadow-sm"
+              className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[18px] bg-white text-[#1caf62] hover:bg-slate-50 transition-all shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
             >
               <Menu className="h-6 w-6" />
             </button>
