@@ -157,17 +157,16 @@ export function LabourCategoriesSection({ groups = [], loading = false }) {
                 I’m a worker — register free
               </button>
             </div>
-            <motion.ul
-              className="mt-5 flex flex-wrap gap-2"
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.03 } } }}
-            >
-              {chips.map((s) => (
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {chips.map((s, i) => (
                 <motion.li
                   key={s._id}
-                  variants={{ hidden: reduce ? {} : { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
+                  // Animate transform only — if the entrance never runs (throttled
+                  // tab, blocked observer) the chip is still readable, never blank.
+                  initial={reduce ? false : { y: 10, scale: 0.96 }}
+                  whileInView={{ y: 0, scale: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.35, delay: Math.min(i * 0.03, 0.4) }}
                   className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-3 pr-1.5 text-xs font-medium text-slate-700"
                 >
                   {s.name}
@@ -176,7 +175,7 @@ export function LabourCategoriesSection({ groups = [], loading = false }) {
                   </span>
                 </motion.li>
               ))}
-            </motion.ul>
+            </ul>
           </div>
         </Reveal>
       </Container>
