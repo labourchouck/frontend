@@ -49,6 +49,7 @@ export function AppShell() {
     pathname.startsWith('/app/active-job') ||
     pathname === '/app/bookings' ||
     pathname === '/app/wallet' ||
+    pathname === '/app/refer' ||
     isLabourAppHome ||
     isLabourJobs ||
     isLabourEarnings ||

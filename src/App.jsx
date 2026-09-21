@@ -48,6 +48,8 @@ import { AdminReviewsRatingsPage } from './pages/admin/AdminReviewsRatingsPage.j
 import { AdminTermsAndConditionsPage } from './pages/admin/AdminTermsAndConditionsPage.jsx'
 import { AdminPrivacyPolicyPage } from './pages/admin/AdminPrivacyPolicyPage.jsx'
 import { AdminFaqPage } from './pages/admin/AdminFaqPage.jsx'
+import { AdminReferralsPage } from './pages/admin/AdminReferralsPage.jsx'
+import { AdminUserWalletPage } from './pages/admin/AdminUserWalletPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { PushNotificationManager } from './hooks/usePushNotifications.js'
@@ -154,6 +156,8 @@ function App() {
             <Route path="zones" element={<AdminZonesPage />} />
             <Route path="platform-fee" element={<AdminPlatformFeePage />} />
             <Route path="commission-fee" element={<AdminCommissionFeePage />} />
+            <Route path="referrals" element={<AdminReferralsPage />} />
+            <Route path="user-wallet" element={<AdminUserWalletPage />} />
             <Route path="labour-wallet" element={<AdminLabourWalletPage />} />
             <Route path="vendor-wallet" element={<AdminVendorWalletPage />} />
             <Route path="cash-management" element={<AdminCashManagementPage />} />

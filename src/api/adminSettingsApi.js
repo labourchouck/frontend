@@ -60,6 +60,13 @@ export const adminSettingsApi = {
     })
   },
 
+  updateReferral: (payload) => {
+    return apiRequest('/admin/settings/referral', {
+      method: 'PATCH',
+      body: payload,
+    })
+  },
+
   updateUserSubscriptionToggle: (payload) => {
     return apiRequest('/admin/settings/user-subscription-toggle', {
       method: 'PATCH',

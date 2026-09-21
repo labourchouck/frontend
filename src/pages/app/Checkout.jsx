@@ -67,6 +67,7 @@ export function Checkout() {
   const [scheduledTime, setScheduledTime] = useState('')
   const [saveAddress, setSaveAddress] = useState(true)
   const [paymentMethod, setPaymentMethod] = useState('CASH')
+  const [useWallet, setUseWallet] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const inputRef = useRef(null)
@@ -250,6 +251,11 @@ export function Checkout() {
     return () => { cancelled = true }
   }, [subcategoryId])
 
+  // Wallet maths mirrors the server: credit can never exceed the bill total.
+  const walletBalance = Number(bill?.walletBalance) || 0
+  const walletDiscount = useWallet ? Math.min(walletBalance, Number(bill?.totalAmount) || 0) : 0
+  const payableAmount = Math.max(0, (Number(bill?.totalAmount) || 0) - walletDiscount)
+
   const handleSubmit = useCallback(async () => {
     if (isGuest) {
       navigate('/b2c/auth', { replace: true, state: { from: location.pathname + location.search } })
@@ -277,12 +283,16 @@ export function Checkout() {
         lng,
         saveAddress,
         paymentMethod,
+        useWallet,
       })
 
       const booking = res.data?.booking
       if (!booking) throw new Error('Booking creation failed')
 
-      if (paymentMethod === 'CASH') {
+      const payable = booking.payableAmount ?? booking.totalAmount
+
+      // Cash, or the wallet already covered the whole bill — nothing to collect.
+      if (paymentMethod === 'CASH' || payable <= 0) {
         navigate(`/app/tracking/${booking._id}`, { replace: true })
         return
       }
@@ -295,8 +305,9 @@ export function Checkout() {
         return
       }
 
+      // The server recomputes the amount from the booking; this is only a hint.
       const payRes = await paymentsApi.initPayment({
-        amount: booking.totalAmount,
+        amount: payable,
         purpose: 'BOOKING',
         bookingId: booking._id,
       })
@@ -338,7 +349,7 @@ export function Checkout() {
       setSubmitError(err instanceof ApiError ? err.message : err.message || 'Booking failed')
       setSubmitting(false)
     }
-  }, [address, lat, lng, paymentMethod, subcategoryId, subcategoryName, navigate, isGuest, location, scheduledTime, type])
+  }, [address, lat, lng, paymentMethod, useWallet, saveAddress, subcategoryId, subcategoryName, navigate, isGuest, location, scheduledTime, type])
 
   return (
     <div className="space-y-4 pb-8">
@@ -375,13 +386,56 @@ export function Checkout() {
                 <span className="font-bold text-slate-900">{formatInr(bill.taxes)}</span>
               </div>
             )}
+            <div className="flex justify-between border-t border-slate-200 pt-2">
+              <span className="font-bold text-slate-900">Total</span>
+              <span className="font-bold text-slate-900">{formatInr(bill.totalAmount)}</span>
+            </div>
+
+            {walletDiscount > 0 ? (
+              <div className="flex justify-between text-emerald-700">
+                <span className="font-semibold">Wallet credit applied</span>
+                <span className="font-bold">-{formatInr(walletDiscount)}</span>
+              </div>
+            ) : null}
+
             <div className="flex justify-between border-t border-slate-200 pt-2 text-base">
-              <span className="font-extrabold text-slate-900">Total</span>
-              <span className="font-extrabold text-brand">{formatInr(bill.totalAmount)}</span>
+              <span className="font-extrabold text-slate-900">To pay</span>
+              <span className="font-extrabold text-brand">{formatInr(payableAmount)}</span>
             </div>
           </div>
         ) : null}
       </GlassPanel>
+
+      {/* Wallet credit */}
+      {!isGuest && walletBalance > 0 ? (
+        <GlassPanel className="p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 accent-[#1caf62]"
+              checked={useWallet}
+              onChange={(e) => setUseWallet(e.target.checked)}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Wallet className="h-4 w-4 text-brand" aria-hidden />
+                Use wallet balance
+              </span>
+              <span className="mt-0.5 block text-xs text-slate-600">
+                You have {formatInr(walletBalance)}.{' '}
+                {useWallet && walletDiscount > 0
+                  ? `${formatInr(walletDiscount)} will be used on this booking.`
+                  : 'Earned from referrals and platform credits.'}
+              </span>
+            </span>
+          </label>
+          {useWallet && payableAmount === 0 ? (
+            <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+              Your wallet covers this booking fully. Nothing left to pay.
+            </p>
+          ) : null}
+        </GlassPanel>
+      ) : null}
 
       {/* Scheduled Time */}
       {type === 'SCHEDULED' && (

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
   User,
+  Gift,
 } from 'lucide-react'
 import { MobileShell } from '../../layouts/MobileShell.jsx'
 import { AppAmbientBackground } from '../../components/app/AppAmbientBackground.jsx'
@@ -22,6 +23,13 @@ import { getRoleHomePath } from '../../lib/roleHomePath.js'
 import { requestLoginOtp, requestRegisterOtp, verifyLogin, verifyRegister } from '../../api/authApi.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { ApiError } from '../../api/http.js'
+import { referralsApi } from '../../api/referralsApi.js'
+import {
+  captureReferralCodeFromUrl,
+  clearStoredReferralCode,
+  readStoredReferralCode,
+  storeReferralCode,
+} from '../../lib/referralCapture.js'
 
 const ROLE_OPTIONS = [
   {
@@ -108,6 +116,11 @@ export function AuthEntryPage({ variant = 'b2c' }) {
   const [businessName, setBusinessName] = useState('')
   const [gstNumber, setGstNumber] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [referralCode, setReferralCode] = useState(
+    () => captureReferralCodeFromUrl() || readStoredReferralCode(),
+  )
+  /** null = not checked yet, otherwise { valid, referrerName, refereeReward } */
+  const [referralCheck, setReferralCheck] = useState(null)
   const [otpCells, setOtpCells] = useState(() => Array(6).fill(''))
   const [challengeId, setChallengeId] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -280,8 +293,12 @@ export function AuthEntryPage({ variant = 'b2c' }) {
         if (role === USER_ROLES.CONTRACTOR) {
           body.businessName = businessName.trim()
         }
+        if (referralCode.trim()) {
+          body.referralCode = referralCode.trim().toUpperCase()
+        }
         const res = await verifyRegister(body)
         const { token, user } = res.data
+        clearStoredReferralCode()
         applySession(token, user)
         signedInUser = user
       }
@@ -508,6 +525,50 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                         />
                       </AuthField>
                     ) : null}
+                    <AuthField label="Referral code (optional)">
+                      <input
+                        type="text"
+                        maxLength={16}
+                        placeholder="Enter a friend's code"
+                        className={inputClass}
+                        value={referralCode}
+                        onChange={(e) => {
+                          const next = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                          setReferralCode(next)
+                          setReferralCheck(null)
+                          storeReferralCode(next)
+                        }}
+                        onBlur={async () => {
+                          const value = referralCode.trim()
+                          if (value.length < 4) {
+                            setReferralCheck(null)
+                            return
+                          }
+                          try {
+                            const res = await referralsApi.validateCode(value)
+                            setReferralCheck(res.data || null)
+                          } catch {
+                            setReferralCheck(null)
+                          }
+                        }}
+                      />
+                      {referralCheck ? (
+                        <p
+                          className={`mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold ${
+                            referralCheck.valid ? 'text-emerald-700' : 'text-rose-700'
+                          }`}
+                        >
+                          <Gift className="h-3.5 w-3.5" aria-hidden />
+                          {referralCheck.valid
+                            ? `Invited by ${referralCheck.referrerName}${
+                                referralCheck.refereeReward > 0
+                                  ? ` · ₹${referralCheck.refereeReward} joining bonus`
+                                  : ''
+                              }`
+                            : 'That referral code is not valid'}
+                        </p>
+                      ) : null}
+                    </AuthField>
                     <div className="flex items-start gap-2 pt-2">
                       <input
                         type="checkbox"

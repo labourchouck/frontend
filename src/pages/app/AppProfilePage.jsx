@@ -28,6 +28,8 @@ import {
   Wrench,
   Trash2,
   AlertTriangle,
+  Gift,
+  Wallet,
 } from 'lucide-react'
 import { BOOT_ROUTES } from '../../constants/bootFlow.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -401,6 +403,10 @@ export function AppProfilePage() {
   }
   if (user?.role === USER_ROLES.CONTRACTOR) {
     quickLinks.push({ to: '/app/workforce', icon: ClipboardList, label: 'Workforce' })
+  }
+  if (user?.role === USER_ROLES.INDIVIDUAL || user?.role === USER_ROLES.LABOUR) {
+    quickLinks.push({ to: '/app/refer', icon: Gift, label: 'Refer & Earn' })
+    quickLinks.push({ to: '/app/wallet', icon: Wallet, label: 'My wallet' })
   }
   quickLinks.push({ to: '/app/support', icon: LifeBuoy, label: 'Support' })
   quickLinks.push({ to: '/app/terms', icon: FileText, label: 'Terms & Conditions' })

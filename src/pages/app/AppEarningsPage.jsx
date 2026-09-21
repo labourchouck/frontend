@@ -10,6 +10,9 @@ import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { formatInrFromPaise } from '../../lib/labourEarningsFlow.js'
 
+/** Mirrors MIN_WITHDRAWAL_AMOUNT on the server. */
+const MIN_WITHDRAWAL = 100
+
 export function AppEarningsPage() {
   const [totalEarnings, setTotalEarnings] = useState(0)
   const [totalCashEarnings, setTotalCashEarnings] = useState(0)
@@ -63,22 +66,20 @@ export function AppEarningsPage() {
       const paid = wList
         .filter(w => w.status === 'APPROVED')
         .reduce((acc, curr) => acc + (curr.amount || 0), 0)
-      
-      const pending = wList
-        .filter(w => w.status === 'PENDING')
-        .reduce((acc, curr) => acc + (curr.amount || 0), 0)
-        
+
       setTotalPaid(paid)
       
-      const totalEarnedInr = Math.floor(onlineSum / 100)
-      const calculatedDue = totalEarnedInr - paid
-      setDueAmount(calculatedDue)
-      
-      // Prevent overdrawing if there are pending requests
-      setMaxWithdrawable(Math.max(0, calculatedDue - pending))
-      // Fetch wallet for admin dues
+      // The wallet is the source of truth for payouts: it is credited when an
+      // online booking completes and debited the moment a withdrawal is
+      // requested. Deriving the limit from bookings instead used to disagree
+      // with the server and let the form offer amounts it would then reject.
       const walletRes = await walletsApi.getMyWallet().catch(() => null)
-      setAdminDues(walletRes?.data?.wallet?.adminBalance || 0)
+      const wallet = walletRes?.data?.wallet
+      const balance = Number(wallet?.selfBalance) || 0
+
+      setDueAmount(balance)
+      setMaxWithdrawable(Math.max(0, balance))
+      setAdminDues(wallet?.adminBalance || 0)
 
     } catch (err) {
       console.error('Failed to load wallet data:', err)
@@ -128,8 +129,11 @@ export function AppEarningsPage() {
       if (!numAmount || numAmount <= 0) {
         throw new Error('Please enter a valid withdrawal amount.')
       }
+      if (numAmount < MIN_WITHDRAWAL) {
+        throw new Error(`Minimum withdrawal is ₹${MIN_WITHDRAWAL}.`)
+      }
       if (numAmount > maxWithdrawable) {
-        throw new Error(`You can only withdraw up to ₹${maxWithdrawable}. (Any pending requests are deducted from your max withdrawable limit)`)
+        throw new Error(`You can only withdraw up to ₹${maxWithdrawable}. Amounts already requested are held until an admin processes them.`)
       }
 
       let qrCodeUrl = qrPreview
@@ -244,7 +248,7 @@ export function AppEarningsPage() {
               </div>
               
               <div className="flex flex-col items-center">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Due Amount</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200">Available</p>
                 {loading ? (
                   <div className="mt-1 h-6 w-16 animate-pulse rounded bg-white/10"></div>
                 ) : (
@@ -330,14 +334,17 @@ export function AppEarningsPage() {
                 <input
                   required
                   type="number"
-                  min="1"
+                  min={MIN_WITHDRAWAL}
                   max={maxWithdrawable}
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
-                  placeholder={`Enter up to ${maxWithdrawable}`}
+                  placeholder={`Min ${MIN_WITHDRAWAL}, up to ${maxWithdrawable}`}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-8 pr-4 text-sm font-medium outline-none transition focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                 />
               </div>
+              <p className="mt-1.5 text-[11px] text-slate-500">
+                Minimum withdrawal is ₹{MIN_WITHDRAWAL}.
+              </p>
             </div>
 
             <div>
@@ -432,7 +439,14 @@ export function AppEarningsPage() {
           <AppPrimaryButton
             type="submit"
             className="w-full py-3.5 text-base shadow-lg shadow-brand/20"
-            disabled={submitting || loading || maxWithdrawable <= 0 || !withdrawAmount || Number(withdrawAmount) > maxWithdrawable}
+            disabled={
+              submitting ||
+              loading ||
+              maxWithdrawable < MIN_WITHDRAWAL ||
+              !withdrawAmount ||
+              Number(withdrawAmount) < MIN_WITHDRAWAL ||
+              Number(withdrawAmount) > maxWithdrawable
+            }
           >
             {submitting ? 'Processing...' : 'Send Request'}
           </AppPrimaryButton>

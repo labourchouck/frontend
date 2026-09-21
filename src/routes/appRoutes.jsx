@@ -10,6 +10,8 @@ import { AppKycPage } from '../pages/app/AppKycPage.jsx'
 import { AppTermsPage } from '../pages/app/AppTermsPage.jsx'
 import { AppPrivacyPolicyPage } from '../pages/app/AppPrivacyPolicyPage.jsx'
 import { AppFaqPage } from '../pages/app/AppFaqPage.jsx'
+import { AppWalletPage } from '../pages/app/AppWalletPage.jsx'
+import { ReferAndEarnPage } from '../pages/app/ReferAndEarnPage.jsx'
 import { LabourNotificationsPage } from '../pages/app/labour/LabourNotificationsPage.jsx'
 import { IndividualBookingFlowPage } from '../pages/app/booking/IndividualBookingFlowPage.jsx'
 import { BuildMartHomePage } from '../pages/app/buildmart/BuildMartHomePage.jsx'
@@ -21,7 +23,6 @@ import { Checkout } from '../pages/app/Checkout.jsx'
 import { JobTracking } from '../pages/app/JobTracking.jsx'
 import { MyBookings } from '../pages/app/MyBookings.jsx'
 import { ActiveJob } from '../pages/app/ActiveJob.jsx'
-import { LaborWallet } from '../pages/app/LaborWallet.jsx'
 import { AppSubCategoryServicePage } from '../pages/app/AppSubCategoryServicePage.jsx'
 import { AppSubscriptionPage } from '../pages/app/AppSubscriptionPage.jsx'
 import { USER_ROLES } from '../constants/userRoles.js'
@@ -119,12 +120,20 @@ export const appShellChildRoutes = (
         </RoleRoute>
       }
     />
-    {/* New: Labor Wallet */}
+    {/* Wallet: labour see earnings & dues, customers see referral credit */}
     <Route
       path="wallet"
       element={
-        <RoleRoute allow={[USER_ROLES.LABOUR]}>
-          <LaborWallet />
+        <RoleRoute allow={[USER_ROLES.LABOUR, USER_ROLES.INDIVIDUAL]}>
+          <AppWalletPage />
+        </RoleRoute>
+      }
+    />
+    <Route
+      path="refer"
+      element={
+        <RoleRoute allow={[USER_ROLES.LABOUR, USER_ROLES.INDIVIDUAL]}>
+          <ReferAndEarnPage />
         </RoleRoute>
       }
     />

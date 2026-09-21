@@ -15,6 +15,8 @@ import {
   UserRound,
   Wrench,
   FileText,
+  Gift,
+  Wallet,
 } from 'lucide-react'
 import { USER_ROLES } from '../constants/userRoles.js'
 
@@ -35,6 +37,8 @@ const byRole = {
       { id: 'subscription', to: '/app/subscriptions', label: 'My Subscription', icon: ShieldCheck },
       { id: 'buildmart', to: '/app/buildmart', label: 'BuildMart materials', icon: Package },
       { id: 'book', to: '/app/my-bookings', label: 'My bookings', icon: ClipboardList },
+      { id: 'refer', to: '/app/refer', label: 'Refer & Earn', icon: Gift },
+      { id: 'wallet', to: '/app/wallet', label: 'My wallet', icon: Wallet },
       { id: 'support', to: '/app/support', label: 'Support & issues', icon: LifeBuoy },
       { id: 'terms', to: '/app/terms', label: 'Terms & Conditions', icon: FileText },
       { id: 'privacy-policy', to: '/app/privacy-policy', label: 'Privacy Policy', icon: FileText },
@@ -59,6 +63,7 @@ const byRole = {
       { id: 'earnings', to: '/app/earnings', label: 'Earnings & payouts', icon: IndianRupee },
       { id: 'kyc', to: '/app/kyc', label: 'Aadhaar KYC', icon: ShieldCheck },
       { id: 'workTypes', to: '/app/work-categories', label: 'Work types', icon: Wrench },
+      { id: 'refer', to: '/app/refer', label: 'Refer & Earn', icon: Gift },
       { id: 'support', to: '/app/support', label: 'Support', icon: LifeBuoy },
       { id: 'terms', to: '/app/terms', label: 'Terms & Conditions', icon: FileText },
       { id: 'privacy-policy', to: '/app/privacy-policy', label: 'Privacy Policy', icon: FileText },
@@ -78,6 +83,8 @@ export function getAppShellTitle(pathname) {
   if (pathname.startsWith('/app/jobs')) return 'Jobs'
   if (pathname.startsWith('/app/earnings')) return 'Earnings'
   if (pathname.startsWith('/app/kyc')) return 'KYC verification'
+  if (pathname.startsWith('/app/refer')) return 'Refer & Earn'
+  if (pathname.startsWith('/app/wallet')) return 'My Wallet'
   if (pathname.startsWith('/app/notifications')) return 'Notifications'
   if (pathname.startsWith('/app/work-categories')) return 'Work types'
   if (pathname.startsWith('/app/booking/flow')) return 'Book labour'

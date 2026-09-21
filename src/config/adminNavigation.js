@@ -21,6 +21,7 @@ import {
   Tag,
   Wrench,
   Map,
+  Gift,
   HandCoins,
   ClipboardCheck,
   Star,
@@ -99,6 +100,8 @@ export const ADMIN_NAV_SECTIONS = [
       { to: '/admin/billing', label: 'Payments & billing', icon: Wallet },
       { to: '/admin/platform-fee', label: 'Platform Fee', icon: HandCoins },
       { to: '/admin/commission-fee', label: 'Commission Fee', icon: HandCoins },
+      { to: '/admin/referrals', label: 'Refer & Earn', icon: Gift },
+      { to: '/admin/user-wallet', label: 'Customer Payouts', icon: Wallet },
       { to: '/admin/labour-wallet', label: 'Labour Wallet', icon: Wallet },
       { to: '/admin/vendor-wallet', label: 'Vendor Wallet', icon: Wallet },
       { to: '/admin/cash-management', label: 'Cash Management', icon: Wallet },
@@ -130,6 +133,8 @@ export const ADMIN_NAV_SECTIONS = [
 ]
 
 const ROUTE_TITLES = [
+  { prefix: '/admin/user-wallet', title: 'Customer Payouts' },
+  { prefix: '/admin/referrals', title: 'Refer & Earn' },
   { prefix: '/admin/profile', title: 'Profile' },
   { prefix: '/admin/complaints', title: 'Complaints' },
   { prefix: '/admin/settings', title: 'Settings' },

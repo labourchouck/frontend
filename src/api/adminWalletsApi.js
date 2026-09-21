@@ -12,6 +12,12 @@ export const adminWalletsApi = {
     return apiRequest('/admin/wallets/vendor-withdrawals', { method: 'GET' })
   },
 
+  /** Customer (individual) payout requests, with headline totals. */
+  getUserWithdrawals: (status) => {
+    const qs = status ? `?status=${encodeURIComponent(status)}` : ''
+    return apiRequest(`/admin/wallets/user-withdrawals${qs}`, { method: 'GET' })
+  },
+
   getVendorWalletStats: () => {
     return apiRequest('/admin/wallets/vendor-stats', { method: 'GET' })
   },

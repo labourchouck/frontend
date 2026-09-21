@@ -19,6 +19,7 @@ import { TestimonialsSection } from '../components/landing/TestimonialsSection'
 import { VendorSection } from '../components/landing/VendorSection'
 import { PageSkeleton } from '../components/ui/PageSkeleton'
 import { useLandingData } from '../hooks/useLandingData.js'
+import { captureReferralCodeFromUrl } from '../lib/referralCapture.js'
 
 export function LandingPage() {
   const [boot, setBoot] = useState(true)
@@ -27,6 +28,12 @@ export function LandingPage() {
   useEffect(() => {
     const t = window.setTimeout(() => setBoot(false), 700)
     return () => window.clearTimeout(t)
+  }, [])
+
+  // Refer & Earn links land here as /?ref=CODE. Park the code so it survives
+  // the walk to the signup screen.
+  useEffect(() => {
+    captureReferralCodeFromUrl()
   }, [])
 
   const catalogueStats = useMemo(
