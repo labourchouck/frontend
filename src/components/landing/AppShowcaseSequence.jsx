@@ -77,7 +77,7 @@ function StepRow({ step, index, activeIndex, reduce }) {
 
 /**
  * Scroll-scrubbed sequence of a site supervisor booking a worker in the
- * LaborChowck app. Frames advance with scroll while the step list beside the
+ * Mappto app. Frames advance with scroll while the step list beside the
  * screen highlights the matching stage.
  */
 export function AppShowcaseSequence() {
@@ -119,7 +119,7 @@ export function AppShowcaseSequence() {
         <Container className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-center">
           <img
             src={frameSrc(FRAME_COUNT - 1)}
-            alt="Site supervisor booking a verified worker in the LaborChowck app"
+            alt="Site supervisor booking a verified worker in the Mappto app"
             className="w-full rounded-[2rem] object-cover"
           />
           <div>
@@ -175,7 +175,7 @@ export function AppShowcaseSequence() {
 
               <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] font-semibold text-white ring-1 ring-white/20 backdrop-blur sm:left-5 sm:top-5">
                 <Smartphone className="h-3.5 w-3.5 text-brand-bright" aria-hidden />
-                LaborChowck app
+                Mappto app
               </div>
 
               <motion.div

@@ -65,7 +65,7 @@ export function ProblemSection() {
                 <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-brand/15 blur-3xl" />
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white shadow-sm">
                   <CheckCircle2 className="h-3.5 w-3.5 text-white" aria-hidden />
-                  With LaborChowck
+                  With Mappto
                 </div>
                 <ul className="relative space-y-3 text-sm text-slate-600">
                   {comparisonRows.map((row) => (
@@ -73,7 +73,7 @@ export function ProblemSection() {
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
                       <span>
                         <span className="font-semibold text-slate-900">{row.aspect}:</span>{' '}
-                        {row.labourchowck}
+                        {row.mappto}
                       </span>
                     </li>
                   ))}

@@ -65,7 +65,7 @@ export function CorporateVerificationHero({ title, subtitle, phaseLabel, tone = 
           <div className="mt-4 flex items-center gap-2 rounded-2xl border border-white/15 bg-white/8 px-3 py-2.5">
             <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-300" aria-hidden />
             <p className="text-[11px] leading-relaxed text-white/75">
-              Documents are reviewed manually by Labour Chowk operations before bulk workforce access unlocks.
+              Documents are reviewed manually by Mappto operations before bulk workforce access unlocks.
             </p>
           </div>
         </div>

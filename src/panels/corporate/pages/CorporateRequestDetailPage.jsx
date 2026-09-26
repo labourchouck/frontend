@@ -80,7 +80,7 @@ export function CorporateRequestDetailPage() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
         amount: initRes.order?.amount,
         currency: initRes.order?.currency,
-        name: 'LaborChowk',
+        name: 'Mappto',
         description: `Payment for Request #${request?.reference}`,
         order_id: initRes.order?.id,
         handler: async function (response) {

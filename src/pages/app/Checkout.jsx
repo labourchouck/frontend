@@ -320,7 +320,7 @@ export function Checkout() {
         amount: order.amount,
         currency: order.currency || 'INR',
         order_id: order.id,
-        name: 'LabourChowk',
+        name: 'Mappto',
         description: `Booking: ${subcategoryName}`,
         handler: async function (response) {
           try {

@@ -92,7 +92,7 @@ export function AppSubscriptionPage() {
         key: keyId,
         amount: order.amount,
         currency: order.currency,
-        name: 'LaborChowck',
+        name: 'Mappto',
         description: `Subscription: ${plan.name}`,
         order_id: order.id,
         handler: async function (response) {

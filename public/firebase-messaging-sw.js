@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 // Firebase Cloud Messaging service worker — handles push notifications
-// while the LabourChowk app/tab is closed or in the background.
+// while the Mappto app/tab is closed or in the background.
 // NOTE: service workers can't read Vite env vars, so the public web config
 // is inlined here. Keep it in sync with src/lib/firebase.js.
 
@@ -23,7 +23,7 @@ const messaging = firebase.messaging()
 messaging.onBackgroundMessage((payload) => {
   if (payload.notification) return
 
-  const title = payload.data?.title || 'LabourChowk'
+  const title = payload.data?.title || 'Mappto'
   const body = payload.data?.body || 'You have a new notification'
   self.registration.showNotification(title, {
     body,

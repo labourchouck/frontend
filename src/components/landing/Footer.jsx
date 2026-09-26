@@ -26,9 +26,9 @@ function IconInstagram(props) {
 }
 
 const social = [
-  { Icon: IconLinkedIn, href: 'https://www.linkedin.com/company/labourchowck', label: 'LinkedIn' },
-  { Icon: IconX, href: 'https://twitter.com/labourchowck', label: 'X (Twitter)' },
-  { Icon: IconInstagram, href: 'https://www.instagram.com/labourchowck', label: 'Instagram' },
+  { Icon: IconLinkedIn, href: 'https://www.linkedin.com/company/mappto', label: 'LinkedIn' },
+  { Icon: IconX, href: 'https://twitter.com/mappto', label: 'X (Twitter)' },
+  { Icon: IconInstagram, href: 'https://www.instagram.com/mappto', label: 'Instagram' },
 ]
 
 export function Footer() {
@@ -38,7 +38,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-white">
-              <img src="/assets/images/labour_chowck_logo.png" alt="LabourChowck Logo" className="h-20 w-auto object-contain" />
+              <img src="/assets/images/mappto_logo.png" alt="Mappto Logo" className="h-20 w-auto object-contain" />
             </div>
             <p className="text-sm leading-relaxed">
               Verified construction labour, on demand—built for India’s contractors, builders, and

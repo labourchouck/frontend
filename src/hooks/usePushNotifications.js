@@ -43,14 +43,14 @@ export function usePushNotifications() {
         // Foreground messages are not auto-displayed by the SDK — show them ourselves
         unsubscribe = await onForegroundMessage(async (payload) => {
           console.info('[push] Foreground FCM message received:', payload?.data?.type, payload)
-          const title = payload.notification?.title || payload.data?.title || 'LabourChowk'
+          const title = payload.notification?.title || payload.data?.title || 'Mappto'
           const body = payload.notification?.body || payload.data?.body || ''
           const options = {
             body,
             icon: '/logo.svg',
             badge: '/favicon.svg',
             data: payload.data || {},
-            tag: payload.data?.type || 'labourchowk',
+            tag: payload.data?.type || 'mappto',
           }
           try {
             const registration =

@@ -93,7 +93,7 @@ export function LaborWallet() {
         amount: order.amount,
         currency: order.currency || 'INR',
         order_id: order.id,
-        name: 'LabourChowk',
+        name: 'Mappto',
         description: 'Clear wallet dues',
         handler: async function (response) {
           try {

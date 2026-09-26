@@ -110,7 +110,7 @@ export function buildAssignmentDetailSnapshot(entries, job, rawJob = null) {
     timeline.push({
       at: rawJob.acceptedAt,
       title: 'Assignment accepted',
-      body: 'You joined this project on LabourChowck (demo).',
+      body: 'You joined this project on Mappto (demo).',
     })
   }
   timeline.push({

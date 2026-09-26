@@ -174,7 +174,7 @@ export function JobTracking() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB', // fallback
         amount: order.amount,
         currency: order.currency,
-        name: 'LaborChowck',
+        name: 'Mappto',
         description: `Payment for Booking`,
         order_id: order.id,
         handler: async function (response) {

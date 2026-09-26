@@ -45,7 +45,7 @@ export function AppPromoSection() {
             <SectionHeading
               titleId="app-heading"
               eyebrow="Mobile apps"
-              title="Carry LaborChowck in your pocket"
+              title="Carry Mappto in your pocket"
               subtitle="Book crews on-site, approve attendance, and help labor partners get paid faster—with notifications tuned for noisy, dusty environments."
             />
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">

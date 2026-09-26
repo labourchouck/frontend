@@ -39,7 +39,7 @@ const capabilities = [
   },
 ]
 
-const FALLBACK_BANNER = '/assets/images/labour_chowck_hero_cleaning_worker.jpg'
+const FALLBACK_BANNER = '/assets/images/mappto_hero_cleaning_worker.jpg'
 
 function BannerCarousel({ banners, reduce }) {
   const slides = banners.length ? banners : [{ id: 'fallback', imageUrl: FALLBACK_BANNER }]

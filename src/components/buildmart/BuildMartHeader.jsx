@@ -62,7 +62,7 @@ export function BuildMartHeader({ onOpenDrawer }) {
 
         {/* Right section (Logo) */}
         <div className="flex items-center">
-          <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck" className="h-10 w-auto scale-125 origin-left object-contain" />
+          <img src="/assets/images/mappto_logo.png" alt="Mappto" className="h-10 w-auto scale-125 origin-left object-contain" />
         </div>
       </header>
 

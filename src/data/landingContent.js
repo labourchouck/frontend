@@ -1,10 +1,10 @@
-/** Dummy marketing copy & structured content for LabourChowck landing */
+/** Dummy marketing copy & structured content for Mappto landing */
 
 export const SITE = {
-  name: 'LaborChowck',
+  name: 'Mappto',
   tagline: 'India’s trusted on-demand construction workforce',
-  url: 'https://laborchowck.com',
-  contactEmail: 'hello@laborchowck.com',
+  url: 'https://mappto.com',
+  contactEmail: 'hello@mappto.com',
   phone: '+91 98765 43210',
 }
 
@@ -47,27 +47,27 @@ export const comparisonRows = [
   {
     aspect: 'Discovery & booking',
     traditional: 'Phone chains & word-of-mouth',
-    labourchowck: 'Search, filter, and book in minutes',
+    mappto: 'Search, filter, and book in minutes',
   },
   {
     aspect: 'Verification',
     traditional: 'Informal references only',
-    labourchowck: 'Aadhaar-linked profiles & skill tags',
+    mappto: 'Aadhaar-linked profiles & skill tags',
   },
   {
     aspect: 'Pricing',
     traditional: 'Negotiated case-by-case',
-    labourchowck: 'Transparent slabs & estimates upfront',
+    mappto: 'Transparent slabs & estimates upfront',
   },
   {
     aspect: 'Reliability',
     traditional: 'High variance, hard to replace',
-    labourchowck: 'Ratings, backups & priority support',
+    mappto: 'Ratings, backups & priority support',
   },
   {
     aspect: 'Payments',
     traditional: 'Mostly cash, limited records',
-    labourchowck: 'UPI, cards & secure escrow-style flow',
+    mappto: 'UPI, cards & secure escrow-style flow',
   },
 ]
 
@@ -303,7 +303,7 @@ export const testimonials = [
     name: 'Ananya Sharma',
     role: 'Homeowner, Gurugram',
     quote:
-      'We needed masons and helpers for a 10-day renovation. Booking on LaborChowck took minutes and the crew showed up on time—something that rarely happened with our old contacts.',
+      'We needed masons and helpers for a 10-day renovation. Booking on Mappto took minutes and the crew showed up on time—something that rarely happened with our old contacts.',
     rating: 5,
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya',
   },

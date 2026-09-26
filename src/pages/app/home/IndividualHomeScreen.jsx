@@ -329,8 +329,8 @@ export function IndividualHomeScreen({ user }) {
           
           <div className="absolute bottom-[-3rem] right-1 w-[42%] max-w-[160px] pointer-events-none z-30">
             <img 
-              src="/assets/images/labour_chowck_hero_worker_final.png" 
-              alt="LaborChowck Professional" 
+              src="/assets/images/mappto_hero_worker_final.png" 
+              alt="Mappto Professional" 
               className="w-full h-auto object-contain object-bottom" 
             />
           </div>
