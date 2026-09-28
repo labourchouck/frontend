@@ -267,7 +267,7 @@ export function AppProfilePage() {
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <header className="relative bg-[#0d4d33] px-5 pb-8 pt-[max(1rem,env(safe-area-inset-top))] text-white">
+      <header className="relative bg-linear-to-br from-brand-bright to-brand px-5 pb-8 pt-[max(1rem,env(safe-area-inset-top))] text-white">
         <button
           type="button"
           onClick={openAppDrawer}
@@ -285,7 +285,7 @@ export function AppProfilePage() {
             className="group relative shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:opacity-70"
             aria-label="Change profile photo"
           >
-            <span className="relative block h-[4.5rem] w-[4.5rem] overflow-hidden rounded-full bg-white text-xl font-black text-[#0d4d33] ring-2 ring-white/70">
+            <span className="relative block h-[4.5rem] w-[4.5rem] overflow-hidden rounded-full bg-white text-xl font-black text-brand ring-2 ring-white/70">
               {displayPhoto ? (
                 <img src={displayPhoto} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -297,7 +297,7 @@ export function AppProfilePage() {
                 </span>
               ) : null}
             </span>
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0d4d33] shadow ring-2 ring-[#0d4d33]">
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white text-brand shadow ring-2 ring-brand">
               <Pencil className="h-3.5 w-3.5" aria-hidden />
             </span>
           </button>
