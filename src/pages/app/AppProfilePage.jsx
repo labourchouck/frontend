@@ -267,7 +267,7 @@ export function AppProfilePage() {
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <header className="relative bg-linear-to-br from-brand-bright to-brand px-5 pb-8 pt-[max(1rem,env(safe-area-inset-top))] text-white">
+      <header className="relative bg-linear-to-br from-brand to-emerald-800 px-5 pb-8 pt-[max(1rem,env(safe-area-inset-top))] text-white">
         <button
           type="button"
           onClick={openAppDrawer}
