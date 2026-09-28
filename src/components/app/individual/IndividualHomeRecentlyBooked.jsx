@@ -1,17 +1,24 @@
 import { Link } from 'react-router-dom'
-import { Star } from 'lucide-react'
+import { ChevronRight, Star } from 'lucide-react'
 import { AppListSkeleton } from '../../app-ui/feedback/AppListSkeleton.jsx'
 import { getCategoryImageUrl } from '../../../lib/labourCategoryDisplay.js'
 
 const FALLBACK_BOOKING_IMG =
   'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=70'
 
-export function IndividualHomeRecentlyBooked({ bookings, loading, formatDay }) {
+const CLOSED_STATUS_UI = {
+  COMPLETED: { label: 'Completed', color: 'text-slate-500' },
+  CANCELLED: { label: 'Cancelled', color: 'text-rose-500' },
+  FAILED: { label: 'Not fulfilled', color: 'text-rose-500' },
+  REFUNDED: { label: 'Refunded', color: 'text-slate-500' },
+}
+
+export function IndividualHomeRecentlyBooked({ title = 'Ongoing bookings', bookings, loading, formatDay }) {
   if (loading) {
     return (
-      <section className="mb-6" aria-label="Recently booked">
+      <section className="mb-6" aria-label={title}>
         <div className="lc-home-section-head">
-          <h3>Recently booked</h3>
+          <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">{title}</h3>
         </div>
         <AppListSkeleton rows={1} className="h-44" />
       </section>
@@ -23,11 +30,15 @@ export function IndividualHomeRecentlyBooked({ bookings, loading, formatDay }) {
   }
 
   return (
-    <section className="mb-6" aria-label="Recently booked">
+    <section className="mb-6" aria-label={title}>
       <div className="lc-home-section-head">
-        <h3>Ongoing bookings</h3>
-        <Link to="/app/bookings" className="lc-home-view-all">
-          View all &gt;
+        <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">{title}</h3>
+        <Link
+          to="/app/bookings"
+          className="flex items-center gap-0.5 text-xs sm:text-sm font-bold text-brand transition-colors hover:text-brand-dark active:scale-95"
+        >
+          View all
+          <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
         </Link>
       </div>
 
@@ -39,11 +50,14 @@ export function IndividualHomeRecentlyBooked({ bookings, loading, formatDay }) {
             ? getCategoryImageUrl({ _id: b.subcategoryId._id, name: itemLabel })
             : FALLBACK_BOOKING_IMG
             
+          const closed = CLOSED_STATUS_UI[b.status]
           let statusLabel = 'Active request'
           let statusColor = 'text-brand'
-          let StatusIcon = Star
-          
-          if (b.status === 'BROADCASTING') {
+
+          if (closed) {
+            statusLabel = closed.label
+            statusColor = closed.color
+          } else if (b.status === 'BROADCASTING') {
             statusLabel = 'Finding labour...'
             statusColor = 'text-amber-500'
           } else if (b.status === 'ACCEPTED' || b.status === 'EN_ROUTE') {
@@ -57,7 +71,7 @@ export function IndividualHomeRecentlyBooked({ bookings, loading, formatDay }) {
           return (
             <Link
               key={b._id}
-              to={`/app/tracking/${b._id}`}
+              to={closed ? '/app/bookings' : `/app/tracking/${b._id}`}
               className="flex w-[280px] shrink-0 snap-start items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-brand/30 hover:shadow-md"
             >
               <img src={img} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" loading="lazy" />
@@ -67,12 +81,16 @@ export function IndividualHomeRecentlyBooked({ bookings, loading, formatDay }) {
                   {day} · {b.type === 'SCHEDULED' ? 'Scheduled' : 'Instant'}
                 </p>
                 <p className={`mt-1 flex items-center gap-1 text-[10px] font-semibold ${statusColor}`}>
-                  <StatusIcon className="h-3 w-3 fill-current" aria-hidden />
+                  <Star className="h-3 w-3 fill-current" aria-hidden />
                   {statusLabel}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center justify-center rounded-full bg-brand/10 px-3 py-1.5 text-[10px] font-extrabold text-brand uppercase tracking-wider">
-                Track
+              <div
+                className={`flex shrink-0 items-center justify-center rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                  closed ? 'bg-slate-100 text-slate-600' : 'bg-brand/10 text-brand'
+                }`}
+              >
+                {closed ? 'View' : 'Track'}
               </div>
             </Link>
           )

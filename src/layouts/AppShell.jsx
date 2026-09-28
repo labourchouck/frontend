@@ -20,7 +20,6 @@ import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
 import { readAppUserLocation } from '../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../components/app/AppUserLocationModal.jsx'
-import { BOOT_ROUTES } from '../constants/bootFlow.js'
 import { APP_HOME_LOCATION, APP_HOME_PATH, hasBookingFlowQuery } from '../lib/bookingFlowNavigation.js'
 
 export function AppShell() {
@@ -215,7 +214,7 @@ export function AppShell() {
       }
     }
     return {
-      individualLocationTitle: 'Your location',
+      individualLocationTitle: 'Set your location',
       individualLocationSubtitle: 'Tap to set address or use GPS',
     }
   }, [appLocation, isIndividualAppHome])
@@ -379,7 +378,7 @@ export function AppShell() {
                 >
                   <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold text-white/80">Your location</p>
+                    <p className="text-[11px] font-semibold text-white/80">Service location</p>
                     <div className="flex items-center gap-0.5">
                       <span className="truncate text-sm font-extrabold tracking-tight sm:text-[0.95rem]">
                         {individualLocationTitle}

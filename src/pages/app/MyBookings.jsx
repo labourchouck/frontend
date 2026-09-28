@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Calendar, CheckCircle2, Clock, Loader2, MapPin, Sparkles, User, CreditCard } from 'lucide-react'
+import { Loader2, Sparkles } from 'lucide-react'
 import { B2cBookingCard } from '../../components/app/B2cBookingCard.jsx'
 import { bookingsApi } from '../../api/bookingsApi.js'
 import { ApiError } from '../../api/http.js'
@@ -10,19 +9,11 @@ import { USER_ROLES } from '../../constants/userRoles.js'
 import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 
-const STATUS_STYLES = {
-  CREATED: 'bg-blue-50 text-blue-700 border-blue-200',
-  ACCEPTED: 'bg-amber-50 text-amber-700 border-amber-200',
-  EN_ROUTE: 'bg-purple-50 text-purple-700 border-purple-200',
-  STARTED: 'bg-orange-50 text-orange-700 border-orange-200',
-  COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  CANCELLED: 'bg-rose-50 text-rose-700 border-rose-200',
-}
+const CLOSED_STATUSES = new Set(['COMPLETED', 'CANCELLED', 'REFUNDED', 'FAILED'])
 
 export function MyBookings() {
   const { user } = useAuth()
   const isLabour = user?.role === USER_ROLES.LABOUR
-  const navigate = useNavigate()
   const reduce = useReducedMotion()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -50,11 +41,8 @@ export function MyBookings() {
     const past = []
     for (const b of bookings) {
       const s = (b.status || '').toUpperCase()
-      if (s === 'COMPLETED' || s === 'CANCELLED') {
-        past.push(b)
-      } else {
-        active.push(b)
-      }
+      if (CLOSED_STATUSES.has(s)) past.push(b)
+      else active.push(b)
     }
     return { activeBookings: active, pastBookings: past }
   }, [bookings])
@@ -62,8 +50,9 @@ export function MyBookings() {
   const displayed = tab === 'active' ? activeBookings : pastBookings
 
   return (
-    <div className="space-y-4 pb-8 pt-2">
-      {/* Tab Bar */}
+    <div className="space-y-4 pb-8">
+      <AppStackScreenHeader title="My bookings" />
+
       <GlassPanel className="p-1.5">
         <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100/90 p-0.5">
           {[
@@ -104,22 +93,16 @@ export function MyBookings() {
         </GlassPanel>
       ) : (
         <div className="space-y-3">
-          {displayed.map((booking, i) => {
-            const status = (booking.status || 'CREATED').toUpperCase()
-            const subcategory = typeof booking.subcategoryId === 'object' ? booking.subcategoryId : null
-            const isActive = status !== 'COMPLETED' && status !== 'CANCELLED'
-
-            return (
-              <motion.div
-                key={booking._id}
-                initial={reduce ? false : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <B2cBookingCard booking={booking} isLabour={isLabour} />
-              </motion.div>
-            )
-          })}
+          {displayed.map((booking, i) => (
+            <motion.div
+              key={booking._id}
+              initial={reduce ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+            >
+              <B2cBookingCard booking={booking} isLabour={isLabour} />
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
