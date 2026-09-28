@@ -180,8 +180,9 @@ function FeaturedLayout({ categories, onQuickBook }) {
               onClick={() => onQuickBook?.(cat)}
               className="lc-home-service-mini-tile"
             >
-              <ServiceImage src={getCategoryImageUrl(cat)} alt="" className="h-20 w-full" />
-              <span className="block truncate px-2 py-2 text-left text-xs font-bold text-slate-900">
+              <ServiceImage src={getCategoryImageUrl(cat)} alt="" className="h-24 w-full" />
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/5 to-transparent" aria-hidden />
+              <span className="absolute inset-x-0 bottom-0 truncate px-2.5 py-2 text-left text-xs font-bold text-white drop-shadow-sm">
                 {cat.name}
               </span>
             </button>
