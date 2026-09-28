@@ -1,13 +1,5 @@
-import { useMemo } from 'react'
-import { LayoutGrid, Sparkles, ChevronRight, Star } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { getGroupImageUrl } from '../../../lib/labourCategoryDisplay.js'
-
-// Simple deterministic hash for UI dummy data
-function hashSeed(str) {
-  let h = 0
-  for (let i = 0; i < str.length; i += 1) h = (h * 31 + str.charCodeAt(i)) | 0
-  return Math.abs(h)
-}
 
 export function IndividualHomeCategoryGrid({
   groups = [],
@@ -27,12 +19,9 @@ export function IndividualHomeCategoryGrid({
             <div className="h-5 w-24 animate-pulse rounded-md bg-slate-200" />
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3 sm:gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex flex-col items-center space-y-2">
-              <div className="aspect-square w-full animate-pulse rounded-2xl bg-slate-200 shadow-xs" />
-              <div className="h-3 w-3/4 animate-pulse rounded bg-slate-200" />
-            </div>
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div key={i} className="aspect-[4/5] w-full animate-pulse rounded-2xl bg-slate-200" />
           ))}
         </div>
       </section>
@@ -76,26 +65,21 @@ export function IndividualHomeCategoryGrid({
               key={String(cat._id)}
               type="button"
               onClick={() => onSelectCategory?.(cat)}
-              className="group flex flex-col w-full rounded-2xl bg-white border border-slate-100 shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-brand overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-brand/40 active:scale-95"
+              className="group relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-slate-100 text-left shadow-[0_6px_18px_-10px_rgba(15,23,42,0.35)] outline-none transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-12px_rgba(15,23,42,0.4)] active:scale-95 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               aria-label={cat.name}
             >
-              <div className="relative aspect-square w-full bg-slate-50 overflow-hidden flex items-center justify-center">
-                <img
-                  src={imageUrl}
-                  alt={cat.name}
-                  className="lc-img-reveal h-full w-full object-cover scale-[1.15] transition-transform duration-300 group-hover:scale-[1.20]"
-                  loading="lazy"
-                  decoding="async"
-                  onLoad={(e) => e.currentTarget.classList.add('lc-img-loaded')}
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-              </div>
-              
-              <div className="flex flex-col items-start p-2.5 pb-3 w-full bg-white">
-                <span className="line-clamp-2 text-left text-[11px] sm:text-xs font-bold leading-tight text-slate-800 transition-colors group-hover:text-brand">
-                  {cat.name}
-                </span>
-              </div>
+              <img
+                src={imageUrl}
+                alt=""
+                className="lc-img-reveal h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+                decoding="async"
+                onLoad={(e) => e.currentTarget.classList.add('lc-img-loaded')}
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/10 to-transparent" />
+              <span className="absolute inset-x-0 bottom-0 line-clamp-2 p-2.5 text-left text-[11px] font-bold leading-tight text-white drop-shadow-sm sm:text-xs">
+                {cat.name}
+              </span>
             </button>
           )
         })}
