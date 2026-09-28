@@ -6,6 +6,7 @@ import instantImg from '../../../assets/user_home_images/instant.png'
 import scheduleImg from '../../../assets/user_home_images/schedule.png'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { IndividualHomeCategoryGrid } from '../../../components/app/individual/IndividualHomeCategoryGrid.jsx'
+import { IndividualHomeTrustSection } from '../../../components/app/individual/IndividualHomeTrustSection.jsx'
 import { IndividualHomeHeroCarousel } from '../../../components/app/individual/IndividualHomeHeroCarousel.jsx'
 import { IndividualHomeRecentlyBooked } from '../../../components/app/individual/IndividualHomeRecentlyBooked.jsx'
 import { IndividualHomeWorkerCarousel } from '../../../components/app/individual/IndividualHomeWorkerCarousel.jsx'
@@ -431,6 +432,9 @@ export function IndividualHomeScreen({ user }) {
           emptyAction="Find a skill"
           onEmptyAction={goSearch}
         />
+
+        {/* 5b. Trust badges */}
+        <IndividualHomeTrustSection />
 
         {/* 5. Active Plan (if subscribed) */}
         {activeSubscription && (() => {
