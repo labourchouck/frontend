@@ -43,9 +43,6 @@ export function BuildMartHeader({ onOpenDrawer }) {
           </button>
 
           <div className="flex items-center gap-2">
-            <span className="flex h-[34px] items-center rounded-lg bg-[#00A64C] px-2.5 text-xs font-bold text-white tracking-wide">
-              60 Mins
-            </span>
             <div className="flex min-w-0 flex-col">
               <span className="text-[11px] text-slate-500 font-medium">Deliver To</span>
               <button
