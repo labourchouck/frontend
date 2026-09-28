@@ -74,17 +74,17 @@ function StaticFaqSection() {
           return (
             <div
               key={faq.q}
-              className="overflow-hidden rounded-2xl bg-[#F5F7FA] border border-slate-200/60 transition-all shadow-2xs"
+              className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_10px_-4px_rgba(15,23,42,0.1)] outline outline-1 -outline-offset-1 outline-slate-100 transition-all"
             >
               <button
                 type="button"
                 onClick={() => toggleFaq(idx)}
-                className="flex w-full items-center justify-between p-4 text-left font-semibold text-slate-800 transition hover:bg-slate-100/80 active:bg-slate-200/60"
+                className="flex w-full items-center justify-between p-4 text-left font-semibold text-slate-800 transition hover:bg-slate-50 active:bg-slate-100"
               >
                 <span className="pr-3 text-sm sm:text-base font-semibold leading-snug text-slate-900">
                   {faq.q}
                 </span>
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-2xs">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
                   {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </span>
               </button>

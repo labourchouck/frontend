@@ -72,7 +72,7 @@ export function IndividualHomeRecentlyBooked({ title = 'Ongoing bookings', booki
             <Link
               key={b._id}
               to={closed ? '/app/bookings' : `/app/tracking/${b._id}`}
-              className="flex w-[280px] shrink-0 snap-start items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-brand/30 hover:shadow-md"
+              className="flex w-[280px] shrink-0 snap-start items-center gap-3 rounded-2xl bg-white p-3 shadow-[0_2px_10px_-4px_rgba(15,23,42,0.12)] outline outline-1 -outline-offset-1 outline-slate-100 transition hover:shadow-[0_10px_24px_-10px_rgba(15,23,42,0.18)]"
             >
               <img src={img} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" loading="lazy" />
               <div className="flex-1 min-w-0">
