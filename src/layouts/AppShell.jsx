@@ -254,12 +254,24 @@ export function AppShell() {
                 <div className="pointer-events-none absolute inset-x-4 bottom-0 h-px bg-linear-to-r from-brand/30 via-slate-200/50 to-transparent" aria-hidden />
                 <div className="relative flex items-start justify-between gap-3">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-brand-bright to-brand text-xs font-black text-white shadow-[0_8px_22px_-8px_rgba(28,175,98,0.45)] ring-2 ring-white">
-                      {drawerInitials}
-                    </span>
+                    {profileImageUrl ? (
+                      <span className="relative block h-11 w-11 shrink-0 overflow-hidden rounded-2xl bg-slate-100 shadow-[0_8px_22px_-8px_rgba(28,175,98,0.45)] ring-2 ring-white">
+                        <img
+                          src={profileImageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </span>
+                    ) : (
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-brand-bright to-brand text-xs font-black text-white shadow-[0_8px_22px_-8px_rgba(28,175,98,0.45)] ring-2 ring-white">
+                        {drawerInitials}
+                      </span>
+                    )}
                     <div className="min-w-0">
-                      <img src="/assets/images/mappto_logo.png" alt="Mappto" className="h-10 w-auto mb-1 scale-125 origin-left object-contain" />
-                      <p className="truncate text-sm font-extrabold text-slate-900">Menu</p>
+                      <p className="truncate text-sm font-extrabold text-slate-900">
+                        {user?.fullName || 'Your account'}
+                      </p>
                       <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
                         {ROLE_LABELS[user?.role] || 'Account'}
                       </p>
