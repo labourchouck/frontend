@@ -84,7 +84,9 @@ function CarouselLayout({ categories, onQuickBook }) {
             {cat.subtitle ? (
               <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-slate-500">{cat.subtitle}</p>
             ) : null}
-            <p className="mt-1.5 text-[10px] font-bold text-brand">Book now</p>
+            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-extrabold text-brand">
+              Book now
+            </span>
           </div>
         </button>
       ))}
