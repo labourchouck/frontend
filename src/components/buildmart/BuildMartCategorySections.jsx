@@ -70,7 +70,7 @@ export function BuildMartCategorySections() {
   if (categorySections.length === 0) return null
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-8 pb-2">
       {categorySections.map((section) => {
         return (
           <section key={section.id} className="mx-4">

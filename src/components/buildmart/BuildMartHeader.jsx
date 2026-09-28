@@ -1,4 +1,4 @@
-import { Menu, ChevronDown, User, ShoppingBag, MapPin } from 'lucide-react'
+import { Menu, ChevronDown, MapPin } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { readAppUserLocation } from '../../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../app/AppUserLocationModal.jsx'
@@ -26,7 +26,7 @@ export function BuildMartHeader({ onOpenDrawer }) {
     if (la != null && ln != null) {
       return 'Current location'
     }
-    return 'Your location'
+    return 'Set your location'
   }, [appLocation])
 
   return (
@@ -62,7 +62,7 @@ export function BuildMartHeader({ onOpenDrawer }) {
 
         {/* Right section (Logo) */}
         <div className="flex items-center">
-          <img src="/assets/images/mappto_logo.png" alt="Mappto" className="h-10 w-auto scale-125 origin-left object-contain" />
+          <img src="/assets/images/mappto_logo.png" alt="Mappto" className="h-9 w-9 rounded-xl object-contain" />
         </div>
       </header>
 

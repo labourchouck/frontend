@@ -62,7 +62,7 @@ export function BuildMartHomeDeals() {
   if (!products || products.length === 0) return null
 
   return (
-    <section className="mx-4 mt-8 pb-12">
+    <section className="mx-4 mt-8 pb-4">
       {/* Section Header */}
       <div className="mb-3 flex items-end justify-between">
         <div>

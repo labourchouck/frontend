@@ -1,19 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronRight, Loader2, Search, X } from 'lucide-react'
+import { Loader2, Search, X } from 'lucide-react'
 import {
   flattenTradeSubcategories,
   getCategoryImageUrl,
   getGroupImageUrl,
 } from '../../../lib/labourCategoryDisplay.js'
-import { buildBookingFlowPath } from '../../../lib/bookingFlowNavigation.js'
-import { readBookingDraft, writeBookingDraft } from '../../../lib/individualBookingDraft.js'
+import { readBookingDraft } from '../../../lib/individualBookingDraft.js'
 
 const ALL_TILE_IMAGE =
   'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=400&q=70'
-
-const BTN_CONTINUE =
-  'flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-sm font-bold text-white transition active:opacity-90 disabled:cursor-not-allowed disabled:opacity-45'
 
 function SwiggyGroupTile({ label, imageSrc, active, onClick }) {
   return (
@@ -79,11 +75,6 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
     return tradeGroups.find((g) => String(g._id) === groupId) ?? null
   }, [tradeGroups, groupId])
 
-  const selectedCategory = useMemo(() => {
-    if (!categoryId) return null
-    return allCategories.find((c) => String(c._id) === categoryId) ?? null
-  }, [allCategories, categoryId])
-
   const isSearching = query.trim().length > 0
 
   const filteredCategories = useMemo(() => {
@@ -121,43 +112,9 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
     if (!gid) setQuery('')
   }
 
-  const resolveGroupForCategory = useCallback(
-    (cat) => {
-      if (!cat) return null
-      return tradeGroups.find((g) => String(g._id) === String(cat.groupId)) ?? null
-    },
-    [tradeGroups],
-  )
-
   const pickCategory = (cat) => {
     navigate(`/app/sub-category/${cat._id}`, { state: { cat } })
   }
-
-  const continueToBooking = useCallback(() => {
-    const cat = selectedCategory
-    if (!cat) return
-    const group = resolveGroupForCategory(cat)
-    if (!group) return
-
-    const prev = readBookingDraft() || {}
-    writeBookingDraft({
-      ...prev,
-      entryPoint: 'search',
-      groupId: String(group._id),
-      groupName: group.name,
-      categoryId: String(cat._id),
-      categoryName: cat.name || '',
-      matchMode: 'smart',
-      selectedWorkers: [],
-    })
-
-    navigate(
-      buildBookingFlowPath('type', {
-        categoryId: String(cat._id),
-        groupId: String(group._id),
-      }),
-    )
-  }, [navigate, resolveGroupForCategory, selectedCategory])
 
   const renderCategoryGrid = (items, showGroupName) => (
     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -287,7 +244,6 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
           <p className="mt-12 text-center text-sm text-slate-500">No skills in this area yet.</p>
         ) : null}
       </div>
-      {/* Continue button removed because we navigate directly now */}
     </div>
   )
 }

@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
-  ArrowLeft,
-  BellRing,
   Building2,
   CalendarClock,
   Camera,
@@ -13,13 +11,11 @@ import {
   FileText,
   Fingerprint,
   HardHat,
-  Home,
   IdCard,
   LifeBuoy,
   Loader2,
   LogOut,
   Mail,
-  Menu,
   HelpCircle,
   Pencil,
   Phone,
@@ -31,7 +27,6 @@ import {
   Gift,
   Wallet,
 } from 'lucide-react'
-import { BOOT_ROUTES } from '../../constants/bootFlow.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import {
   CORPORATE_STATUS,
@@ -49,14 +44,8 @@ import { AppTextInput } from '../../components/app-ui/inputs/AppTextInput.jsx'
 import { AppButton } from '../../components/app-ui/buttons/AppButton.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { patchCurrentUser, deleteCurrentUser } from '../../api/userProfileApi.js'
-import { registerFcmToken, sendTestNotification } from '../../api/notificationsApi.js'
-import { requestFcmToken } from '../../lib/firebase.js'
 import { ApiError } from '../../api/http.js'
 import { setUser } from '../../store/slices/authSlice.js'
-
-function openAppDrawer() {
-  window.dispatchEvent(new Event('lc-open-app-drawer'))
-}
 
 function roleStatusPill(user) {
   const role = user?.role
@@ -79,37 +68,6 @@ function roleStatusPill(user) {
     if (v === 'approved') return { label: 'Verified vendor', variant: 'emerald' }
   }
   return null
-}
-
-function ProfileScreenHeader() {
-  return (
-    <motion.div className="pb-1">
-      <div className="flex items-start gap-2 sm:gap-3">
-        <Link
-          to="/app"
-          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-800 shadow-sm transition hover:border-brand/35 hover:text-brand"
-          aria-label="Back to home"
-        >
-          <ArrowLeft className="h-5 w-5" aria-hidden />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand">Account</p>
-          <h1 className="mt-0.5 text-xl font-black tracking-tight text-slate-900">Profile</h1>
-          <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
-            Your identity, verification status, and app shortcuts.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={openAppDrawer}
-          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-brand/35 hover:text-brand"
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" aria-hidden />
-        </button>
-      </div>
-    </motion.div>
-  )
 }
 
 function StatTile({ icon: Icon, label, value, tone = 'slate' }) {
@@ -165,7 +123,7 @@ function QuickLinkCard({ to, icon: Icon, label }) {
 }
 
 export function AppProfilePage() {
-  const { user, token, logout, setBootRole } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const reduce = useReducedMotion()
@@ -185,9 +143,6 @@ export function AppProfilePage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteErr, setDeleteErr] = useState('')
-
-  const [testingPush, setTestingPush] = useState(false)
-  const [pushTestResult, setPushTestResult] = useState(null) // { ok: boolean, text: string }
 
   const labourCategories = user?.labourProfile?.categoryIds
   const labourKyc = user?.labourProfile?.kycStatus
@@ -305,67 +260,6 @@ export function AppProfilePage() {
     }
   }, [editNameValue, editPhoneValue, editEmailValue, dispatch])
 
-  const handleTestPush = useCallback(async () => {
-    setTestingPush(true)
-    setPushTestResult(null)
-    try {
-      // Make sure this device actually has permission + a registered token first
-      const fcmToken = await requestFcmToken()
-      if (!fcmToken) {
-        setPushTestResult({
-          ok: false,
-          text:
-            typeof Notification !== 'undefined' && Notification.permission === 'denied'
-              ? 'Notifications are blocked for this site. Enable them in your browser settings, then try again.'
-              : 'Push is not supported here. Use HTTPS or localhost, and allow notifications when asked.',
-        })
-        return
-      }
-      await registerFcmToken(fcmToken, 'web')
-
-      // Step 1 — LOCAL display test (no FCM involved): proves whether this
-      // device can show notifications at all.
-      const registration =
-        (await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')) ||
-        (await navigator.serviceWorker.ready)
-      let localShown = false
-      if (registration) {
-        await registration.showNotification('Display test 🔔', {
-          body: 'If you can see this banner, notifications display correctly on this device.',
-          icon: '/logo.svg',
-          tag: 'lc-local-test',
-        })
-        // Give the browser a beat, then verify the notification object exists
-        await new Promise((r) => setTimeout(r, 400))
-        const active = await registration.getNotifications({ tag: 'lc-local-test' })
-        localShown = active.length > 0
-      }
-
-      // Step 2 — real push through the backend + FCM
-      const res = await sendTestNotification()
-      const devices = res?.data?.devices
-
-      if (registration && !localShown) {
-        setPushTestResult({
-          ok: false,
-          text: 'The push was sent, but your browser could not display notifications. Check browser notification permissions for this site.',
-        })
-      } else {
-        setPushTestResult({
-          ok: true,
-          text: `${devices ? `Sent to ${devices.web} web + ${devices.app} app device(s). ` : 'Sent. '}Two notifications were triggered (a local display test + the real push). If you did not see any banner, Windows is hiding them — turn OFF "Do not disturb" (Settings → System → Notifications) and check the notification center (Win+N).`,
-        })
-      }
-    } catch (err) {
-      setPushTestResult({
-        ok: false,
-        text: err instanceof ApiError ? err.message : 'Could not send the test notification. Please try again.',
-      })
-    } finally {
-      setTestingPush(false)
-    }
-  }, [])
-
   const handleSignOut = async () => {
     await logout()
     navigate('/b2c/auth', { replace: true })
@@ -385,17 +279,16 @@ export function AppProfilePage() {
   }, [logout, navigate])
 
   const quickLinks = []
-  quickLinks.push({ to: '/app', icon: Home, label: 'Home' })
   if (user?.role === USER_ROLES.LABOUR) {
     quickLinks.push({ to: '/app/jobs', icon: HardHat, label: 'Jobs & assignments' })
-    quickLinks.push({ to: '/app/my-bookings', icon: CalendarClock, label: 'My Bookings (Direct)' })
+    quickLinks.push({ to: '/app/my-bookings', icon: CalendarClock, label: 'My bookings' })
     quickLinks.push({ to: '/app/kyc', icon: Fingerprint, label: 'Aadhaar KYC' })
     quickLinks.push({ to: '/app/earnings', icon: Sparkles, label: 'Earnings & payouts' })
   } else {
     quickLinks.push({
-      to: '/app/my-bookings',
+      to: '/app/bookings',
       icon: CalendarClock,
-      label: user?.role === USER_ROLES.CORPORATE ? 'Bookings & requests' : 'Bookings',
+      label: user?.role === USER_ROLES.CORPORATE ? 'Bookings & requests' : 'My bookings',
     })
   }
   if (user?.role === USER_ROLES.CORPORATE) {
@@ -415,7 +308,7 @@ export function AppProfilePage() {
 
   return (
     <motion.div
-      className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden bg-linear-to-b from-slate-50/95 via-white to-emerald-50/15 pb-28 pt-2"
+      className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden bg-linear-to-b from-slate-50/95 via-white to-emerald-50/15 pb-4 pt-2"
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
     >
@@ -501,12 +394,6 @@ export function AppProfilePage() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
-          {/* <StatTile
-            icon={Phone}
-            label="Mobile"
-            value={user?.phone ? `+91 ${user.phone.slice(-10)}` : '—'}
-            tone={user?.isPhoneVerified ? 'emerald' : 'amber'}
-          /> */}
           <StatTile icon={CalendarClock} label="Member" value={memberSince} />
           <StatTile icon={ShieldCheck} label="Active" value={lastActive || '—'} />
         </div>
