@@ -52,7 +52,7 @@ export function IndividualHomeHeroCarousel({ onBook }) {
           key={slide._id}
           src={slide.imageUrl}
           alt=""
-          className="w-full h-full object-fill shadow-sm"
+          className="w-full h-full object-cover shadow-sm"
           loading="lazy"
           decoding="async"
         />
