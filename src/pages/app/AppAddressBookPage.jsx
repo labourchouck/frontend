@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Briefcase, Home as HomeIcon, Loader2, MapPin, Navigation, Plus, Trash2 } from 'lucide-react'
-import {
-  addSavedAddress,
-  distanceKm,
-  readSavedAddresses,
-  removeSavedAddress,
-} from '../../lib/appAddressBookStorage.js'
+import { userAddressesApi } from '../../api/userAddressesApi.js'
+import { ApiError } from '../../api/http.js'
 import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
 import { AppModal } from '../../components/app-ui/feedback/AppModal.jsx'
 import { AppTextInput } from '../../components/app-ui/inputs/AppTextInput.jsx'
@@ -19,11 +15,26 @@ function labelIconFor(label) {
   return LABEL_ICONS[label?.trim().toLowerCase()] || MapPin
 }
 
+/** Haversine distance in km between two lat/lng points. */
+function distanceKm(lat1, lng1, lat2, lng2) {
+  if ([lat1, lng1, lat2, lng2].some((v) => v == null || !Number.isFinite(v))) return null
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 export function AppAddressBookPage() {
   const reduce = useReducedMotion()
   const inputRef = useRef(null)
 
-  const [addresses, setAddresses] = useState(() => readSavedAddresses())
+  const [addresses, setAddresses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [listError, setListError] = useState('')
+  const [removingId, setRemovingId] = useState(null)
   const [here, setHere] = useState({ lat: null, lng: null })
   const [locating, setLocating] = useState(false)
 
@@ -32,12 +43,24 @@ export function AppAddressBookPage() {
   const [newAddress, setNewAddress] = useState('')
   const [newLat, setNewLat] = useState(null)
   const [newLng, setNewLng] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
+  const load = useCallback(async () => {
+    try {
+      const res = await userAddressesApi.list()
+      setAddresses(res?.data?.addresses ?? [])
+      setListError('')
+    } catch (err) {
+      setListError(err instanceof ApiError ? err.message : 'Could not load your addresses.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    const refresh = () => setAddresses(readSavedAddresses())
-    window.addEventListener('lc-app-address-book-changed', refresh)
-    return () => window.removeEventListener('lc-app-address-book-changed', refresh)
-  }, [])
+    queueMicrotask(() => void load())
+  }, [load])
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -91,6 +114,7 @@ export function AppAddressBookPage() {
     setNewAddress('')
     setNewLat(null)
     setNewLng(null)
+    setSaveError('')
     setAddOpen(true)
   }, [])
 
@@ -120,6 +144,7 @@ export function AppAddressBookPage() {
         setNewAddress(addr)
         setNewLat(la)
         setNewLng(ln)
+        setSaveError('')
         setAddOpen(true)
       },
       () => setLocating(false),
@@ -128,13 +153,37 @@ export function AppAddressBookPage() {
   }, [])
 
   const saveNewAddress = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault()
       if (!newAddress.trim()) return
-      addSavedAddress({ label: newLabel, address: newAddress, lat: newLat, lng: newLng })
-      setAddOpen(false)
+      setSaving(true)
+      setSaveError('')
+      try {
+        await userAddressesApi.create({ label: newLabel, address: newAddress.trim(), lat: newLat, lng: newLng })
+        setAddOpen(false)
+        await load()
+      } catch (err) {
+        setSaveError(err instanceof ApiError ? err.message : 'Could not save this address.')
+      } finally {
+        setSaving(false)
+      }
     },
-    [newLabel, newAddress, newLat, newLng],
+    [newLabel, newAddress, newLat, newLng, load],
+  )
+
+  const removeAddress = useCallback(
+    async (id) => {
+      setRemovingId(id)
+      try {
+        await userAddressesApi.remove(id)
+        setAddresses((list) => list.filter((a) => a._id !== id))
+      } catch (err) {
+        setListError(err instanceof ApiError ? err.message : 'Could not remove this address.')
+      } finally {
+        setRemovingId(null)
+      }
+    },
+    [],
   )
 
   return (
@@ -173,7 +222,14 @@ export function AppAddressBookPage() {
         <p className="mb-2 px-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-400">
           Saved addresses
         </p>
-        {addresses.length === 0 ? (
+        {listError ? (
+          <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700">{listError}</p>
+        ) : null}
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-brand" aria-hidden />
+          </div>
+        ) : addresses.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200/90 bg-white/60 p-6 text-center">
             <MapPin className="mx-auto h-6 w-6 text-slate-300" aria-hidden />
             <p className="mt-2 text-sm font-semibold text-slate-700">No saved addresses yet</p>
@@ -184,9 +240,10 @@ export function AppAddressBookPage() {
             {addresses.map((a) => {
               const Icon = labelIconFor(a.label)
               const km = distanceKm(here.lat, here.lng, a.lat, a.lng)
+              const removing = removingId === a._id
               return (
                 <li
-                  key={a.id}
+                  key={a._id}
                   className="flex items-start gap-3 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 shadow-sm"
                 >
                   <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand ring-1 ring-brand/15">
@@ -203,11 +260,12 @@ export function AppAddressBookPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeSavedAddress(a.id)}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                    onClick={() => removeAddress(a._id)}
+                    disabled={removing}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                     aria-label={`Remove ${a.label}`}
                   >
-                    <Trash2 className="h-4 w-4" aria-hidden />
+                    {removing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
                   </button>
                 </li>
               )
@@ -216,7 +274,7 @@ export function AppAddressBookPage() {
         )}
       </section>
 
-      <AppModal open={addOpen} onClose={() => setAddOpen(false)} title="Add address">
+      <AppModal open={addOpen} onClose={() => !saving && setAddOpen(false)} title="Add address">
         <form onSubmit={saveNewAddress} className="space-y-4">
           <div>
             <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-600">Label</p>
@@ -247,14 +305,16 @@ export function AppAddressBookPage() {
               placeholder="Search locality, sector, area"
               value={newAddress}
               onChange={(e) => setNewAddress(e.target.value)}
+              disabled={saving}
               autoFocus
             />
           </div>
+          {saveError ? <p className="text-xs font-medium text-rose-600">{saveError}</p> : null}
           <div className="flex gap-3 pt-2">
-            <AppButton type="button" variant="secondary" onClick={() => setAddOpen(false)}>
+            <AppButton type="button" variant="secondary" onClick={() => setAddOpen(false)} disabled={saving}>
               Cancel
             </AppButton>
-            <AppButton type="submit" disabled={!newAddress.trim()}>
+            <AppButton type="submit" loading={saving} disabled={!newAddress.trim()}>
               Save address
             </AppButton>
           </div>

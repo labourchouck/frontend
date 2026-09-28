@@ -32,6 +32,7 @@ import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeShe
 import { BookingStepProgress } from '../../../components/app/booking/BookingStepProgress.jsx'
 import { BookingServiceHighlight } from '../../../components/app/booking/BookingServiceHighlight.jsx'
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
+import { SavedAddressPicker } from '../../../components/app/SavedAddressPicker.jsx'
 import { useBookingSocket } from '../../../hooks/useBookingSocket.js'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { paymentsApi } from '../../../api/paymentsApi.js'
@@ -49,7 +50,7 @@ import {
   readBookingDraft,
   writeBookingDraft,
 } from '../../../lib/individualBookingDraft.js'
-import { readAppUserLocation, writeAppUserLocation } from '../../../lib/appUserLocationStorage.js'
+import { writeAppUserLocation } from '../../../lib/appUserLocationStorage.js'
 import {
   APP_HOME_LOCATION,
   BOOKING_FLOW_PATH,
@@ -110,6 +111,7 @@ export function IndividualBookingFlowPage() {
   const autocompleteRef = useRef(null)
   const [mapsLoaded, setMapsLoaded] = useState(false)
   const [forceInput, setForceInput] = useState(false)
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false)
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
   const markerInstance = useRef(null)
@@ -460,16 +462,10 @@ export function IndividualBookingFlowPage() {
     )
   }
 
-  const applySavedAddress = () => {
-    const saved = readAppUserLocation()
-    if (saved && (saved.address || (saved.lat && saved.lng))) {
-      const displayAddress = saved.address || `GPS ${saved.lat.toFixed(5)}, ${saved.lng.toFixed(5)}`
-      syncDraft({ address: displayAddress, lat: saved.lat, lng: saved.lng })
-      setForceInput(true)
-      setFormError('') // clear any existing error
-    } else {
-      setFormError('No saved address found. Please save one in your profile first.')
-    }
+  const applySavedAddress = (picked) => {
+    syncDraft({ address: picked.address, lat: picked.lat ?? draft.lat, lng: picked.lng ?? draft.lng })
+    setForceInput(true)
+    setFormError('')
   }
 
   const validateDetails = () => {
@@ -1100,12 +1096,17 @@ export function IndividualBookingFlowPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={applySavedAddress}
+                  onClick={() => setAddressPickerOpen(true)}
                   className="lc-booking-btn-secondary py-2.5 text-[11px]"
                 >
-                  Saved address
+                  Saved addresses
                 </button>
               </div>
+              <SavedAddressPicker
+                open={addressPickerOpen}
+                onClose={() => setAddressPickerOpen(false)}
+                onSelect={applySavedAddress}
+              />
             </div>
 
             <motion.div>
