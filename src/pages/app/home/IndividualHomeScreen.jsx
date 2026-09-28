@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Zap, CalendarClock, Shield, ChevronRight } from 'lucide-react'
+import { Zap, CalendarClock, Clock3, Shield, ChevronRight } from 'lucide-react'
 import LottieExport from 'lottie-react'
 const Lottie = LottieExport.default || LottieExport
 
@@ -33,6 +33,7 @@ import instantAnimation from '../../../assets/lotties/booking (1).json'
 import scheduleAnimation from '../../../assets/lotties/schedule.json'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { IndividualHomeCategoryGrid } from '../../../components/app/individual/IndividualHomeCategoryGrid.jsx'
+import { IndividualHomeQuickServicesGrid } from '../../../components/app/individual/IndividualHomeQuickServicesGrid.jsx'
 import { IndividualHomeCategoryRail } from '../../../components/app/individual/IndividualHomeCategoryRail.jsx'
 import { IndividualHomeHeroCarousel } from '../../../components/app/individual/IndividualHomeHeroCarousel.jsx'
 import { IndividualHomeRecentlyBooked } from '../../../components/app/individual/IndividualHomeRecentlyBooked.jsx'
@@ -377,6 +378,45 @@ export function IndividualHomeScreen({ user }) {
           emptyAction="Find a skill"
           onSelectWorker={openDetail}
           onEmptyAction={goSearch}
+        />
+
+        {/* 3.5 Plan for Later — schedule ahead or set up a recurring booking */}
+        <section className="space-y-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">Plan for Later</h3>
+            <p className="mt-0.5 text-xs font-semibold text-slate-500">Select your needs &amp; stay prepared</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/app/search')}
+              className="group flex flex-col items-start gap-2 rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md active:scale-95"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                <Clock3 className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="text-sm font-extrabold text-slate-900">Schedule Booking</span>
+              <span className="text-[11px] font-bold uppercase tracking-wide text-brand">Up to 50% off</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/app/subscriptions')}
+              className="group flex flex-col items-start gap-2 rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md active:scale-95"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                <CalendarClock className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="text-sm font-extrabold text-slate-900">Recurring Booking</span>
+              <span className="text-[11px] font-bold uppercase tracking-wide text-brand">Up to 25% off</span>
+            </button>
+          </div>
+        </section>
+
+        {/* 3.6 Quick Labor Services — fast-book grid with price + rating */}
+        <IndividualHomeQuickServicesGrid
+          groups={tradeGroups}
+          loading={groupsLoading}
+          onSelectCategory={(group) => navigate('/app/services')}
         />
 
         {/* 4. Promotional Banner Carousel (Moved above All Categories) */}
