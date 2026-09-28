@@ -21,7 +21,7 @@ export function IndividualHomeCategoryGrid({
         </div>
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="aspect-[4/5] w-full animate-pulse rounded-2xl bg-slate-200" />
+            <div key={i} className="aspect-[10/9] w-full animate-pulse rounded-2xl bg-slate-200" />
           ))}
         </div>
       </section>
@@ -65,7 +65,7 @@ export function IndividualHomeCategoryGrid({
               key={String(cat._id)}
               type="button"
               onClick={() => onSelectCategory?.(cat)}
-              className="group relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-slate-100 text-left shadow-[0_6px_18px_-10px_rgba(15,23,42,0.35)] outline-none transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-12px_rgba(15,23,42,0.4)] active:scale-95 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className="group relative aspect-[10/9] w-full overflow-hidden rounded-2xl bg-slate-100 text-left shadow-[0_6px_18px_-10px_rgba(15,23,42,0.35)] outline-none transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-12px_rgba(15,23,42,0.4)] active:scale-95 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               aria-label={cat.name}
             >
               <img
