@@ -356,12 +356,20 @@ export function IndividualHomeScreen({ user }) {
       aria-label={user?.fullName ? `Home for ${user.fullName}` : 'Discover workers home'}
     >
       {/* 1. Header Background Extension with Text, Image, & Buttons */}
-      <div className="bg-brand px-4 pb-8 pt-6 rounded-b-[2.5rem] relative z-0 flex flex-col min-h-[300px]">
-        
+      <div className="relative z-0 flex min-h-[300px] flex-col overflow-hidden rounded-b-[2.5rem] bg-linear-to-br from-brand-bright via-brand to-emerald-800 px-4 pb-8 pt-6">
+        <div
+          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-full opacity-[0.07] [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:18px_18px] text-white"
+          aria-hidden
+        />
+
         {/* Top area with Text & Image */}
         <div className="flex-1 flex items-start relative mt-4">
           <div className="w-[60%] relative z-10 text-white">
-            <h2 className="text-[1.5rem] sm:text-[1.85rem] font-extrabold leading-[1.2] tracking-tight">
+            <h2 className="text-[1.5rem] sm:text-[1.85rem] font-extrabold leading-[1.2] tracking-tight drop-shadow-sm">
               Your trusted <br/> partner for 100+ <br/> expert services
             </h2>
           </div>
