@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight, Package, Truck } from 'lucide-react'
-import { formatBuildMartPrice } from '../../data/buildmartCatalog.js'
+import { formatBuildMartPrice, getBuildMartOffer } from '../../data/buildmartCatalog.js'
 
 export function BuildMartProductCard({ product, index = 0, isCompact = false }) {
   const reduce = useReducedMotion()
   const primaryVariant = product.variants?.[0]
+  const offer = getBuildMartOffer(primaryVariant)
   const { pathname } = useLocation()
   const basePath = pathname.includes('/corporate/mart') ? '/corporate/mart' : '/app/buildmart'
 
@@ -39,6 +40,11 @@ export function BuildMartProductCard({ product, index = 0, isCompact = false }) 
               {product.variantCount} var
             </span>
           ) : null}
+          {offer.hasOffer ? (
+            <span className={`absolute left-2 bottom-2 rounded-full bg-emerald-600 px-2 py-0.5 ${isCompact ? 'text-[8px]' : 'text-[10px]'} font-black text-white shadow-sm`}>
+              {offer.discountPercent}% OFF
+            </span>
+          ) : null}
         </motion.div>
 
         <motion.div className={`space-y-1.5 flex flex-col justify-between ${isCompact ? 'p-2.5 h-[120px]' : 'p-4'}`}>
@@ -59,6 +65,11 @@ export function BuildMartProductCard({ product, index = 0, isCompact = false }) 
                 ? formatBuildMartPrice(primaryVariant.retailPrice, primaryVariant.unit)
                 : product.priceLabel}
             </span>
+            {offer.hasOffer ? (
+              <span className={`${isCompact ? 'text-[10px]' : 'text-xs'} font-semibold text-slate-400 line-through`}>
+                {offer.mrpLabel}
+              </span>
+            ) : null}
             {primaryVariant?.bulkPrice && !isCompact ? (
               <span className="rounded-lg bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-800 ring-1 ring-orange-200/80">
                 Bulk pricing available

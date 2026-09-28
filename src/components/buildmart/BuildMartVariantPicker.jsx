@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { formatBuildMartPrice } from '../../data/buildmartCatalog.js'
+import { formatBuildMartPrice, getBuildMartOffer } from '../../data/buildmartCatalog.js'
 
 export function BuildMartVariantPicker({ variants, selectedId, onSelect }) {
   const reduce = useReducedMotion()
@@ -13,6 +13,7 @@ export function BuildMartVariantPicker({ variants, selectedId, onSelect }) {
     >
       {variants.map((v) => {
         const active = selectedId === v.id
+        const offer = getBuildMartOffer(v)
         return (
           <motion.button
             key={v.id}
@@ -36,8 +37,13 @@ export function BuildMartVariantPicker({ variants, selectedId, onSelect }) {
               />
             ) : null}
             <span className="relative block text-sm font-extrabold text-slate-900">{v.label}</span>
-            <span className="relative mt-0.5 block text-xs font-bold text-bm-terracotta">
-              {formatBuildMartPrice(v.retailPrice, v.unit)}
+            <span className="relative mt-0.5 flex items-baseline gap-1">
+              <span className="text-xs font-bold text-bm-terracotta">
+                {formatBuildMartPrice(v.retailPrice, v.unit)}
+              </span>
+              {offer.hasOffer ? (
+                <span className="text-[10px] font-semibold text-slate-400 line-through">{offer.mrpLabel}</span>
+              ) : null}
             </span>
           </motion.button>
         )

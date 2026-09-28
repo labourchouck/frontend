@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { ChevronRight, Package, Truck } from 'lucide-react'
-import { formatBuildMartPrice } from '../../../data/buildmartCatalog.js'
+import { formatBuildMartPrice, getBuildMartOffer } from '../../../data/buildmartCatalog.js'
 
 export function IndividualHomeProductCard({ product, index = 0 }) {
   const reduce = useReducedMotion()
   const primaryVariant = product.variants?.[0]
+  const offer = getBuildMartOffer(primaryVariant)
 
   return (
     <motion.article
@@ -31,6 +32,11 @@ export function IndividualHomeProductCard({ product, index = 0 }) {
           <span className="absolute left-2 top-2 max-w-[calc(100%-16px)] truncate rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-brand ring-1 ring-brand/20">
             {product.brand}
           </span>
+          {offer.hasOffer ? (
+            <span className="absolute right-2 top-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-black text-white shadow-sm">
+              {offer.discountPercent}% OFF
+            </span>
+          ) : null}
         </motion.div>
 
         <motion.div className="flex flex-col h-[130px] p-2.5">
@@ -39,10 +45,15 @@ export function IndividualHomeProductCard({ product, index = 0 }) {
           </h3>
 
           <div className="mt-auto pt-1 space-y-1.5">
-            <span className="block text-sm font-black text-brand">
-              {primaryVariant
-                ? formatBuildMartPrice(primaryVariant.retailPrice, primaryVariant.unit)
-                : product.priceLabel}
+            <span className="flex items-baseline gap-1.5">
+              <span className="block text-sm font-black text-brand">
+                {primaryVariant
+                  ? formatBuildMartPrice(primaryVariant.retailPrice, primaryVariant.unit)
+                  : product.priceLabel}
+              </span>
+              {offer.hasOffer ? (
+                <span className="text-[10px] font-semibold text-slate-400 line-through">{offer.mrpLabel}</span>
+              ) : null}
             </span>
 
             <p className="flex items-center gap-1 text-[9px] font-medium text-slate-500">
