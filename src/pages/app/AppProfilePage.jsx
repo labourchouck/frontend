@@ -4,20 +4,21 @@ import { useDispatch } from 'react-redux'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowLeft,
+  BellRing,
   Building2,
   CalendarClock,
+  Camera,
   ChevronRight,
   ClipboardList,
   FileText,
   Fingerprint,
   HardHat,
+  Home,
   IdCard,
-  Info,
   LifeBuoy,
   Loader2,
   LogOut,
   Mail,
-  MapPinned,
   Menu,
   HelpCircle,
   Pencil,
@@ -80,107 +81,52 @@ function roleStatusPill(user) {
   return null
 }
 
-function ProfileScreenHeader({
-  displayPhoto,
-  initials,
-  photoSaving,
-  onAvatarClick,
-  onEditProfile,
-  fullName,
-  phone,
-}) {
+function ProfileScreenHeader() {
   return (
-    <motion.div className="relative overflow-hidden rounded-b-[2rem] bg-linear-to-br from-surface-900 via-surface-850 to-brand px-4 pb-6 pt-[max(0.75rem,env(safe-area-inset-top))] text-white shadow-[0_20px_48px_-24px_rgba(10,18,16,0.6)]">
-      <div className="flex items-center justify-between">
+    <motion.div className="pb-1">
+      <div className="flex items-start gap-2 sm:gap-3">
         <Link
           to="/app"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/20"
+          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-800 shadow-sm transition hover:border-brand/35 hover:text-brand"
           aria-label="Back to home"
         >
           <ArrowLeft className="h-5 w-5" aria-hidden />
         </Link>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand">Account</p>
+          <h1 className="mt-0.5 text-xl font-black tracking-tight text-slate-900">Profile</h1>
+          <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600 sm:text-sm">
+            Your identity, verification status, and app shortcuts.
+          </p>
+        </div>
         <button
           type="button"
           onClick={openAppDrawer}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white transition hover:bg-white/20"
+          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-brand/35 hover:text-brand"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" aria-hidden />
         </button>
       </div>
-
-      <div className="mt-4 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={onAvatarClick}
-          disabled={photoSaving}
-          className="group relative shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:opacity-70"
-          aria-label="Change profile photo"
-        >
-          <span className="relative block h-16 w-16 overflow-hidden rounded-full bg-white/15 text-xl font-black text-white ring-2 ring-white/30">
-            {displayPhoto ? (
-              <img src={displayPhoto} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center">{initials}</span>
-            )}
-            {photoSaving ? (
-              <span className="absolute inset-0 flex items-center justify-center bg-slate-900/45">
-                <Loader2 className="h-5 w-5 animate-spin text-white" aria-hidden />
-              </span>
-            ) : null}
-          </span>
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-brand-bright text-surface-950 shadow ring-2 ring-surface-900 transition group-hover:scale-105">
-            <Pencil className="h-3 w-3" aria-hidden />
-          </span>
-        </button>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xl font-black tracking-tight text-white">{fullName || 'Your profile'}</p>
-          <p className="mt-0.5 truncate text-sm font-medium text-white/70">{phone || '—'}</p>
-          <button
-            type="button"
-            onClick={onEditProfile}
-            className="mt-1.5 flex items-center gap-1 text-sm font-bold text-brand-bright transition hover:text-white"
-          >
-            Edit profile
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-          </button>
-        </div>
-      </div>
     </motion.div>
   )
 }
 
-function ListRow({ to, onClick, icon: Icon, label, badge, danger = false, last = false }) {
-  const content = (
-    <>
-      <span className="flex min-w-0 items-center gap-3">
-        <Icon className={`h-[18px] w-[18px] shrink-0 ${danger ? 'text-rose-500' : 'text-slate-500'}`} aria-hidden />
-        <span className={`truncate text-[15px] font-semibold ${danger ? 'text-rose-600' : 'text-slate-800'}`}>
-          {label}
-        </span>
-        {badge ? (
-          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-            {badge}
-          </span>
-        ) : null}
-      </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />
-    </>
-  )
-  const cls = `flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-slate-50 active:bg-slate-100 ${
-    last ? '' : 'border-b border-slate-100'
-  }`
-  if (to) {
-    return (
-      <Link to={to} className={cls}>
-        {content}
-      </Link>
-    )
+function StatTile({ icon: Icon, label, value, tone = 'slate' }) {
+  const tones = {
+    slate: 'bg-slate-50 text-slate-800 ring-slate-200/80',
+    brand: 'bg-brand/8 text-brand ring-brand/20',
+    emerald: 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
+    amber: 'bg-amber-50 text-amber-950 ring-amber-200/80',
   }
   return (
-    <button type="button" onClick={onClick} className={cls}>
-      {content}
-    </button>
+    <div className={`rounded-2xl px-3 py-2.5 ring-1 ${tones[tone] || tones.slate}`}>
+      <div className="flex items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
+        <span className="text-[10px] font-bold uppercase tracking-wide opacity-70">{label}</span>
+      </div>
+      <p className="mt-1 text-xs font-bold leading-snug">{value}</p>
+    </div>
   )
 }
 
@@ -198,6 +144,23 @@ function DetailRow({ icon: Icon, label, value, sub }) {
       </div>
       <span className="max-w-[58%] shrink-0 text-right text-sm font-semibold text-slate-900">{value}</span>
     </div>
+  )
+}
+
+function QuickLinkCard({ to, icon: Icon, label }) {
+  return (
+    <Link
+      to={to}
+      className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white px-3.5 py-3 shadow-sm transition hover:border-brand/30 hover:shadow-md active:scale-[0.99]"
+    >
+      <span className="flex min-w-0 items-center gap-2.5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand ring-1 ring-brand/15">
+          <Icon className="h-4 w-4" aria-hidden />
+        </span>
+        <span className="truncate text-sm font-bold text-slate-800">{label}</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-brand" aria-hidden />
+    </Link>
   )
 }
 
@@ -315,7 +278,7 @@ export function AppProfilePage() {
     const trimmedName = editNameValue.trim()
     const trimmedPhone = editPhoneValue.trim()
     const trimmedEmail = editEmailValue.trim()
-    
+
     if (!trimmedName) {
       setProfileErr('Name cannot be empty')
       return
@@ -324,11 +287,11 @@ export function AppProfilePage() {
       setProfileErr('Enter a valid 10-digit phone number')
       return
     }
-    
+
     setSavingProfile(true)
     setProfileErr('')
     try {
-      const res = await patchCurrentUser({ 
+      const res = await patchCurrentUser({
         fullName: trimmedName,
         phone: trimmedPhone || undefined,
         email: trimmedEmail || undefined
@@ -421,42 +384,34 @@ export function AppProfilePage() {
     }
   }, [logout, navigate])
 
-  // Primary shortcuts: bookings, address book, refer & earn, wallet — the things
-  // someone opens often. Secondary: informational / account-management rows.
-  const primaryLinks = []
+  const quickLinks = []
+  quickLinks.push({ to: '/app', icon: Home, label: 'Home' })
   if (user?.role === USER_ROLES.LABOUR) {
-    primaryLinks.push({ to: '/app/jobs', icon: HardHat, label: 'Jobs & assignments' })
-    primaryLinks.push({ to: '/app/my-bookings', icon: CalendarClock, label: 'My Bookings (Direct)' })
-    primaryLinks.push({ to: '/app/kyc', icon: Fingerprint, label: 'Aadhaar KYC' })
-    primaryLinks.push({ to: '/app/earnings', icon: Sparkles, label: 'Earnings & payouts' })
+    quickLinks.push({ to: '/app/jobs', icon: HardHat, label: 'Jobs & assignments' })
+    quickLinks.push({ to: '/app/my-bookings', icon: CalendarClock, label: 'My Bookings (Direct)' })
+    quickLinks.push({ to: '/app/kyc', icon: Fingerprint, label: 'Aadhaar KYC' })
+    quickLinks.push({ to: '/app/earnings', icon: Sparkles, label: 'Earnings & payouts' })
   } else {
-    primaryLinks.push({
+    quickLinks.push({
       to: '/app/my-bookings',
       icon: CalendarClock,
-      label: user?.role === USER_ROLES.CORPORATE ? 'Bookings & requests' : 'Your bookings',
+      label: user?.role === USER_ROLES.CORPORATE ? 'Bookings & requests' : 'Bookings',
     })
   }
   if (user?.role === USER_ROLES.CORPORATE) {
-    primaryLinks.push({ to: '/app/billing', icon: FileText, label: 'Billing & contracts' })
+    quickLinks.push({ to: '/app/billing', icon: FileText, label: 'Billing & contracts' })
   }
   if (user?.role === USER_ROLES.CONTRACTOR) {
-    primaryLinks.push({ to: '/app/workforce', icon: ClipboardList, label: 'Workforce' })
-  }
-  if ([USER_ROLES.INDIVIDUAL, USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR].includes(user?.role)) {
-    primaryLinks.push({ to: '/app/addresses', icon: MapPinned, label: 'Address book' })
+    quickLinks.push({ to: '/app/workforce', icon: ClipboardList, label: 'Workforce' })
   }
   if (user?.role === USER_ROLES.INDIVIDUAL || user?.role === USER_ROLES.LABOUR) {
-    primaryLinks.push({ to: '/app/refer', icon: Gift, label: 'Refer & Earn', badge: 'Earn upto ₹5000' })
-    primaryLinks.push({ to: '/app/wallet', icon: Wallet, label: 'My wallet' })
+    quickLinks.push({ to: '/app/refer', icon: Gift, label: 'Refer & Earn' })
+    quickLinks.push({ to: '/app/wallet', icon: Wallet, label: 'My wallet' })
   }
-
-  const secondaryLinks = [
-    { to: '/app/about', icon: Info, label: 'About us' },
-    { to: '/app/terms', icon: FileText, label: 'Terms & conditions' },
-    { to: '/app/privacy-policy', icon: FileText, label: 'Privacy policy' },
-    { to: '/app/support', icon: LifeBuoy, label: 'Help & support' },
-    { to: '/app/faq', icon: HelpCircle, label: 'FAQs' },
-  ]
+  quickLinks.push({ to: '/app/support', icon: LifeBuoy, label: 'Support' })
+  quickLinks.push({ to: '/app/terms', icon: FileText, label: 'Terms & Conditions' })
+  quickLinks.push({ to: '/app/privacy-policy', icon: FileText, label: 'Privacy Policy' })
+  quickLinks.push({ to: '/app/faq', icon: HelpCircle, label: 'FAQs' })
 
   return (
     <motion.div
@@ -464,70 +419,108 @@ export function AppProfilePage() {
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <div className="-mx-4 -mt-4">
-        <ProfileScreenHeader
-          displayPhoto={displayPhoto}
-          initials={initials}
-          photoSaving={photoSaving}
-          onAvatarClick={() => photoInputRef.current?.click()}
-          onEditProfile={handleEditProfileOpen}
-          fullName={user?.fullName}
-          phone={user?.phone ? `+91 ${user.phone}` : ''}
-        />
-      </div>
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/*"
-        className="sr-only"
-        onChange={(e) => void onPickPhoto(e)}
-      />
-
-      <div className="flex flex-wrap items-center gap-2">
-        {user?.isPhoneVerified ? (
-          <AppBadge variant="emerald" uppercase={false}>
-            Phone verified
-          </AppBadge>
-        ) : (
-          <AppBadge variant="amber" uppercase={false}>
-            Phone not verified
-          </AppBadge>
-        )}
-        <AppBadge variant="brand" uppercase={false}>
-          {ROLE_LABELS[user?.role] || user?.role || '—'}
-        </AppBadge>
-        {statusPill ? (
-          <AppBadge variant={statusPill.variant} uppercase={false}>
-            {statusPill.label}
-          </AppBadge>
-        ) : null}
-        {user?.isActive === false ? (
-          <AppBadge variant="rose" uppercase={false}>
-            Inactive
-          </AppBadge>
-        ) : null}
-        {displayPhoto && !photoSaving ? (
+      <motion.section
+        initial={reduce ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-white to-brand/[0.07] p-4 shadow-[0_20px_48px_-28px_rgba(15,23,42,0.18)] ring-1 ring-slate-100/90"
+      >
+        <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left">
           <button
             type="button"
-            onClick={() => void removePhoto()}
-            className="text-[11px] font-bold text-slate-500 underline-offset-2 hover:text-rose-600 hover:underline"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={photoSaving}
+            className="group relative shrink-0 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-70"
+            aria-label="Change profile photo"
           >
-            Remove photo
+            <span className="relative block h-24 w-24 overflow-hidden rounded-3xl bg-linear-to-br from-brand-bright to-brand text-2xl font-black text-white shadow-[0_16px_40px_-12px_rgba(28,175,98,0.55)] ring-2 ring-white">
+              {displayPhoto ? (
+                <img src={displayPhoto} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center">{initials}</span>
+              )}
+              {photoSaving ? (
+                <span className="absolute inset-0 flex items-center justify-center bg-slate-900/45 backdrop-blur-[2px]">
+                  <Loader2 className="h-7 w-7 animate-spin text-white" aria-hidden />
+                </span>
+              ) : null}
+            </span>
+            <span className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white shadow-lg ring-2 ring-white transition group-hover:scale-105">
+              <Pencil className="h-4 w-4" aria-hidden />
+            </span>
           </button>
-        ) : null}
-      </div>
-      {photoErr ? <p className="-mt-3 text-xs font-medium text-rose-700">{photoErr}</p> : null}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/*"
+            className="sr-only"
+            onChange={(e) => void onPickPhoto(e)}
+          />
+
+          <div className="mt-4 min-w-0 flex-1 sm:mt-0 sm:ml-4">
+            <p className="truncate text-xl font-black tracking-tight text-slate-900">
+              {user?.fullName || 'Your profile'}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-brand">{ROLE_LABELS[user?.role] || user?.role || '—'}</p>
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500 sm:justify-start">
+              <Camera className="h-3.5 w-3.5" aria-hidden />
+              Tap photo to upload from your device
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              {user?.isPhoneVerified ? (
+                <AppBadge variant="emerald" uppercase={false}>
+                  Phone verified
+                </AppBadge>
+              ) : (
+                <AppBadge variant="amber" uppercase={false}>
+                  Phone not verified
+                </AppBadge>
+              )}
+              {statusPill ? (
+                <AppBadge variant={statusPill.variant} uppercase={false}>
+                  {statusPill.label}
+                </AppBadge>
+              ) : null}
+              {user?.isActive === false ? (
+                <AppBadge variant="rose" uppercase={false}>
+                  Inactive
+                </AppBadge>
+              ) : null}
+            </div>
+            {displayPhoto && !photoSaving ? (
+              <button
+                type="button"
+                onClick={() => void removePhoto()}
+                className="mt-2 text-[11px] font-bold text-slate-500 underline-offset-2 hover:text-rose-600 hover:underline"
+              >
+                Remove photo
+              </button>
+            ) : null}
+            {photoErr ? <p className="mt-2 text-xs font-medium text-rose-700">{photoErr}</p> : null}
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
+          {/* <StatTile
+            icon={Phone}
+            label="Mobile"
+            value={user?.phone ? `+91 ${user.phone.slice(-10)}` : '—'}
+            tone={user?.isPhoneVerified ? 'emerald' : 'amber'}
+          /> */}
+          <StatTile icon={CalendarClock} label="Member" value={memberSince} />
+          <StatTile icon={ShieldCheck} label="Active" value={lastActive || '—'} />
+        </div>
+      </motion.section>
 
       {user?.role === USER_ROLES.LABOUR ? (
         <Link
           to="/app/kyc"
-          className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 shadow-sm transition active:scale-[0.99] ${
-            labourKyc === KYC_STATUS.VERIFIED
+          className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 shadow-sm transition active:scale-[0.99] ${labourKyc === KYC_STATUS.VERIFIED
               ? 'border-emerald-200/80 bg-emerald-50/80'
               : labourKyc === KYC_STATUS.FAILED
                 ? 'border-rose-200/80 bg-rose-50/60'
                 : 'border-amber-200/80 bg-amber-50/70'
-          }`}
+            }`}
         >
           <span className="flex items-center gap-2.5">
             <Fingerprint className="h-5 w-5 shrink-0 text-brand" aria-hidden />
@@ -550,9 +543,9 @@ export function AppProfilePage() {
 
       <GlassPanel className="border-slate-200/90 p-4 ring-1 ring-slate-100/90">
         <AppSectionHeader title="Account details" className="mb-1" />
-        <DetailRow 
-          icon={Sparkles} 
-          label="Full name" 
+        <DetailRow
+          icon={Sparkles}
+          label="Full name"
           value={
             <div className="flex items-center justify-end gap-2">
               <span className="truncate">{user?.fullName || '—'}</span>
@@ -565,7 +558,7 @@ export function AppProfilePage() {
                 <Pencil className="h-3.5 w-3.5" />
               </button>
             </div>
-          } 
+          }
         />
         <DetailRow
           icon={Phone}
@@ -585,9 +578,9 @@ export function AppProfilePage() {
           }
           sub="Used for OTP sign-in"
         />
-        <DetailRow 
-          icon={Mail} 
-          label="Email" 
+        <DetailRow
+          icon={Mail}
+          label="Email"
           value={
             <div className="flex items-center justify-end gap-2">
               <span className="truncate">{user?.email?.trim() || '—'}</span>
@@ -600,11 +593,10 @@ export function AppProfilePage() {
                 <Pencil className="h-3.5 w-3.5" />
               </button>
             </div>
-          } 
-          sub="Optional on your account" 
+          }
+          sub="Optional on your account"
         />
         <DetailRow icon={ShieldCheck} label="Last session" value={lastActive || '—'} />
-        <DetailRow icon={CalendarClock} label="Member since" value={memberSince} />
       </GlassPanel>
 
       {user?.role === USER_ROLES.CORPORATE && user?.corporateProfile ? (
@@ -663,30 +655,38 @@ export function AppProfilePage() {
         </GlassPanel>
       ) : null}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
-        {primaryLinks.map((link, i) => (
-          <ListRow
-            key={link.to}
-            to={link.to}
-            icon={link.icon}
-            label={link.label}
-            badge={link.badge}
-            last={i === primaryLinks.length - 1}
-          />
-        ))}
+      <section>
+        <AppSectionHeader title="Shortcuts" className="mb-3 px-0.5" />
+        <ul className="space-y-2">
+          {quickLinks.map((link) => (
+            <li key={link.to}>
+              <QuickLinkCard to={link.to} icon={link.icon} label={link.label} />
+            </li>
+          ))}
+        </ul>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
-        {secondaryLinks.map((link) => (
-          <ListRow key={link.to} to={link.to} icon={link.icon} label={link.label} />
-        ))}
-        <ListRow icon={Trash2} label="Request account deletion" danger onClick={() => setDeleteOpen(true)} />
-        <ListRow icon={LogOut} label="Log out" danger onClick={handleSignOut} last />
-      </section>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-[0.99]"
+      >
+        <LogOut className="h-4 w-4" aria-hidden />
+        Sign out
+      </button>
 
-      <AppModal 
-        open={editProfileOpen} 
-        onClose={() => !savingProfile && setEditProfileOpen(false)} 
+      <button
+        type="button"
+        onClick={() => setDeleteOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200/90 bg-rose-50/90 py-3.5 text-sm font-bold text-rose-900 shadow-sm transition hover:bg-rose-50 active:scale-[0.99]"
+      >
+        <Trash2 className="h-4 w-4" aria-hidden />
+        Delete account
+      </button>
+
+      <AppModal
+        open={editProfileOpen}
+        onClose={() => !savingProfile && setEditProfileOpen(false)}
         title="Edit Profile"
       >
         <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -729,14 +729,14 @@ export function AppProfilePage() {
               disabled={savingProfile}
             />
           </div>
-          
+
           {profileErr ? <p className="mt-1.5 text-xs font-medium text-rose-600">{profileErr}</p> : null}
-          
+
           <div className="flex gap-3 pt-2">
-            <AppButton 
-              type="button" 
-              variant="secondary" 
-              onClick={() => setEditProfileOpen(false)} 
+            <AppButton
+              type="button"
+              variant="secondary"
+              onClick={() => setEditProfileOpen(false)}
               disabled={savingProfile}
             >
               Cancel
@@ -748,28 +748,28 @@ export function AppProfilePage() {
         </form>
       </AppModal>
 
-      <AppModal 
-        open={deleteOpen} 
-        onClose={() => !deletingAccount && setDeleteOpen(false)} 
+      <AppModal
+        open={deleteOpen}
+        onClose={() => !deletingAccount && setDeleteOpen(false)}
         title="Delete Account"
       >
         <div className="space-y-4">
           <div className="flex gap-4 items-start">
-             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-               <AlertTriangle className="size-5" />
-             </div>
-             <div>
-               <p className="text-sm text-slate-600">
-                 Are you sure you want to delete your account? This action cannot be undone and will permanently remove your data, verified documents, and access.
-               </p>
-             </div>
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+              <AlertTriangle className="size-5" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-600">
+                Are you sure you want to delete your account? This action cannot be undone and will permanently remove your data, verified documents, and access.
+              </p>
+            </div>
           </div>
           {deleteErr ? <p className="mt-1.5 text-xs font-medium text-rose-600">{deleteErr}</p> : null}
           <div className="flex gap-3 pt-2">
-            <AppButton 
-              type="button" 
-              variant="secondary" 
-              onClick={() => setDeleteOpen(false)} 
+            <AppButton
+              type="button"
+              variant="secondary"
+              onClick={() => setDeleteOpen(false)}
               disabled={deletingAccount}
             >
               Cancel

@@ -5,8 +5,6 @@ import { AppBookingsPage } from '../pages/app/AppBookingsPage.jsx'
 import { AppJobsPage } from '../pages/app/AppJobsPage.jsx'
 import { AppSupportPage } from '../pages/app/AppSupportPage.jsx'
 import { AppProfilePage } from '../pages/app/AppProfilePage.jsx'
-import { AppAddressBookPage } from '../pages/app/AppAddressBookPage.jsx'
-import { AppAboutUsPage } from '../pages/app/AppAboutUsPage.jsx'
 import { AppEarningsPage } from '../pages/app/AppEarningsPage.jsx'
 import { AppKycPage } from '../pages/app/AppKycPage.jsx'
 import { AppTermsPage } from '../pages/app/AppTermsPage.jsx'
@@ -175,15 +173,6 @@ export const appShellChildRoutes = (
     <Route path="terms" element={<AppTermsPage />} />
     <Route path="privacy-policy" element={<AppPrivacyPolicyPage />} />
     <Route path="faq" element={<AppFaqPage />} />
-    <Route path="about" element={<AppAboutUsPage />} />
-    <Route
-      path="addresses"
-      element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL, USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]}>
-          <AppAddressBookPage />
-        </RoleRoute>
-      }
-    />
     <Route path="profile" element={<AppProfilePage />} />
     <Route
       path="earnings"
