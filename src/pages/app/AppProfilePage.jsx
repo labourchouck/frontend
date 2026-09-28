@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   AlertTriangle,
+  BookMarked,
   CalendarClock,
   ChevronRight,
   ClipboardX,
@@ -13,6 +14,7 @@ import {
   HardHat,
   HelpCircle,
   Headset,
+  Info,
   Loader2,
   LogOut,
   Menu,
@@ -335,7 +337,10 @@ export function AppProfilePage() {
               <MenuRow icon={Coins} label="Earnings & payouts" to="/app/earnings" />
             </>
           ) : (
-            <MenuRow icon={CalendarClock} label="Your bookings" to="/app/bookings" />
+            <>
+              <MenuRow icon={CalendarClock} label="Your bookings" to="/app/bookings" />
+              <MenuRow icon={BookMarked} label="Address book" to="/app/addresses" />
+            </>
           )}
           {canRefer ? <MenuRow icon={Wallet} label="My wallet" to="/app/wallet" /> : null}
         </MenuGroup>
@@ -354,6 +359,7 @@ export function AppProfilePage() {
         ) : null}
 
         <MenuGroup>
+          <MenuRow icon={Info} label="About us" to="/app/about" />
           <MenuRow icon={FileText} label="Terms & conditions" to="/app/terms" />
           <MenuRow icon={ShieldCheck} label="Privacy policy" to="/app/privacy-policy" />
           <MenuRow icon={HelpCircle} label="FAQs" to="/app/faq" />
