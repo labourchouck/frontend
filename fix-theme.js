@@ -16,7 +16,7 @@ function walk(dir) {
   return results;
 }
 
-const files = walk('/Users/rashijaiswal/Documents/GitHub/LabourChowck/frontend/src/panels/vendor');
+const files = walk('/Users/rashijaiswal/Documents/GitHub/Mappto/frontend/src/panels/vendor');
 files.forEach(file => {
   let content = fs.readFileSync(file, 'utf8');
   let newContent = content

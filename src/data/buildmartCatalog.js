@@ -311,3 +311,19 @@ export function formatBuildMartPrice(amount, unit = '') {
   const formatted = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n)
   return unit ? `₹${formatted}/${unit}` : `₹${formatted}`
 }
+
+/**
+ * Offer pricing for a variant: an `mrp` above the current `retailPrice` is
+ * treated as the struck-through original price.
+ * @returns {{ hasOffer: boolean, mrpLabel: string, discountPercent: number }}
+ */
+export function getBuildMartOffer(variant) {
+  const mrp = Number(variant?.mrp)
+  const price = Number(variant?.retailPrice)
+  const hasOffer = Number.isFinite(mrp) && Number.isFinite(price) && mrp > price
+  return {
+    hasOffer,
+    mrpLabel: hasOffer ? formatBuildMartPrice(mrp, variant?.unit) : '',
+    discountPercent: hasOffer ? Math.round(((mrp - price) / mrp) * 100) : 0,
+  }
+}

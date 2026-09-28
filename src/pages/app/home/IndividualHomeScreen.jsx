@@ -1,39 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Zap, CalendarClock, Shield, ChevronRight } from 'lucide-react'
-import LottieExport from 'lottie-react'
-const Lottie = LottieExport.default || LottieExport
-
-const TypewriterText = ({ text, className }) => {
-  const [displayedText, setDisplayedText] = useState('');
-
-  useEffect(() => {
-    let i = 0;
-    setDisplayedText(''); // Reset on mount
-    const interval = setInterval(() => {
-      if (i <= text.length) {
-        setDisplayedText(text.slice(0, i));
-        i++;
-      } else {
-        // Pause for 2 seconds (20 ticks) at the end, then loop
-        if (i > text.length + 20) {
-          i = 0;
-        } else {
-          i++;
-        }
-      }
-    }, 100); // 100ms per tick
-    return () => clearInterval(interval);
-  }, [text]);
-
-  return <span className={className}>{displayedText || '\u00A0'}</span>;
-};
-import instantAnimation from '../../../assets/lotties/booking (1).json'
-import scheduleAnimation from '../../../assets/lotties/schedule.json'
+import { Shield, ChevronRight, Plus, Minus } from 'lucide-react'
+import instantImg from '../../../assets/user_home_images/instant.png'
+import scheduleImg from '../../../assets/user_home_images/schedule.png'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
 import { IndividualHomeCategoryGrid } from '../../../components/app/individual/IndividualHomeCategoryGrid.jsx'
-import { IndividualHomeCategoryRail } from '../../../components/app/individual/IndividualHomeCategoryRail.jsx'
+import { IndividualHomeTrustSection } from '../../../components/app/individual/IndividualHomeTrustSection.jsx'
 import { IndividualHomeHeroCarousel } from '../../../components/app/individual/IndividualHomeHeroCarousel.jsx'
 import { IndividualHomeRecentlyBooked } from '../../../components/app/individual/IndividualHomeRecentlyBooked.jsx'
 import { IndividualHomeWorkerCarousel } from '../../../components/app/individual/IndividualHomeWorkerCarousel.jsx'
@@ -48,8 +21,7 @@ import { bookingsApi } from '../../../api/bookingsApi.js'
 import { ApiError } from '../../../api/http.js'
 import { userSubscriptionApi } from '../../../api/userSubscriptionApi.js'
 import { LabourPublicDetailSheet } from '../labour/LabourPublicDetailSheet.jsx'
-import { enrichDiscoverLabourUi, DEMO_LABOUR_ROWS } from '../../../lib/discoverLabourDummyUi.js'
-import { displayBookingsList, loadIndividualBookings } from '../../../lib/individualBookings.js'
+import { enrichDiscoverLabourUi } from '../../../lib/discoverLabourDummyUi.js'
 import { buildBookingFlowPath } from '../../../lib/bookingFlowNavigation.js'
 
 function formatBookingDay(serviceDate) {
@@ -65,6 +37,76 @@ function formatBookingDay(serviceDate) {
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Tomorrow'
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+const STATIC_FAQS = [
+  {
+    q: 'Can I book a recurring service?',
+    a: 'Yes, you can schedule recurring daily, weekly, or monthly bookings for your home or site projects directly from the app.',
+  },
+  {
+    q: 'How can I trust your service?',
+    a: 'All workers listed on Mappto go through strict identity checks, background verification, and video Aadhaar KYC approval before accepting jobs.',
+  },
+  {
+    q: 'Do I need to provide all the tools and equipment?',
+    a: 'Workers bring basic hand tools for standard tasks. For specialized machinery or materials, you can specify requirements during booking or order via BuildMart.',
+  },
+  {
+    q: 'What if I need to cancel or reschedule my booking?',
+    a: 'You can easily reschedule or cancel your booking through the "Your bookings" section in your profile before the shift begins.',
+  },
+]
+
+function StaticFaqSection() {
+  const [openIndex, setOpenIndex] = useState(null)
+
+  const toggleFaq = (index) => {
+    setOpenIndex(openIndex === index ? null : index)
+  }
+
+  return (
+    <div className="pt-4 pb-2 space-y-3">
+      <h3 className="text-xl font-bold text-slate-900 tracking-tight">FAQs</h3>
+      <div className="space-y-3">
+        {STATIC_FAQS.map((faq, idx) => {
+          const isOpen = openIndex === idx
+          return (
+            <div
+              key={faq.q}
+              className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_10px_-4px_rgba(15,23,42,0.1)] outline outline-1 -outline-offset-1 outline-slate-100 transition-all"
+            >
+              <button
+                type="button"
+                onClick={() => toggleFaq(idx)}
+                className="flex w-full items-center justify-between p-4 text-left font-semibold text-slate-800 transition hover:bg-slate-50 active:bg-slate-100"
+              >
+                <span className="pr-3 text-sm sm:text-base font-semibold leading-snug text-slate-900">
+                  {faq.q}
+                </span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
+                  {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                </span>
+              </button>
+              <AnimatePresence>
+                {isOpen ? (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-4 pb-4 pt-1 text-xs sm:text-sm leading-relaxed text-slate-600 border-t border-slate-200/40"
+                  >
+                    {faq.a}
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -87,7 +129,7 @@ export function IndividualHomeScreen({ user }) {
   const [quickBookModeOpen, setQuickBookModeOpen] = useState(false)
   const [quickBookTypeOpen, setQuickBookTypeOpen] = useState(false)
   const [quickBookCategory, setQuickBookCategory] = useState(null)
-  const [bookingsLoading, setBookingsLoading] = useState(true)
+  const [bookingsLoading, setBookingsLoading] = useState(() => Boolean(user))
   const [bookings, setBookings] = useState([])
 
   const [products, setProducts] = useState([])
@@ -218,7 +260,7 @@ export function IndividualHomeScreen({ user }) {
     } finally {
       setLaboursLoading(false)
     }
-  }, [selectedGroupId, user])
+  }, [selectedGroupId])
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -235,10 +277,7 @@ export function IndividualHomeScreen({ user }) {
 
   useEffect(() => {
     let cancelled = false
-    if (!user) {
-      setBookingsLoading(false)
-      return
-    }
+    if (!user) return
     bookingsApi.getMyBookings()
       .then((res) => {
         if (!cancelled) {
@@ -303,7 +342,7 @@ export function IndividualHomeScreen({ user }) {
       .finally(() => {
         setDetailLoading(false)
       })
-  }, [user])
+  }, [])
 
   const closeDetail = useCallback(() => {
     setDetailId(null)
@@ -317,20 +356,28 @@ export function IndividualHomeScreen({ user }) {
       aria-label={user?.fullName ? `Home for ${user.fullName}` : 'Discover workers home'}
     >
       {/* 1. Header Background Extension with Text, Image, & Buttons */}
-      <div className="bg-brand px-4 pb-8 pt-6 rounded-b-[2.5rem] relative z-0 flex flex-col min-h-[300px]">
-        
+      <div className="relative z-0 flex min-h-[300px] flex-col overflow-hidden rounded-b-[2.5rem] bg-linear-to-br from-brand-bright via-brand to-emerald-800 px-4 pb-8 pt-6">
+        <div
+          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-full opacity-[0.07] [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:18px_18px] text-white"
+          aria-hidden
+        />
+
         {/* Top area with Text & Image */}
         <div className="flex-1 flex items-start relative mt-4">
           <div className="w-[60%] relative z-10 text-white">
-            <h2 className="text-[1.5rem] sm:text-[1.85rem] font-extrabold leading-[1.2] tracking-tight">
+            <h2 className="text-[1.5rem] sm:text-[1.85rem] font-extrabold leading-[1.2] tracking-tight drop-shadow-sm">
               Your trusted <br/> partner for 100+ <br/> expert services
             </h2>
           </div>
           
           <div className="absolute bottom-[-3rem] right-1 w-[42%] max-w-[160px] pointer-events-none z-30">
             <img 
-              src="/assets/images/labour_chowck_hero_worker_final.png" 
-              alt="LaborChowck Professional" 
+              src="/assets/images/mappto_hero_worker_final.png" 
+              alt="Mappto Professional" 
               className="w-full h-auto object-contain object-bottom" 
             />
           </div>
@@ -343,11 +390,11 @@ export function IndividualHomeScreen({ user }) {
             className="group relative flex flex-col items-start justify-start rounded-2xl bg-gradient-to-b from-white to-slate-50/90 p-4 min-h-[110px] border border-slate-200/90 shadow-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md hover:border-brand/40 overflow-hidden"
             aria-label="Instant Booking"
           >
-            <TypewriterText text="Instant" className="text-left text-[15px] font-extrabold uppercase tracking-wider text-slate-800 z-10" />
+            <span className="z-10 text-left text-[15px] font-extrabold uppercase tracking-wider text-slate-800">Instant</span>
             <span className="text-[11px] font-bold text-brand bg-brand/10 px-1.5 py-0.5 rounded-sm mt-1 z-10">Book Instantly</span>
             
             <div className="absolute bottom-1 right-1 h-12 w-12 flex items-center justify-center opacity-90 group-hover:scale-110 transition-transform duration-300">
-              <Lottie animationData={instantAnimation} loop={true} className="h-full w-full object-contain" />
+              <img src={instantImg} alt="Instant" className="h-full w-full object-contain" />
             </div>
           </button>
 
@@ -356,11 +403,11 @@ export function IndividualHomeScreen({ user }) {
             className="group relative flex flex-col items-start justify-start rounded-2xl bg-gradient-to-b from-white to-slate-50/90 p-4 min-h-[110px] border border-slate-200/90 shadow-sm transition-all duration-200 active:scale-95 hover:-translate-y-0.5 hover:shadow-md hover:border-brand/40 overflow-hidden"
             aria-label="Schedule Booking"
           >
-            <TypewriterText text="Schedule" className="text-left text-[15px] font-extrabold uppercase tracking-wider text-slate-800 z-10" />
+            <span className="z-10 text-left text-[15px] font-extrabold uppercase tracking-wider text-slate-800">Schedule</span>
             <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-sm mt-1 z-10">Pick date/time</span>
             
             <div className="absolute bottom-1 right-1 h-12 w-12 flex items-center justify-center opacity-90 group-hover:scale-110 transition-transform duration-300">
-              <Lottie animationData={scheduleAnimation} loop={true} className="h-full w-full object-contain" />
+              <img src={scheduleImg} alt="Schedule" className="h-full w-full object-contain" />
             </div>
           </button>
         </div>
@@ -388,11 +435,14 @@ export function IndividualHomeScreen({ user }) {
         <IndividualHomeCategoryGrid
           groups={tradeGroups}
           loading={groupsLoading}
-          onSelectCategory={(group) => navigate('/app/services')}
+          onSelectCategory={() => navigate('/app/services')}
           title="All Categories"
           emptyAction="Find a skill"
           onEmptyAction={goSearch}
         />
+
+        {/* 5b. Trust badges */}
+        <IndividualHomeTrustSection />
 
         {/* 5. Active Plan (if subscribed) */}
         {activeSubscription && (() => {
@@ -463,6 +513,7 @@ export function IndividualHomeScreen({ user }) {
 
         {/* 6. Recently Booked (if any) */}
         <IndividualHomeRecentlyBooked
+          title={ongoingBookings.length ? 'Ongoing bookings' : 'Recent bookings'}
           bookings={recentBookings}
           loading={bookingsLoading}
           formatDay={formatBookingDay}
@@ -481,6 +532,9 @@ export function IndividualHomeScreen({ user }) {
           onQuickBook={handleQuickBookCategory}
           onSelectGroup={setSelectedGroupId}
         />
+
+        {/* 9. Static FAQs Section */}
+        <StaticFaqSection />
       </section>
 
       <BookingModeSheet

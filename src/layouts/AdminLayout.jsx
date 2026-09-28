@@ -97,9 +97,10 @@ export function AdminLayout() {
           className={`relative z-10 flex min-w-0 items-center gap-2.5 rounded-xl px-1.5 py-1.5 font-extrabold tracking-tight text-slate-900 transition hover:bg-white/80 hover:shadow-sm ${collapsed ? 'md:justify-center' : ''}`}
           title="Dashboard"
         >
-          <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck" className="h-12 w-auto scale-125 origin-left object-contain" />
+          <img src="/assets/images/mappto_logo.png" alt="Mappto" className="h-9 w-9 shrink-0 rounded-xl object-contain" />
           <span className={`min-w-0 truncate ${collapsed ? 'md:sr-only' : ''}`}>
-            <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <span className="block truncate text-sm font-extrabold leading-tight text-slate-900">Mappto</span>
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
               Control panel
             </span>
           </span>

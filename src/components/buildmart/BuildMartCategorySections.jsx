@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Truck, Star, Layers } from 'lucide-react'
 import { fetchAppMartProducts, fetchAppMartCategories } from '../../api/buildmartApi.js'
-import { formatBuildMartPrice } from '../../data/buildmartCatalog.js'
+import { formatBuildMartPrice, getBuildMartOffer } from '../../data/buildmartCatalog.js'
 
 export function BuildMartCategorySections() {
   const [products, setProducts] = useState([])
@@ -70,7 +70,7 @@ export function BuildMartCategorySections() {
   if (categorySections.length === 0) return null
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-8 pb-2">
       {categorySections.map((section) => {
         return (
           <section key={section.id} className="mx-4">
@@ -99,13 +99,19 @@ export function BuildMartCategorySections() {
               {section.products.map((product) => {
                 const primaryVariant = product.variants?.[0]
                 const imageUrl = product.images?.[0] || product.image
+                const offer = getBuildMartOffer(primaryVariant)
 
                 return (
                   <Link
                     key={product.id || product._id}
                     to={`/app/buildmart/product/${product.id || product._id}`}
-                    className="group flex w-[175px] min-w-[175px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
+                    className="group relative flex w-[175px] min-w-[175px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
                   >
+                    {offer.hasOffer ? (
+                      <span className="absolute right-2 top-2 z-10 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-black text-white shadow-sm">
+                        {offer.discountPercent}% OFF
+                      </span>
+                    ) : null}
                     {/* Top Row: Brand & Rating / Variant count */}
                     <div className="flex items-center justify-between gap-1 text-[10px]">
                       {product.brand ? (
@@ -158,12 +164,15 @@ export function BuildMartCategorySections() {
                       </h3>
 
                       {/* Price Display */}
-                      <div className="pt-0.5">
+                      <div className="flex items-baseline gap-1.5 pt-0.5">
                         <div className="text-sm font-black text-slate-900">
                           {primaryVariant && primaryVariant.retailPrice != null
                             ? formatBuildMartPrice(primaryVariant.retailPrice, primaryVariant.unit)
                             : product.priceLabel || 'Price on request'}
                         </div>
+                        {offer.hasOffer ? (
+                          <div className="text-[10px] font-semibold text-slate-400 line-through">{offer.mrpLabel}</div>
+                        ) : null}
                       </div>
                     </div>
 

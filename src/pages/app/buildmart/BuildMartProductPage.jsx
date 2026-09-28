@@ -15,7 +15,7 @@ import { BuildMartImageCarousel } from '../../../components/buildmart/BuildMartI
 import { BuildMartVariantPicker } from '../../../components/buildmart/BuildMartVariantPicker.jsx'
 import { BuildMartProductCard } from '../../../components/buildmart/BuildMartProductCard.jsx'
 import { BuildMartRequestQuoteSheet } from '../../../components/buildmart/BuildMartRequestQuoteSheet.jsx'
-import { formatBuildMartPrice } from '../../../data/buildmartCatalog.js'
+import { formatBuildMartPrice, getBuildMartOffer } from '../../../data/buildmartCatalog.js'
 import { fetchAppMartProducts } from '../../../api/buildmartApi.js'
 import { AppBadge } from '../../../components/app-ui/data-display/AppBadge.jsx'
 
@@ -59,6 +59,7 @@ export function BuildMartProductPage() {
     () => (product?.variants || []).find((v) => v.id === variantId) ?? product?.variants?.[0],
     [product, variantId],
   )
+  const variantOffer = useMemo(() => getBuildMartOffer(variant), [variant])
 
   const related = useMemo(() => {
     if (!product || !product.relatedIds) return []
@@ -116,7 +117,11 @@ export function BuildMartProductPage() {
         <section className="space-y-3 rounded-3xl border border-orange-100/90 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-extrabold text-slate-900">Pricing</h2>
           <div className="grid gap-2 sm:grid-cols-3">
-            <PriceTile label="Retail" value={formatBuildMartPrice(variant.retailPrice, variant.unit)} />
+            <PriceTile
+              label="Retail"
+              value={formatBuildMartPrice(variant.retailPrice, variant.unit)}
+              wasValue={variantOffer.hasOffer ? variantOffer.mrpLabel : ''}
+            />
             <PriceTile
               label="Contractor"
               value={formatBuildMartPrice(variant.contractorPrice, variant.unit)}
@@ -238,7 +243,7 @@ export function BuildMartProductPage() {
   )
 }
 
-function PriceTile({ label, value, highlight }) {
+function PriceTile({ label, value, highlight, wasValue }) {
   return (
     <div
       className={`rounded-2xl px-3 py-2.5 ring-1 ${
@@ -248,8 +253,11 @@ function PriceTile({ label, value, highlight }) {
       }`}
     >
       <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`mt-0.5 text-sm font-extrabold ${highlight ? 'text-bm-terracotta' : 'text-slate-900'}`}>
-        {value}
+      <p className="flex items-baseline gap-1.5">
+        <span className={`mt-0.5 text-sm font-extrabold ${highlight ? 'text-bm-terracotta' : 'text-slate-900'}`}>
+          {value}
+        </span>
+        {wasValue ? <span className="text-[11px] font-semibold text-slate-400 line-through">{wasValue}</span> : null}
       </p>
     </div>
   )

@@ -18,7 +18,7 @@ export function FAQSection() {
           titleId="faq-heading"
           eyebrow="FAQ"
           title="Answers before you book"
-          subtitle="Still deciding? Here’s what teams usually ask before their first LaborChowck shift."
+          subtitle="Still deciding? Here’s what teams usually ask before their first Mappto shift."
           align="center"
         />
 

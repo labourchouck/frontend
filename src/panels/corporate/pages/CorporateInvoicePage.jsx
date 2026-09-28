@@ -188,10 +188,10 @@ export function CorporateInvoicePage() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">From</p>
-              <h3 className="text-sm font-extrabold text-slate-900">LabourChowk Platform</h3>
+              <h3 className="text-sm font-extrabold text-slate-900">Mappto Platform</h3>
               <p className="text-sm text-slate-600 mt-1">
                 Admin Support<br />
-                support@labourchowk.com
+                support@mappto.com
               </p>
             </div>
             {request?.preferredVendorId && (

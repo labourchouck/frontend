@@ -19,7 +19,7 @@ export function TestimonialsSection() {
           titleId="testimonials-heading"
           eyebrow="Stories from the field"
           title="Real crews. Real sites. Real outcomes."
-          subtitle="From Gurugram renovations to Hyderabad electrical contracts—teams use LaborChowck when timelines and trust both matter."
+          subtitle="From Gurugram renovations to Hyderabad electrical contracts—teams use Mappto when timelines and trust both matter."
           align="center"
         />
 

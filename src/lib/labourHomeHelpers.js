@@ -175,7 +175,7 @@ export function offerDistanceKm(offerId) {
   return (h % 8) + 1
 }
 
-export function whatsAppSupportUrl(message = 'Hi LabourChowck, I need help on site.') {
+export function whatsAppSupportUrl(message = 'Hi Mappto, I need help on site.') {
   const phone = LABOUR_SUPPORT_PHONE.replace(/\D/g, '')
   return `https://wa.me/91${phone.slice(-10)}?text=${encodeURIComponent(message)}`
 }

@@ -4,12 +4,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   AlertCircle,
   ArrowRight,
+  BookMarked,
   CreditCard,
   IndianRupee,
   Loader2,
   MapPin,
   Wallet,
 } from 'lucide-react'
+import { SavedAddressPicker } from '../../components/app/SavedAddressPicker.jsx'
 import { bookingsApi } from '../../api/bookingsApi.js'
 import { paymentsApi } from '../../api/paymentsApi.js'
 import { adminSettingsApi, getPublicSettings } from '../../api/adminSettingsApi.js'
@@ -66,6 +68,7 @@ export function Checkout() {
   const [lng, setLng] = useState(user?.savedAddress?.lng || 77.1025)
   const [scheduledTime, setScheduledTime] = useState('')
   const [saveAddress, setSaveAddress] = useState(true)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('CASH')
   const [useWallet, setUseWallet] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -320,7 +323,7 @@ export function Checkout() {
         amount: order.amount,
         currency: order.currency || 'INR',
         order_id: order.id,
-        name: 'LabourChowk',
+        name: 'Mappto',
         description: `Booking: ${subcategoryName}`,
         handler: async function (response) {
           try {
@@ -517,10 +520,22 @@ export function Checkout() {
 
       {/* Address */}
       <GlassPanel className="p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-          <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-          Work Location
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <MapPin className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+            Work Location
+          </label>
+          {!isGuest ? (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="flex items-center gap-1 text-xs font-bold text-brand transition hover:text-brand-dark"
+            >
+              <BookMarked className="h-3.5 w-3.5" aria-hidden />
+              Saved addresses
+            </button>
+          ) : null}
+        </div>
         <input
           ref={inputRef}
           type="text"
@@ -543,6 +558,18 @@ export function Checkout() {
           Save this address for future bookings
         </label>
       </GlassPanel>
+
+      <SavedAddressPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(picked) => {
+          setAddress(picked.address)
+          if (picked.lat != null && picked.lng != null) {
+            setLat(picked.lat)
+            setLng(picked.lng)
+          }
+        }}
+      />
 
       {/* Error */}
       {submitError && (

@@ -74,8 +74,8 @@ export function Navbar() {
           className="flex items-center gap-2 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           <img
-            src="/assets/images/labour_chowck_logo.png"
-            alt="LaborChowck"
+            src="/assets/images/mappto_logo.png"
+            alt="Mappto"
             className="h-16 w-auto origin-left scale-[1.35] object-contain"
           />
         </a>

@@ -403,7 +403,7 @@ export function AdminMartProductsTab() {
           <h4 className="font-bold text-slate-800">Variants</h4>
           <button
             type="button"
-            onClick={() => setProd({ ...prod, variants: [...(prod.variants || []), { id: '', label: '', size: '', unit: '', retailPrice: '', contractorPrice: '', bulkPrice: '', moq: '' }] })}
+            onClick={() => setProd({ ...prod, variants: [...(prod.variants || []), { id: '', label: '', size: '', unit: '', retailPrice: '', mrp: '', contractorPrice: '', bulkPrice: '', moq: '' }] })}
             className="flex items-center gap-1 text-xs font-bold text-brand hover:text-brand-dark"
           >
             <PlusCircle className="h-4 w-4" /> Add Variant
@@ -475,7 +475,7 @@ export function AdminMartProductsTab() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-slate-600">Retail Price *</label>
                   <input
@@ -483,6 +483,16 @@ export function AdminMartProductsTab() {
                     type="number"
                     value={variant.retailPrice || ''}
                     onChange={(e) => { const v = [...prod.variants]; v[idx].retailPrice = e.target.value; setProd({...prod, variants: v}) }}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600">MRP (offer strike-through)</label>
+                  <input
+                    type="number"
+                    value={variant.mrp || ''}
+                    onChange={(e) => { const v = [...prod.variants]; v[idx].mrp = e.target.value; setProd({...prod, variants: v}) }}
+                    placeholder="Optional"
                     className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand"
                   />
                 </div>

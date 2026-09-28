@@ -16,7 +16,7 @@ import { Container } from '../ui/Container'
 import { useLandingCta } from '../../hooks/useLandingCta.js'
 import { optimizeImage } from '../../lib/imageUrl.js'
 
-const HERO_IMG = '/assets/images/labour_chowck_hero_worker_final.png'
+const HERO_IMG = '/assets/images/mappto_hero_worker_final.png'
 
 const pillars = [
   { id: 'labour', label: 'Hire Labour', hint: 'Homes & sites', Icon: HardHat, href: '#labour' },
@@ -135,7 +135,7 @@ export function Hero({ groups = [], stats }) {
             >
               Book Aadhaar-verified workers in minutes, staff corporate projects at scale, buy
               cement-to-safety-gear on BuildMart, and grow as a vendor with your own crew and
-              catalogue. LaborChowck keeps every step tracked, priced, and paid digitally.
+              catalogue. Mappto keeps every step tracked, priced, and paid digitally.
             </motion.p>
           </div>
 
@@ -157,7 +157,7 @@ export function Hero({ groups = [], stats }) {
 
           <motion.ul
             className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-            aria-label="What you can do on LaborChowck"
+            aria-label="What you can do on Mappto"
             initial="hidden"
             animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.28 } } }}
@@ -213,7 +213,7 @@ export function Hero({ groups = [], stats }) {
             <div className="absolute inset-x-6 top-10 bottom-0 rounded-[2.5rem] bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2232%22%20height=%2232%22%3E%3Ccircle%20cx=%222%22%20cy=%222%22%20r=%221.2%22%20fill=%22%23ffffff%22%20fill-opacity=%22.16%22/%3E%3C/svg%3E')]" />
             <motion.img
               src={HERO_IMG}
-              alt="LaborChowck worker with hard hat and tools"
+              alt="Mappto worker with hard hat and tools"
               className="absolute bottom-0 left-1/2 z-10 h-[96%] w-auto -translate-x-1/2 object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.35)]"
               style={{ y: imgY }}
               fetchPriority="high"

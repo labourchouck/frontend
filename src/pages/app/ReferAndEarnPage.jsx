@@ -74,7 +74,7 @@ export function ReferAndEarnPage() {
   const joiningBonus = data?.config?.refereeReward ?? 0
   const onBooking = data?.config?.rewardTrigger === 'FIRST_BOOKING'
 
-  const shareMessage = `Book verified workers on LaborChowck. Use my code ${code} when you sign up${
+  const shareMessage = `Book verified workers on Mappto. Use my code ${code} when you sign up${
     joiningBonus > 0 ? ` and get ${formatInr(joiningBonus)} in your wallet` : ''
   }. ${link}`
 
@@ -91,7 +91,7 @@ export function ReferAndEarnPage() {
   const share = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'LaborChowck', text: shareMessage, url: link })
+        await navigator.share({ title: 'Mappto', text: shareMessage, url: link })
         return
       } catch {
         // User dismissed the sheet; fall through to WhatsApp.

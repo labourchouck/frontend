@@ -4,12 +4,24 @@ import { GlassPanel } from '../ui/GlassPanel.jsx'
 
 const STATUS_STYLES = {
   CREATED: 'bg-amber-100 text-amber-800 border-amber-200',
+  BROADCASTING: 'bg-amber-100 text-amber-800 border-amber-200',
   ACCEPTED: 'bg-blue-100 text-blue-800 border-blue-200',
+  ASSIGNED: 'bg-blue-100 text-blue-800 border-blue-200',
   EN_ROUTE: 'bg-purple-100 text-purple-800 border-purple-200',
   STARTED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   COMPLETED: 'bg-slate-100 text-slate-800 border-slate-200',
   CANCELLED: 'bg-rose-100 text-rose-800 border-rose-200',
+  FAILED: 'bg-rose-100 text-rose-800 border-rose-200',
+  REFUNDED: 'bg-slate-100 text-slate-800 border-slate-200',
 }
+
+const STATUS_LABELS = {
+  BROADCASTING: 'Finding worker',
+  EN_ROUTE: 'On the way',
+  STARTED: 'In progress',
+}
+
+const CLOSED_STATUSES = new Set(['CANCELLED', 'FAILED', 'REFUNDED'])
 
 export function B2cBookingCard({ booking, isLabour }) {
   const navigate = useNavigate()
@@ -17,7 +29,7 @@ export function B2cBookingCard({ booking, isLabour }) {
   const subcategory = typeof booking.subcategoryId === 'object' ? booking.subcategoryId : null
   const isUnpaid = booking.paymentMethod === 'ONLINE' && booking.paymentStatus !== 'PAID'
   const isUnreviewed = !booking.review
-  const isActive = status !== 'CANCELLED' && (status !== 'COMPLETED' || isUnpaid || isUnreviewed)
+  const isActive = !CLOSED_STATUSES.has(status) && (status !== 'COMPLETED' || isUnpaid || isUnreviewed)
 
   return (
     <GlassPanel
@@ -34,7 +46,7 @@ export function B2cBookingCard({ booking, isLabour }) {
           <div className="min-w-0 flex-1 pr-3">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm ${STATUS_STYLES[status] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                {status}
+                {STATUS_LABELS[status] || status.replace(/_/g, ' ')}
               </span>
               {booking.type && (
                 <>
@@ -117,7 +129,7 @@ export function B2cBookingCard({ booking, isLabour }) {
                   <div className="flex items-center gap-1.5 text-xs mt-0.5">
                     <span className="font-extrabold text-slate-700">{booking.paymentMethod}</span>
                     <span className="text-[10px] text-slate-300">•</span>
-                    <span className={`font-bold ${booking.paymentStatus === 'COMPLETED' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    <span className={`font-bold ${booking.paymentStatus === 'PAID' ? 'text-emerald-600' : 'text-amber-600'}`}>
                       {booking.paymentStatus}
                     </span>
                   </div>

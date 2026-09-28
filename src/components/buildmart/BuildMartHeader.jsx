@@ -1,4 +1,4 @@
-import { Menu, ChevronDown, User, ShoppingBag, MapPin } from 'lucide-react'
+import { Menu, ChevronDown, MapPin } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { readAppUserLocation } from '../../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../app/AppUserLocationModal.jsx'
@@ -26,7 +26,7 @@ export function BuildMartHeader({ onOpenDrawer }) {
     if (la != null && ln != null) {
       return 'Current location'
     }
-    return 'Your location'
+    return 'Set your location'
   }, [appLocation])
 
   return (
@@ -43,18 +43,15 @@ export function BuildMartHeader({ onOpenDrawer }) {
           </button>
 
           <div className="flex items-center gap-2">
-            <span className="flex h-[34px] items-center rounded-lg bg-[#00A64C] px-2.5 text-xs font-bold text-white tracking-wide">
-              60 Mins
-            </span>
-            <div className="flex flex-col">
+            <div className="flex min-w-0 flex-col">
               <span className="text-[11px] text-slate-500 font-medium">Deliver To</span>
               <button
                 onClick={() => setLocationModalOpen(true)}
-                className="flex items-center gap-0.5 text-sm font-bold text-slate-800 truncate max-w-[120px] -mt-0.5"
+                className="flex min-w-0 max-w-[150px] items-center gap-0.5 text-sm font-bold text-slate-800 -mt-0.5"
               >
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden />
                 <span className="truncate">{individualLocationTitle}</span>
-                <ChevronDown className="h-4 w-4 shrink-0" />
+                <ChevronDown className="h-4 w-4 shrink-0" aria-hidden />
               </button>
             </div>
           </div>
@@ -62,7 +59,7 @@ export function BuildMartHeader({ onOpenDrawer }) {
 
         {/* Right section (Logo) */}
         <div className="flex items-center">
-          <img src="/assets/images/labour_chowck_logo.png" alt="LaborChowck" className="h-10 w-auto scale-125 origin-left object-contain" />
+          <img src="/assets/images/mappto_logo.png" alt="Mappto" className="h-9 w-9 rounded-xl object-contain" />
         </div>
       </header>
 

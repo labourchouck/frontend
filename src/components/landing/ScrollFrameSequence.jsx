@@ -118,10 +118,10 @@ export function ScrollFrameSequence() {
 
   if (reduce) {
     return (
-      <section id="story" className="relative bg-slate-950" aria-label="LaborChowck on site">
+      <section id="story" className="relative bg-slate-950" aria-label="Mappto on site">
         <img
           src={frameSrc(60)}
-          alt="Construction site with LaborChowck workers"
+          alt="Construction site with Mappto workers"
           className="h-[70vh] w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
@@ -140,7 +140,7 @@ export function ScrollFrameSequence() {
       ref={sectionRef}
       className="relative bg-slate-950"
       style={{ height: '320vh' }}
-      aria-label="LaborChowck on site"
+      aria-label="Mappto on site"
     >
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(28,175,98,0.18),transparent)]" />
@@ -177,7 +177,7 @@ export function ScrollFrameSequence() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-bright opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-bright" />
             </span>
-            Scroll to see a day on a LaborChowck site
+            Scroll to see a day on a Mappto site
           </div>
 
           <div className="absolute inset-x-6 bottom-6 flex items-end justify-between gap-4 sm:inset-x-10">

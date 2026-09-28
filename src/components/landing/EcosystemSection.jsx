@@ -7,8 +7,8 @@ import { useLandingCta } from '../../hooks/useLandingCta.js'
 import { optimizeImage } from '../../lib/imageUrl.js'
 
 const FALLBACK = {
-  labour: '/assets/images/labour_chowck_hero_worker.jpg',
-  corporate: '/assets/images/labour_chowck_hero_cleaning_worker.jpg',
+  labour: '/assets/images/mappto_hero_worker.jpg',
+  corporate: '/assets/images/mappto_hero_cleaning_worker.jpg',
   buildmart: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=900&q=70',
   vendor: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&q=70',
 }
@@ -91,7 +91,7 @@ export function EcosystemSection({ groups = [], products = [], banners = [] }) {
         <SectionHeading
           titleId="ecosystem-heading"
           eyebrow="What’s inside"
-          title="Four products. One LaborChowck account."
+          title="Four products. One Mappto account."
           subtitle="Whether you need one plumber for a day, 200 workers for a plant, ten tonnes of sand, or a way to sell your services and stock, there’s a dedicated space for you."
           align="center"
         />

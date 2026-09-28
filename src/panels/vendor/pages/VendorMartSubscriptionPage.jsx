@@ -78,7 +78,7 @@ export function VendorMartSubscriptionPage() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
         amount: initRes.data.order.amount,
         currency: initRes.data.order.currency,
-        name: 'LaborChowck',
+        name: 'Mappto',
         description: `Subscription to ${plan.name}`,
         order_id: initRes.data.order.id,
         handler: async function (response) {
