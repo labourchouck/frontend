@@ -17,6 +17,8 @@ import { HomeServicePickerSheet } from '../../../components/app/individual/home/
 import { HomeActiveBookingCard } from '../../../components/app/individual/home/HomeActiveBookingCard.jsx'
 import { HomeReferCard } from '../../../components/app/individual/home/HomeReferCard.jsx'
 import { HomeFaqSection } from '../../../components/app/individual/home/HomeFaqSection.jsx'
+import { HomeInlineBanner } from '../../../components/app/individual/home/HomeInlineBanner.jsx'
+import { fetchActiveBanners } from '../../../api/bannersApi.js'
 import { startServiceBooking, subcategoryRouteState } from '../../../components/app/individual/home/homeBooking.js'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { fetchDiscoverLabour, fetchDiscoverLabours } from '../../../api/discoverLaboursApi.js'
@@ -31,6 +33,9 @@ import { enrichDiscoverLabourUi } from '../../../lib/discoverLabourDummyUi.js'
 import { getCategoryImageUrl } from '../../../lib/labourCategoryDisplay.js'
 
 const ACTIVE_STATUSES = ['CREATED', 'BROADCASTING', 'ACCEPTED', 'ASSIGNED', 'EN_ROUTE', 'STARTED']
+
+/** Trade-section indexes followed by an in-feed promo banner (alternating with the rails at 3, 5). */
+const INLINE_BANNER_AFTER = [2, 4]
 
 function formatBookingDay(serviceDate) {
   if (!serviceDate) return 'Soon'
@@ -159,6 +164,9 @@ export function IndividualHomeScreen({ user }) {
   const [activeSubscription, setActiveSubscription] = useState(null)
   const [referralReward, setReferralReward] = useState(0)
 
+  const [banners, setBanners] = useState([])
+  const [bannersLoading, setBannersLoading] = useState(true)
+
   const [pickerMode, setPickerMode] = useState(null)
   const [quickBookItem, setQuickBookItem] = useState(null)
 
@@ -256,6 +264,21 @@ export function IndividualHomeScreen({ user }) {
 
   useEffect(() => {
     let cancelled = false
+    fetchActiveBanners()
+      .then((res) => {
+        if (!cancelled) setBanners(res.data?.banners ?? [])
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setBannersLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
     fetchAppMartProducts()
       .then((res) => {
         if (!cancelled) setProducts((res?.data ?? res ?? []).slice(0, 8))
@@ -306,7 +329,14 @@ export function IndividualHomeScreen({ user }) {
         actionLabel="See all"
         onAction={() => selectTrade(String(group._id))}
       />
-      <HomeSkillGrid group={group} skills={group.categories || []} onOpenSkill={openSkill} colorOffset={index} />
+      <HomeSkillGrid
+        group={group}
+        skills={group.categories || []}
+        onOpenSkill={openSkill}
+        onBook={setQuickBookItem}
+        onSeeAll={() => selectTrade(String(group._id))}
+        colorOffset={index}
+      />
     </section>
   )
 
@@ -325,7 +355,7 @@ export function IndividualHomeScreen({ user }) {
           <HomeTradeFeed group={activeTrade} onOpenSkill={openSkill} onBook={setQuickBookItem} />
         ) : (
           <>
-            <IndividualHomeHeroCarousel />
+            <HomeModeCards onPickMode={setPickerMode} />
 
             {ongoingBookings.length > 0 || activeSubscription ? (
               <div className="space-y-3">
@@ -342,7 +372,7 @@ export function IndividualHomeScreen({ user }) {
               </div>
             ) : null}
 
-            <HomeModeCards onPickMode={setPickerMode} />
+            <IndividualHomeHeroCarousel banners={banners} loading={bannersLoading} />
 
             {groupsLoading ? (
               <div className="grid grid-cols-4 gap-2.5">
@@ -355,6 +385,11 @@ export function IndividualHomeScreen({ user }) {
             {tradeGroups.map((group, index) => (
               <Fragment key={String(group._id)}>
                 {tradeSection(group, index)}
+                {INLINE_BANNER_AFTER.indexOf(index) !== -1 && INLINE_BANNER_AFTER.indexOf(index) < banners.length ? (
+                  <HomeInlineBanner
+                    banner={banners[(INLINE_BANNER_AFTER.indexOf(index) + 2) % banners.length]}
+                  />
+                ) : null}
                 {index === 1 ? (
                   <HomeServiceRail
                     title="Popular services"

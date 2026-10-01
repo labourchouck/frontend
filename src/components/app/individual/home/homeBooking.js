@@ -18,6 +18,13 @@ export function flattenServices(tradeGroups) {
   return rows
 }
 
+/** Opens an admin-set banner link: in-app paths via the router, full URLs in a new tab. */
+export function openBannerTarget(navigate, targetUrl) {
+  const target = String(targetUrl || '').trim()
+  if (target.startsWith('/')) navigate(target)
+  else if (/^https?:\/\//i.test(target)) window.open(target, '_blank', 'noopener,noreferrer')
+}
+
 export function formatRupees(amount) {
   return `₹${Number(amount || 0).toLocaleString('en-IN')}`
 }
