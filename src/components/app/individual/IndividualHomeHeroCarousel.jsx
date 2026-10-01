@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { fetchActiveBanners } from '../../../api/bannersApi.js'
 
-export function IndividualHomeHeroCarousel({ onBook }) {
+export function IndividualHomeHeroCarousel() {
+  const navigate = useNavigate()
   const [index, setIndex] = useState(0)
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
@@ -43,19 +44,33 @@ export function IndividualHomeHeroCarousel({ onBook }) {
     return null
   }
 
-  const slide = banners[index] || banners[0]
+  const target = String(banners[index]?.targetUrl || '').trim()
+  const openTarget = () => {
+    if (target.startsWith('/')) navigate(target)
+    else if (/^https?:\/\//i.test(target)) window.open(target, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <section aria-label="Offers" className="mb-1">
-      <article className="lc-home-hero-slide !min-h-0 !bg-transparent aspect-[4/1] relative overflow-hidden rounded-[1.25rem]">
-        <img
-          key={slide._id}
-          src={slide.imageUrl}
-          alt=""
-          className="w-full h-full object-cover shadow-sm"
-          loading="lazy"
-          decoding="async"
-        />
+      <article
+        className={`lc-home-hero-slide !min-h-0 !bg-slate-100 aspect-[4/1] relative overflow-hidden rounded-[1.25rem] ${
+          target ? 'cursor-pointer' : ''
+        }`}
+        onClick={target ? openTarget : undefined}
+        role={target ? 'link' : undefined}
+      >
+        {banners.map((b, i) => (
+          <img
+            key={b._id}
+            src={b.imageUrl}
+            alt=""
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+              i === index ? 'opacity-100' : 'opacity-0'
+            }`}
+            decoding="async"
+            aria-hidden={i !== index}
+          />
+        ))}
       </article>
 
       {banners.length > 1 && (

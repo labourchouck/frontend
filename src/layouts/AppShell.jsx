@@ -224,7 +224,7 @@ export function AppShell() {
   }, [appLocation, isIndividualAppHome])
 
   return (
-    <div className="relative min-h-dvh w-full overflow-x-hidden text-slate-900">
+    <div className="relative min-h-dvh w-full overflow-x-clip text-slate-900">
       <AppAmbientBackground />
 
       <AnimatePresence>
@@ -371,7 +371,7 @@ export function AppShell() {
         {!hideShellHeader ? (
           <header
             ref={headerRef}
-            className={`sticky top-0 z-30 ${isIndividualAppHome ? 'bg-brand px-4 pb-3.5 pt-3' : 'px-3 pt-3'
+            className={`z-30 ${isIndividualAppHome ? 'relative bg-brand px-4 pb-3.5 pt-3' : 'sticky top-0 px-3 pt-3'
               }`}
           >
             {isIndividualAppHome ? (
