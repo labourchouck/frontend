@@ -1,5 +1,6 @@
-import { ChevronRight, Star } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { AppListSkeleton } from '../../app-ui/feedback/AppListSkeleton.jsx'
+import { HomeSectionHeader } from './home/HomeSectionHeader.jsx'
 import { hashSeed } from '../../../lib/discoverLabourDummyUi.js'
 
 export function IndividualHomeWorkerCarousel({
@@ -16,20 +17,8 @@ export function IndividualHomeWorkerCarousel({
   }
 
   return (
-    <section className="mb-2" aria-label={title}>
-      <div className="lc-home-section-head flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">{title}</h3>
-        {onEmptyAction ? (
-          <button
-            type="button"
-            onClick={onEmptyAction}
-            className="flex items-center gap-0.5 text-xs sm:text-sm font-bold text-brand transition-colors hover:text-brand-dark active:scale-95"
-          >
-            {emptyAction}
-            <ChevronRight className="h-4 w-4 shrink-0 text-brand" />
-          </button>
-        ) : null}
-      </div>
+    <section aria-label={title}>
+      <HomeSectionHeader title={title} actionLabel={emptyAction} onAction={onEmptyAction} />
 
       {error ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-medium text-amber-900">
