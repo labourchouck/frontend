@@ -1,28 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchActiveBanners } from '../../../api/bannersApi.js'
+import { openBannerTarget } from './home/homeBooking.js'
 
-export function IndividualHomeHeroCarousel() {
+export function IndividualHomeHeroCarousel({ banners = [], loading = false }) {
   const navigate = useNavigate()
   const [index, setIndex] = useState(0)
-  const [banners, setBanners] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    fetchActiveBanners()
-      .then((res) => {
-        if (!cancelled) {
-          setBanners(res.data?.banners ?? [])
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     if (banners.length <= 1) return
@@ -35,7 +17,7 @@ export function IndividualHomeHeroCarousel() {
   if (loading) {
     return (
       <section className="mb-1 animate-pulse">
-        <article className="lc-home-hero-slide bg-slate-200 !min-h-0 aspect-[4/1]" />
+        <article className="lc-home-hero-slide bg-slate-200 !min-h-0 aspect-[3/1]" />
       </section>
     )
   }
@@ -45,18 +27,14 @@ export function IndividualHomeHeroCarousel() {
   }
 
   const target = String(banners[index]?.targetUrl || '').trim()
-  const openTarget = () => {
-    if (target.startsWith('/')) navigate(target)
-    else if (/^https?:\/\//i.test(target)) window.open(target, '_blank', 'noopener,noreferrer')
-  }
 
   return (
     <section aria-label="Offers" className="mb-1">
       <article
-        className={`lc-home-hero-slide !min-h-0 !bg-slate-100 aspect-[4/1] relative overflow-hidden rounded-[1.25rem] ${
+        className={`lc-home-hero-slide !min-h-0 !bg-slate-100 aspect-[3/1] relative overflow-hidden rounded-[1.25rem] ${
           target ? 'cursor-pointer' : ''
         }`}
-        onClick={target ? openTarget : undefined}
+        onClick={target ? () => openBannerTarget(navigate, target) : undefined}
         role={target ? 'link' : undefined}
       >
         {banners.map((b, i) => (
