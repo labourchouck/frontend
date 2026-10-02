@@ -32,13 +32,13 @@ export function HomeModeCards({ onPickMode }) {
           className={`relative flex h-[92px] flex-col items-start justify-center overflow-hidden rounded-2xl px-3.5 text-left transition active:scale-[0.97] ${m.tone}`}
           aria-label={`${m.title} booking`}
         >
-          <span className="text-[15px] font-black tracking-tight text-slate-900">{m.title}</span>
-          <span className="mt-0.5 text-[11px] font-medium text-slate-600">{m.desc}</span>
-          <span className={`mt-1.5 flex items-center text-[11px] font-extrabold ${m.cta}`}>
+          <span className="relative z-10 text-[15px] font-black tracking-tight text-slate-900">{m.title}</span>
+          <span className="relative z-10 mt-0.5 text-[11px] font-medium text-slate-600">{m.desc}</span>
+          <span className={`relative z-10 mt-1.5 flex items-center text-[11px] font-extrabold ${m.cta}`}>
             Book now
             <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </span>
-          <img src={m.img} alt="" className="pointer-events-none absolute -bottom-1 -right-1 h-16 w-16 object-contain" />
+          <img src={m.img} alt="" className="pointer-events-none absolute -bottom-1 right-1 h-16 w-16 object-contain" />
         </button>
       ))}
     </div>

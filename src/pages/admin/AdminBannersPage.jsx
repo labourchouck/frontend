@@ -1,8 +1,173 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Image as ImageIcon, Loader2, RefreshCw, Save } from 'lucide-react'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
-import { fetchAdminBanners, createAdminBanner, deleteAdminBanner } from '../../api/adminBannersApi.js'
+import { fetchAdminBanners, createAdminBanner, updateAdminBanner, deleteAdminBanner } from '../../api/adminBannersApi.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+
+/** Where a tap on the banner takes the user. `/app?book=…` opens the home booking picker. */
+const LINK_PRESETS = [
+  { value: '', label: 'No link' },
+  { value: '/app?book=instant', label: 'Instant booking picker' },
+  { value: '/app?book=scheduled', label: 'Schedule booking picker' },
+  { value: '/app/search', label: 'Search services' },
+  { value: '/app/buildmart', label: 'BuildMart' },
+  { value: '/app/refer', label: 'Refer & earn' },
+  { value: '/app/subscriptions', label: 'Subscriptions' },
+]
+const CUSTOM = '__custom__'
+
+function presetFor(url) {
+  return LINK_PRESETS.some((p) => p.value === url) ? url : CUSTOM
+}
+
+function BannerCard({ banner, onChanged, onError }) {
+  const [isActive, setIsActive] = useState(banner.isActive !== false)
+  const [sortOrder, setSortOrder] = useState(String(banner.sortOrder ?? 0))
+  const [targetUrl, setTargetUrl] = useState(banner.targetUrl || '')
+  const [linkChoice, setLinkChoice] = useState(presetFor(banner.targetUrl || ''))
+  const [saving, setSaving] = useState(false)
+  const replaceRef = useRef(null)
+
+  const dirty =
+    isActive !== (banner.isActive !== false) ||
+    Number(sortOrder) !== Number(banner.sortOrder ?? 0) ||
+    targetUrl.trim() !== (banner.targetUrl || '')
+
+  const save = async (file) => {
+    const url = targetUrl.trim()
+    if (url && !url.startsWith('/') && !/^https?:\/\//i.test(url)) {
+      onError('Custom link must start with / (in-app page) or http(s)://')
+      return
+    }
+    try {
+      setSaving(true)
+      const formData = new FormData()
+      formData.append('isActive', String(isActive))
+      formData.append('sortOrder', String(Number(sortOrder) || 0))
+      formData.append('targetUrl', url)
+      if (file) formData.append('file', file)
+      await updateAdminBanner(banner._id, formData)
+      await onChanged()
+    } catch (err) {
+      onError(err.message || 'Failed to update banner')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this banner?')) return
+    try {
+      await deleteAdminBanner(banner._id)
+      await onChanged()
+    } catch (err) {
+      onError(err.message || 'Failed to delete banner')
+    }
+  }
+
+  return (
+    <GlassPanel className={`overflow-hidden rounded-xl bg-white shadow-sm ${isActive ? '' : 'opacity-70'}`}>
+      <div className="relative aspect-[3/1] w-full bg-slate-100">
+        <img src={banner.imageUrl} alt="Banner" className="h-full w-full object-cover" />
+        {!isActive ? (
+          <span className="absolute left-2 top-2 rounded-full bg-slate-900/80 px-2 py-0.5 text-[11px] font-bold text-white">
+            Hidden
+          </span>
+        ) : null}
+      </div>
+
+      <div className="space-y-3 p-4">
+        <div className="flex items-center gap-3">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="h-4 w-4 accent-[var(--color-brand,#16a34a)]"
+            />
+            Active
+          </label>
+          <label className="ml-auto flex items-center gap-2 text-sm font-medium text-slate-700">
+            Order
+            <input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm"
+            />
+          </label>
+        </div>
+
+        <label className="block text-sm font-medium text-slate-700">
+          On tap
+          <select
+            value={linkChoice}
+            onChange={(e) => {
+              setLinkChoice(e.target.value)
+              if (e.target.value !== CUSTOM) setTargetUrl(e.target.value)
+            }}
+            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+          >
+            {LINK_PRESETS.map((p) => (
+              <option key={p.value || 'none'} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+            <option value={CUSTOM}>Custom link…</option>
+          </select>
+        </label>
+        {linkChoice === CUSTOM ? (
+          <input
+            type="text"
+            value={targetUrl}
+            onChange={(e) => setTargetUrl(e.target.value)}
+            placeholder="/app/... or https://..."
+            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+          />
+        ) : null}
+
+        <div className="flex items-center gap-2 pt-1">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={replaceRef}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) save(file)
+              e.target.value = ''
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => replaceRef.current?.click()}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Replace image
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
+          <button
+            type="button"
+            onClick={() => save()}
+            disabled={!dirty || saving}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Save
+          </button>
+        </div>
+      </div>
+    </GlassPanel>
+  )
+}
 
 export function AdminBannersPage() {
   const [banners, setBanners] = useState([])
@@ -38,7 +203,7 @@ export function AdminBannersPage() {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('panel', 'APP')
-      
+
       await createAdminBanner(formData)
       await loadBanners()
     } catch (err) {
@@ -51,25 +216,19 @@ export function AdminBannersPage() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this banner?')) return
-    try {
-      setError('')
-      await deleteAdminBanner(id)
-      await loadBanners()
-    } catch (err) {
-      setError(err.message || 'Failed to delete banner')
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Banners</h1>
-        <input 
-          type="file" 
-          accept="image/*" 
-          className="hidden" 
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Banners</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            User app home carousel · lower order shows first · use 1500 × 500 px (3:1) images
+          </p>
+        </div>
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
           ref={fileInputRef}
           onChange={handleFileChange}
         />
@@ -100,25 +259,13 @@ export function AdminBannersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {banners.map(banner => (
-            <GlassPanel key={banner._id} className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
-              <div className="aspect-[21/9] w-full bg-slate-100">
-                <img 
-                  src={banner.imageUrl} 
-                  alt="Banner" 
-                  className="h-full w-full object-cover" 
-                />
-              </div>
-              <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
-                  onClick={() => handleDelete(banner._id)}
-                  className="rounded-full bg-white/90 p-2 text-red-600 shadow-sm transition-colors hover:bg-red-50 hover:text-red-700"
-                  title="Delete banner"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </GlassPanel>
+          {banners.map((banner) => (
+            <BannerCard
+              key={`${banner._id}-${banner.updatedAt}`}
+              banner={banner}
+              onChanged={loadBanners}
+              onError={setError}
+            />
           ))}
         </div>
       )}

@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronRight, Shield } from 'lucide-react'
 import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.js'
@@ -18,6 +18,7 @@ import { HomeActiveBookingCard } from '../../../components/app/individual/home/H
 import { HomeReferCard } from '../../../components/app/individual/home/HomeReferCard.jsx'
 import { HomeFaqSection } from '../../../components/app/individual/home/HomeFaqSection.jsx'
 import { HomeInlineBanner } from '../../../components/app/individual/home/HomeInlineBanner.jsx'
+import { HomeBrandFooter } from '../../../components/app/individual/home/HomeBrandFooter.jsx'
 import { fetchActiveBanners } from '../../../api/bannersApi.js'
 import { startServiceBooking, subcategoryRouteState } from '../../../components/app/individual/home/homeBooking.js'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
@@ -36,6 +37,9 @@ const ACTIVE_STATUSES = ['CREATED', 'BROADCASTING', 'ACCEPTED', 'ASSIGNED', 'EN_
 
 /** Trade-section indexes followed by an in-feed promo banner (alternating with the rails at 3, 5). */
 const INLINE_BANNER_AFTER = [2, 4]
+
+/** `?book=` values (e.g. from an admin banner link `/app?book=scheduled`) that open the service picker. */
+const BOOK_MODES = ['instant', 'scheduled']
 
 function formatBookingDay(serviceDate) {
   if (!serviceDate) return 'Soon'
@@ -167,7 +171,7 @@ export function IndividualHomeScreen({ user }) {
   const [banners, setBanners] = useState([])
   const [bannersLoading, setBannersLoading] = useState(true)
 
-  const [pickerMode, setPickerMode] = useState(null)
+  const [chosenPickerMode, setChosenPickerMode] = useState(null)
   const [quickBookItem, setQuickBookItem] = useState(null)
 
   const activeTrade = tradeGroups.find((g) => String(g._id) === activeTradeId) || null
@@ -178,6 +182,22 @@ export function IndividualHomeScreen({ user }) {
   }, [tradeGroups])
 
   const popularItems = useMemo(() => pickAcrossTrades(tradeGroups, 2, 12), [tradeGroups])
+
+  // Deep link into the picker: admin banners can point at /app?book=instant|scheduled.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const bookParam = searchParams.get('book')
+  const pickerMode = chosenPickerMode || (BOOK_MODES.includes(bookParam) ? bookParam : null)
+  const setPickerMode = useCallback(
+    (mode) => {
+      setChosenPickerMode(mode)
+      if (bookParam) {
+        const next = new URLSearchParams(searchParams)
+        next.delete('book')
+        setSearchParams(next, { replace: true })
+      }
+    },
+    [bookParam, searchParams, setSearchParams],
+  )
 
   const ongoingBookings = useMemo(() => {
     return [...bookings]
@@ -421,6 +441,8 @@ export function IndividualHomeScreen({ user }) {
           </>
         )}
       </div>
+
+      {activeTrade ? null : <HomeBrandFooter tradeGroups={tradeGroups} />}
 
       <HomeServicePickerSheet
         open={Boolean(pickerMode)}
