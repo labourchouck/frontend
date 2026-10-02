@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { footerLinks, SITE } from '../../data/landingContent'
 import { Container } from '../ui/Container'
 
@@ -121,11 +122,17 @@ export function Footer() {
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 text-xs text-zinc-500 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">
-            {footerLinks.legal.map((l) => (
-              <a key={l.label} href={l.href} className="hover:text-zinc-300">
-                {l.label}
-              </a>
-            ))}
+            {footerLinks.legal.map((l) =>
+              l.href.startsWith('/') ? (
+                <Link key={l.label} to={l.href} className="hover:text-zinc-300">
+                  {l.label}
+                </Link>
+              ) : (
+                <a key={l.label} href={l.href} className="hover:text-zinc-300">
+                  {l.label}
+                </a>
+              ),
+            )}
           </div>
         </div>
       </Container>

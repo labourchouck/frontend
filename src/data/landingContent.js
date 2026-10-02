@@ -403,8 +403,8 @@ export const footerLinks = {
     { label: 'Press', href: '#footer' },
   ],
   legal: [
-    { label: 'Terms', href: '#footer' },
-    { label: 'Privacy', href: '#footer' },
-    { label: 'Grievance', href: '#footer' },
+    { label: 'Terms', href: '/terms' },
+    { label: 'Privacy', href: '/privacy' },
+    { label: 'Grievance', href: '/privacy#grievance' },
   ],
 }
