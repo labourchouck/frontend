@@ -27,15 +27,16 @@ export function IndividualHomeHeroCarousel({ banners = [], loading = false }) {
   }
 
   const target = String(banners[index]?.targetUrl || '').trim()
+  const handleClick = target ? () => openBannerTarget(navigate, target) : undefined
 
   return (
     <section aria-label="Offers" className="mb-1">
       <article
         className={`lc-home-hero-slide !min-h-0 !bg-slate-100 aspect-[3/1] relative overflow-hidden rounded-[1.25rem] ${
-          target ? 'cursor-pointer' : ''
+          handleClick ? 'cursor-pointer' : ''
         }`}
-        onClick={target ? () => openBannerTarget(navigate, target) : undefined}
-        role={target ? 'link' : undefined}
+        onClick={handleClick}
+        role={handleClick ? 'link' : undefined}
       >
         {banners.map((b, i) => (
           <img
