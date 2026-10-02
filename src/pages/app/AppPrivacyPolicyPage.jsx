@@ -1,6 +1,7 @@
-import { LegalDocument } from '../../components/legal/LegalDocument.jsx'
-import { PRIVACY } from '../../data/legalContent.js'
+import { useAuth } from '../../hooks/useAuth.js'
+import { DynamicLegalDocument } from '../../components/legal/DynamicLegalDocument.jsx'
 
 export function AppPrivacyPolicyPage() {
-  return <LegalDocument doc={PRIVACY} variant="app" />
+  const { user } = useAuth()
+  return <DynamicLegalDocument kind="privacy" role={user?.role || 'individual'} variant="app" />
 }

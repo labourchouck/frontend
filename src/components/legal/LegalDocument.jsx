@@ -6,6 +6,17 @@ import { COMPANY, LAST_UPDATED, LEGAL_DOCS } from '../../data/legalContent.js'
 const OTHER_DOC_PATH = {
   public: { terms: '/privacy', privacy: '/terms' },
   app: { terms: '/app/privacy-policy', privacy: '/app/terms' },
+  corporate: { terms: '/corporate/privacy-policy', privacy: '/corporate/terms' },
+  vendor: { terms: '/vendor/privacy-policy', privacy: '/vendor/terms' },
+}
+
+/** Paragraphs in the intro are separated by one or more blank lines. */
+const BLANK_LINES = /\n{2,}/
+
+function formatUpdated(updatedAt) {
+  const d = updatedAt ? new Date(updatedAt) : null
+  if (!d || Number.isNaN(d.getTime())) return LAST_UPDATED
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function Block({ block }) {
@@ -86,7 +97,7 @@ function GrievanceContacts() {
  * Renders the Terms or Privacy Policy. `variant="app"` is used inside the app shell,
  * `variant="public"` on the website pages.
  */
-export function LegalDocument({ doc, variant = 'public' }) {
+export function LegalDocument({ doc, variant = 'public', updatedAt = null }) {
   const { hash } = useLocation()
   const otherDoc = doc.kind === 'terms' ? LEGAL_DOCS.privacy : LEGAL_DOCS.terms
 
@@ -97,14 +108,24 @@ export function LegalDocument({ doc, variant = 'public' }) {
   }, [hash])
 
   return (
-    <article className={variant === 'app' ? 'pb-6' : ''}>
+    <article className={variant === 'public' ? '' : 'pb-6'}>
       <header>
         <h1 className="text-[26px] font-black leading-tight tracking-tight text-slate-900">{doc.title}</h1>
         <p className="mt-1.5 text-[14px] leading-relaxed text-slate-500">{doc.subtitle}</p>
         <p className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-100">
-          Last updated: {LAST_UPDATED}
+          Last updated: {formatUpdated(updatedAt)}
         </p>
-        <p className="mt-4 text-[14px] leading-relaxed text-slate-600">{doc.intro}</p>
+        {doc.intro ? (
+          <div className="mt-4 space-y-3">
+            {String(doc.intro)
+              .split(BLANK_LINES)
+              .map((para, i) => (
+                <p key={i} className="whitespace-pre-line text-[14px] leading-relaxed text-slate-600">
+                  {para}
+                </p>
+              ))}
+          </div>
+        ) : null}
       </header>
 
       <nav aria-label="Contents" className="mt-5 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/70">
