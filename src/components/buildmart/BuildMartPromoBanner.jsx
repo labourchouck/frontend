@@ -5,6 +5,7 @@ import { fetchAppMartBanners } from '../../api/buildmartApi.js'
 export function BuildMartPromoBanner() {
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
+  const [active, setActive] = useState(0)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -50,7 +51,11 @@ export function BuildMartPromoBanner() {
     <div className="mt-2 w-full px-4">
       <div 
         ref={scrollRef}
-        className="flex w-full snap-x snap-mandatory items-start gap-4 overflow-x-auto pb-4 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth"
+        onScroll={(e) => {
+          const el = e.currentTarget
+          setActive(Math.round(el.scrollLeft / Math.max(el.clientWidth, 1)))
+        }}
+        className="flex w-full snap-x snap-mandatory items-start gap-4 overflow-x-auto pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth"
       >
         {banners.map((banner) => {
           const content = (
@@ -88,7 +93,7 @@ export function BuildMartPromoBanner() {
             </>
           )
 
-          const containerClass = "group relative w-full min-w-full shrink-0 snap-center overflow-hidden rounded-[1.25rem] bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.08)] aspect-[16/9]"
+          const containerClass = "group relative w-full min-w-full shrink-0 snap-center overflow-hidden rounded-[1.25rem] bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.08)] aspect-[2/1]"
 
           return banner.categoryId ? (
             <Link 
@@ -108,6 +113,16 @@ export function BuildMartPromoBanner() {
           )
         })}
       </div>
+      {banners.length > 1 ? (
+        <div className="mb-3 flex justify-center gap-1.5" aria-hidden>
+          {banners.map((b, i) => (
+            <span
+              key={b.id || b._id || i}
+              className={`h-1.5 rounded-full transition-all ${i === active ? 'w-5 bg-brand' : 'w-1.5 bg-slate-300'}`}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

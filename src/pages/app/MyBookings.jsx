@@ -51,27 +51,34 @@ export function MyBookings() {
 
   return (
     <div className="space-y-4 pb-8">
-      <AppStackScreenHeader title="My bookings" />
-
-      <GlassPanel className="p-1.5">
-        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100/90 p-0.5">
+      <AppStackScreenHeader variant="brand" title="My bookings" subtitle="Track ongoing jobs and past bookings">
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-white/15 p-1" role="tablist" aria-label="Booking status">
           {[
-            { id: 'active', label: `Active (${activeBookings.length})` },
-            { id: 'past', label: `Past (${pastBookings.length})` },
+            { id: 'active', label: 'Active', count: activeBookings.length },
+            { id: 'past', label: 'Past', count: pastBookings.length },
           ].map((t) => (
             <button
               key={t.id}
               type="button"
+              role="tab"
+              aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
-              className={`rounded-lg py-2.5 text-xs font-bold transition ${
-                tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
+              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition ${
+                tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-white/90 hover:bg-white/10'
               }`}
             >
               {t.label}
+              <span
+                className={`min-w-[1.25rem] rounded-full px-1.5 py-px text-[10px] font-black ${
+                  tab === t.id ? 'bg-brand text-white' : 'bg-white/20 text-white'
+                }`}
+              >
+                {t.count}
+              </span>
             </button>
           ))}
         </div>
-      </GlassPanel>
+      </AppStackScreenHeader>
 
       {loading ? (
         <div className="flex items-center justify-center py-16">

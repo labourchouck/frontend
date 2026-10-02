@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { fetchLabourCategoriesGrouped } from '../../api/labourCategoriesApi.js'
-import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
 import { IndividualCategorySearchPanel } from '../../components/app/individual/IndividualCategorySearchPanel.jsx'
 
 export function AppIndividualSearchPage() {
@@ -29,7 +28,7 @@ export function AppIndividualSearchPage() {
   }, [])
 
   return (
-    <div className="-mx-4 flex flex-col h-[calc(100dvh-7rem)]">
+    <div className="-mx-4 -mt-2 flex h-[calc(100dvh-8.5rem)] flex-col">
       <div className="flex-1 min-h-0">
         <IndividualCategorySearchPanel tradeGroups={tradeGroups} groupsLoading={loading} />
       </div>

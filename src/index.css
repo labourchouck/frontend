@@ -45,6 +45,14 @@ body {
   outline-offset: 3px;
 }
 
+/* Text fields show focus through their own box styling; the global ring drew a stray green line beside them. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[contenteditable]:focus-visible {
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

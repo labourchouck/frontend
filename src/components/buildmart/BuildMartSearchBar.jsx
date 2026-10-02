@@ -1,8 +1,8 @@
-import { Search, Mic, MicOff, Loader2 } from 'lucide-react'
+import { Search, Mic, MicOff } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
-export function BuildMartSearchBar({ onSearch }) {
-  const [query, setQuery] = useState('')
+export function BuildMartSearchBar({ onSearch, autoFocus = false, initialQuery = '' }) {
+  const [query, setQuery] = useState(initialQuery)
   const [listening, setListening] = useState(false)
   const recognitionRef = useRef(null)
 
@@ -91,6 +91,7 @@ export function BuildMartSearchBar({ onSearch }) {
             setQuery(e.target.value)
             onSearch?.(e.target.value)
           }}
+          autoFocus={autoFocus}
           placeholder={listening ? "Listening... Speak now" : "Search for Cement, Pipes, Tiling..."} 
           className="flex-1 bg-transparent text-sm font-medium text-slate-800 placeholder:text-slate-400 outline-none"
         />

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, Sparkles } from 'lucide-react'
-import { BuildMartProductCard } from '../../../components/buildmart/BuildMartProductCard.jsx'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Sparkles } from 'lucide-react'
+import { MartProductTile } from '../../../components/buildmart/MartProductTile.jsx'
 import { BuildMartSearchBar } from '../../../components/buildmart/BuildMartSearchBar.jsx'
 import { fetchAppMartProducts } from '../../../api/buildmartApi.js'
 import { AppListSkeleton } from '../../../components/app-ui/feedback/AppListSkeleton.jsx'
@@ -9,10 +9,11 @@ import { motion, useReducedMotion } from 'framer-motion'
 
 export function BuildMartCategoryPage() {
   const { categoryId } = useParams()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const [allProducts, setAllProducts] = useState([])
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function BuildMartCategoryPage() {
   }, [categoryId])
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-slate-50 pb-6 -mx-4 -mt-4 sm:mx-0 sm:mt-0">
+    <div className="min-h-[calc(100dvh-4rem)] bg-white pb-6 -mx-4 -mt-4 sm:mx-0 sm:mt-0">
       <header className="sticky top-0 z-30 flex items-center gap-3 bg-white px-4 py-3 shadow-sm">
         <button
           onClick={() => navigate(-1)}
@@ -66,7 +67,11 @@ export function BuildMartCategoryPage() {
         </div>
       </header>
 
-      <BuildMartSearchBar onSearch={setSearchQuery} />
+      <BuildMartSearchBar
+        onSearch={setSearchQuery}
+        initialQuery={searchQuery}
+        autoFocus={searchParams.get('focus') === '1'}
+      />
 
       <div className="px-4 mt-4">
         {loading ? (
@@ -82,9 +87,9 @@ export function BuildMartCategoryPage() {
             <p className="mt-1 text-xs text-slate-500">Check back later for new stock.</p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {products.map((p, i) => (
-              <BuildMartProductCard key={p.id || p._id} product={p} index={i} isCompact />
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5">
+            {products.map((p) => (
+              <MartProductTile key={p.id || p._id} product={p} />
             ))}
           </div>
         )}

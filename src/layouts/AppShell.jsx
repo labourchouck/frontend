@@ -45,6 +45,7 @@ export function AppShell() {
     pathname.startsWith('/app/booking/flow') ||
     pathname.startsWith('/app/tracking') ||
     pathname.startsWith('/app/sub-category/') ||
+    pathname === '/app/search' ||
     pathname.startsWith('/app/active-job') ||
     pathname === '/app/bookings' ||
     pathname === '/app/my-bookings' ||
