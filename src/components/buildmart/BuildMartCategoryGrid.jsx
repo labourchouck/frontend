@@ -18,7 +18,7 @@ export function BuildMartCategoryGrid() {
 
   if (loading) {
     return (
-      <div className="mx-4 mt-6 grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 animate-pulse">
+      <div className="mx-4 mt-3 grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 animate-pulse">
         {[...Array(8)].map((_, i) => (
           <div key={i} className="flex flex-col items-center gap-2">
             <div className="aspect-square w-full rounded-2xl bg-slate-100" />
@@ -30,7 +30,7 @@ export function BuildMartCategoryGrid() {
   }
 
   return (
-    <div className="mx-4 mt-6 grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+    <div className="mx-4 mt-3 grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
       {categories.map((category) => (
         <Link
           to={`/app/buildmart/category/${category.id || category._id}`}

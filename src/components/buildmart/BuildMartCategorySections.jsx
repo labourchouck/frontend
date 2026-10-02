@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Truck, Star, Layers } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { fetchAppMartProducts, fetchAppMartCategories } from '../../api/buildmartApi.js'
-import { formatBuildMartPrice, getBuildMartOffer } from '../../data/buildmartCatalog.js'
+import { MartProductTile } from './MartProductTile.jsx'
 
 export function BuildMartCategorySections() {
   const [products, setProducts] = useState([])
@@ -75,19 +75,27 @@ export function BuildMartCategorySections() {
         return (
           <section key={section.id} className="mx-4">
             {/* Category Header */}
-            <div className="mb-3.5 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-extrabold tracking-tight text-slate-900">
+            <div className="mb-3 flex items-center gap-2.5">
+              {section.icon || section.image ? (
+                <img
+                  src={section.icon || section.image}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded-xl bg-[#eef8f8] object-cover ring-1 ring-slate-200/70"
+                  loading="lazy"
+                />
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate text-lg font-extrabold leading-tight tracking-tight text-slate-900">
                   {section.label || section.name}
                 </h2>
                 <p className="text-[11px] font-medium text-slate-500">
-                  {section.products.length} items available
+                  {section.products.length} {section.products.length === 1 ? 'item' : 'items'}
                 </p>
               </div>
 
               <Link
                 to={`/app/buildmart/category/${section.id}`}
-                className="flex items-center gap-0.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700"
+                className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-brand"
               >
                 <span>See all</span>
                 <ChevronRight className="h-3.5 w-3.5" />
@@ -95,95 +103,10 @@ export function BuildMartCategorySections() {
             </div>
 
             {/* Category Products Horizontal Scroll */}
-            <div className="flex w-full snap-x snap-mandatory items-stretch gap-3.5 overflow-x-auto pb-3 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
-              {section.products.map((product) => {
-                const primaryVariant = product.variants?.[0]
-                const imageUrl = product.images?.[0] || product.image
-                const offer = getBuildMartOffer(primaryVariant)
-
-                return (
-                  <Link
-                    key={product.id || product._id}
-                    to={`/app/buildmart/product/${product.id || product._id}`}
-                    className="group relative flex w-[175px] min-w-[175px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
-                  >
-                    {offer.hasOffer ? (
-                      <span className="absolute right-2 top-2 z-10 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-black text-white shadow-sm">
-                        {offer.discountPercent}% OFF
-                      </span>
-                    ) : null}
-                    {/* Top Row: Brand & Rating / Variant count */}
-                    <div className="flex items-center justify-between gap-1 text-[10px]">
-                      {product.brand ? (
-                        <span className="truncate rounded-md bg-slate-100 px-1.5 py-0.5 font-bold uppercase tracking-wider text-slate-700">
-                          {product.brand}
-                        </span>
-                      ) : <span />}
-
-                      {product.supplier?.rating ? (
-                        <span className="flex items-center gap-0.5 font-extrabold text-amber-600">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          {product.supplier.rating}
-                        </span>
-                      ) : product.variantCount > 1 ? (
-                        <span className="flex items-center gap-0.5 font-bold text-slate-500">
-                          <Layers className="h-3 w-3" />
-                          {product.variantCount} var
-                        </span>
-                      ) : null}
-                    </div>
-
-                    {/* Product Image */}
-                    <div className="relative my-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-slate-50/80 p-2">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={product.name}
-                          className="h-full w-full object-contain mix-blend-multiply transition duration-300 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                          No image
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Delivery Info */}
-                    {product.deliveryInfo && (
-                      <div className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-800">
-                        <Truck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                        <span className="truncate">{product.deliveryInfo}</span>
-                      </div>
-                    )}
-
-                    {/* Product Name */}
-                    <div className="mt-1.5 space-y-1">
-                      <h3 className="line-clamp-2 text-xs font-bold leading-snug text-slate-900 group-hover:text-emerald-700">
-                        {product.name}
-                      </h3>
-
-                      {/* Price Display */}
-                      <div className="flex items-baseline gap-1.5 pt-0.5">
-                        <div className="text-sm font-black text-slate-900">
-                          {primaryVariant && primaryVariant.retailPrice != null
-                            ? formatBuildMartPrice(primaryVariant.retailPrice, primaryVariant.unit)
-                            : product.priceLabel || 'Price on request'}
-                        </div>
-                        {offer.hasOffer ? (
-                          <div className="text-[10px] font-semibold text-slate-400 line-through">{offer.mrpLabel}</div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="mt-3 flex items-center justify-center gap-1 rounded-xl bg-emerald-600 py-1.5 text-xs font-bold text-white transition group-hover:bg-emerald-700 shadow-xs">
-                      <span>View Details</span>
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </div>
-                  </Link>
-                )
-              })}
+            <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {section.products.map((product) => (
+                <MartProductTile key={product.id || product._id} product={product} rail />
+              ))}
             </div>
           </section>
         )

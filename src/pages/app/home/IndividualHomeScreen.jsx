@@ -320,6 +320,10 @@ export function IndividualHomeScreen({ user }) {
   }, [])
 
   const goSearch = useCallback(() => navigate('/app/search'), [navigate])
+  const goVoiceSearch = useCallback(
+    (text) => navigate(`/app/search?q=${encodeURIComponent(text)}`),
+    [navigate],
+  )
   const openSkill = useCallback(
     (group, cat) => navigate(`/app/sub-category/${cat._id}`, { state: subcategoryRouteState(group, cat) }),
     [navigate],
@@ -368,6 +372,7 @@ export function IndividualHomeScreen({ user }) {
         onSelect={selectTrade}
         searchHints={searchHints}
         onSearch={goSearch}
+        onVoiceSearch={goVoiceSearch}
       />
 
       <div className="space-y-6 px-4 pt-4">

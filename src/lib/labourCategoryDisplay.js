@@ -33,6 +33,8 @@ export function flattenTradeSubcategories(tradeGroups) {
         sortOrder: c.sortOrder ?? 0,
         groupId: g._id,
         groupName: g.name,
+        // Lets search match a skill by the services under it ("plumber" → Plumbing & Electrical).
+        serviceNames: (c.services || []).map((s) => s?.name || '').join(' '),
       })
     }
   }

@@ -29,16 +29,16 @@ export function HomeModeCards({ onPickMode }) {
           key={m.id}
           type="button"
           onClick={() => onPickMode(m.id)}
-          className={`relative flex h-[92px] flex-col items-start justify-center overflow-hidden rounded-2xl px-3.5 text-left transition active:scale-[0.97] ${m.tone}`}
+          className={`relative flex h-[92px] flex-col items-start justify-between overflow-hidden rounded-2xl py-2.5 pl-3.5 pr-[70px] text-left transition active:scale-[0.97] ${m.tone}`}
           aria-label={`${m.title} booking`}
         >
           <span className="relative z-10 text-[15px] font-black tracking-tight text-slate-900">{m.title}</span>
-          <span className="relative z-10 mt-0.5 text-[11px] font-medium text-slate-600">{m.desc}</span>
-          <span className={`relative z-10 mt-1.5 flex items-center text-[11px] font-extrabold ${m.cta}`}>
+          <span className="relative z-10 line-clamp-2 min-h-[2.5em] text-[11px] font-medium leading-[1.25] text-slate-600">{m.desc}</span>
+          <span className={`relative z-10 flex items-center text-[11px] font-extrabold ${m.cta}`}>
             Book now
             <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </span>
-          <img src={m.img} alt="" className="pointer-events-none absolute -bottom-1 right-1 h-16 w-16 object-contain" />
+          <img src={m.img} alt="" className="pointer-events-none absolute right-2 top-1/2 h-14 w-14 -translate-y-1/2 object-contain" />
         </button>
       ))}
     </div>
