@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { fetchAppMartBanners } from '../../api/buildmartApi.js'
 
 export function BuildMartPromoBanner() {
@@ -60,40 +61,39 @@ export function BuildMartPromoBanner() {
         {banners.map((banner) => {
           const content = (
             <>
-              {/* Background Image */}
-              <img 
-                src={banner.image || banner.imageUrl} 
-                alt={banner.title || 'Promo Banner'} 
-                className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" 
-              />
-              
-              {/* Subtle Gradient Overlay for text readability (no colors) */}
-              <div 
-                className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" 
+              {/* Photo, anchored right so the product stays clear of the text block */}
+              <img
+                src={banner.image || banner.imageUrl}
+                alt={banner.title || 'Promo Banner'}
+                className="absolute inset-0 h-full w-full object-cover object-[70%_center] transition duration-700 group-hover:scale-105"
               />
 
-              {/* Text Content */}
-              <div className="relative flex h-full w-full flex-col justify-center p-5 text-white z-10">
+              {/* Readability: deep scrim on the left, fading out by ~65% width */}
+              <div className="absolute inset-0 bg-linear-to-r from-slate-950/90 via-slate-950/55 via-45% to-transparent to-70%" />
+              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-slate-950/40 to-transparent" />
+
+              <div className="relative z-10 flex h-full w-[62%] flex-col justify-center px-4 pb-3 pt-4 text-white">
                 {banner.title && (
-                  <h3 className="mb-1 text-xl font-black leading-tight tracking-tight drop-shadow-md">
+                  <h3 className="line-clamp-2 text-[19px] font-black leading-[1.15] tracking-tight drop-shadow-md">
                     {banner.title}
                   </h3>
                 )}
                 {banner.subtitle && (
-                  <p className="mb-4 max-w-[75%] text-xs font-semibold text-white/90 drop-shadow">
+                  <p className="mt-1 line-clamp-2 text-[11px] font-semibold leading-snug text-white/85 drop-shadow">
                     {banner.subtitle}
                   </p>
                 )}
                 {banner.cta && (
-                  <div className="mt-auto self-start rounded-lg bg-white px-4 py-1.5 text-xs font-extrabold text-slate-900 shadow-sm transition hover:bg-slate-100 group-hover:scale-105 group-hover:shadow-md">
+                  <span className="mt-5 inline-flex w-fit items-center gap-1 rounded-lg bg-white/15 px-3.5 py-1.5 text-xs font-extrabold text-white ring-1 ring-white/35 backdrop-blur-md transition-all duration-200 hover:bg-brand hover:ring-brand group-hover:gap-1.5 group-hover:bg-brand group-hover:ring-brand group-hover:shadow-[0_6px_16px_-6px_rgba(16,185,129,0.8)]">
                     {banner.cta}
-                  </div>
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  </span>
                 )}
               </div>
             </>
           )
 
-          const containerClass = "group relative w-full min-w-full shrink-0 snap-center overflow-hidden rounded-[1.25rem] bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.08)] aspect-[2/1]"
+          const containerClass = "group relative w-full min-w-full shrink-0 snap-center overflow-hidden rounded-[1.25rem] bg-slate-900 aspect-[2/1]"
 
           return banner.categoryId ? (
             <Link 
@@ -114,7 +114,7 @@ export function BuildMartPromoBanner() {
         })}
       </div>
       {banners.length > 1 ? (
-        <div className="mb-3 flex justify-center gap-1.5" aria-hidden>
+        <div className="mb-1 flex justify-center gap-1.5" aria-hidden>
           {banners.map((b, i) => (
             <span
               key={b.id || b._id || i}

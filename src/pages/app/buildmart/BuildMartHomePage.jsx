@@ -23,7 +23,7 @@ export function BuildMartHomePage() {
         <BuildMartPromoBanner />
       </div>
 
-      <div className="mx-4 mt-1 grid grid-cols-3 gap-2">
+      <div className="mx-4 mt-2 grid grid-cols-3 gap-2">
         {PERKS.map(({ icon: Icon, title, sub }) => (
           <div key={title} className="flex flex-col items-center rounded-xl bg-emerald-50/70 px-1.5 py-2.5 text-center ring-1 ring-emerald-100">
             <Icon className="h-4 w-4 text-brand" aria-hidden />
