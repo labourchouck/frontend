@@ -23,7 +23,7 @@ export function AdminMartBannersTab() {
   
   const [editBanner, setEditBanner] = useState(null)
   
-  const [newBanner, setNewBanner] = useState({ id: '', title: '', subtitle: '', cta: '', categoryId: '', active: true })
+  const [newBanner, setNewBanner] = useState({ id: '', title: '', subtitle: '', cta: '', categoryId: '', sortOrder: 0, active: true })
   const [newBannerFile, setNewBannerFile] = useState(null)
   const [newBannerPreview, setNewBannerPreview] = useState('')
   const [busy, setBusy] = useState(false)
@@ -66,6 +66,7 @@ export function AdminMartBannersTab() {
         subtitle: newBanner.subtitle,
         cta: newBanner.cta,
         categoryId: newBanner.categoryId,
+        sortOrder: Number(newBanner.sortOrder) || 0,
         active: newBanner.active,
         image: imageUrl || '',
         imageUrl: imageUrl || ''
@@ -73,7 +74,7 @@ export function AdminMartBannersTab() {
       await createAdminMartBanner(payload)
       
       setIsModalOpen(false)
-      setNewBanner({ id: '', title: '', subtitle: '', cta: '', categoryId: '', active: true })
+      setNewBanner({ id: '', title: '', subtitle: '', cta: '', categoryId: '', sortOrder: 0, active: true })
       setNewBannerFile(null)
       setNewBannerPreview('')
       load()
@@ -100,6 +101,7 @@ export function AdminMartBannersTab() {
         subtitle: editBanner.subtitle,
         cta: editBanner.cta,
         categoryId: editBanner.categoryId,
+        sortOrder: Number(editBanner.sortOrder) || 0,
         active: editBanner.active,
         image: imageUrl || '',
         imageUrl: imageUrl || ''
@@ -150,7 +152,7 @@ export function AdminMartBannersTab() {
         </div>
         <button
           onClick={() => {
-            setNewBanner({ id: '', title: '', subtitle: '', cta: '', categoryId: '', active: true })
+            setNewBanner({ id: '', title: '', subtitle: '', cta: '', categoryId: '', sortOrder: 0, active: true })
             setNewBannerFile(null)
             setNewBannerPreview('')
             setIsModalOpen(true)
@@ -180,13 +182,18 @@ export function AdminMartBannersTab() {
             </div>
             <div className="flex items-center justify-between p-4">
               <div>
-                <p className="font-bold text-slate-800">{banner.title}</p>
+                <p className="font-bold text-slate-800">
+                  {banner.title}
+                  <span className="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 align-middle text-[10px] font-bold text-slate-500">
+                    Order {banner.sortOrder ?? 0}
+                  </span>
+                </p>
                 <p className="text-xs text-slate-500">{banner.subtitle}</p>
                 {banner.cta && <p className="mt-1 text-[11px] font-semibold text-brand">{banner.cta}</p>}
                 {banner.categoryId && (
                   <p className="mt-1 flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
                     <Tag className="h-3 w-3" />
-                    {categories.find(c => c.id === banner.categoryId || c._id === banner.categoryId)?.name || banner.categoryId}
+                    {banner.categoryId === 'all' ? 'All products' : categories.find(c => c.id === banner.categoryId || c._id === banner.categoryId)?.name || banner.categoryId}
                   </p>
                 )}
                 <div className="mt-2">
@@ -362,11 +369,26 @@ export function AdminMartBannersTab() {
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                       >
                         <option value="">Select a category</option>
+                        <option value="all">All products</option>
                         {categories.map(c => (
                           <option key={c.id || c._id} value={c.id}>{c.name || c.id}</option>
                         ))}
                       </select>
                     </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">
+                      Order <span className="font-normal text-slate-400">(lower shows first)</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={editBanner ? editBanner.sortOrder ?? 0 : newBanner.sortOrder}
+                      onChange={(e) => {
+                        if (editBanner) setEditBanner({ ...editBanner, sortOrder: e.target.value })
+                        else setNewBanner({ ...newBanner, sortOrder: e.target.value })
+                      }}
+                      className="w-32 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                    />
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-700">
