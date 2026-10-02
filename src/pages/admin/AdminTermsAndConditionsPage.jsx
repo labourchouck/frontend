@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+import { LegalFormatHint } from '../../components/admin/LegalFormatHint.jsx'
 import { apiClient } from '../../api/http.js'
 import { USER_ROLES } from '../../constants/userRoles.js'
 
@@ -149,6 +150,8 @@ export function AdminTermsAndConditionsPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <LegalFormatHint />
 
         <div className="relative h-[500px] w-full rounded-2xl bg-slate-50 ring-1 ring-slate-200/80 focus-within:ring-2 focus-within:ring-brand overflow-hidden">
           <textarea

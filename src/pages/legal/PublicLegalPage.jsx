@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { LegalDocument } from '../../components/legal/LegalDocument.jsx'
+import { DynamicLegalDocument } from '../../components/legal/DynamicLegalDocument.jsx'
 import { COMPANY, LEGAL_DOCS } from '../../data/legalContent.js'
 
 /** Public website page for the Terms (kind="terms") or Privacy Policy (kind="privacy"). */
@@ -44,7 +44,7 @@ export function PublicLegalPage({ kind }) {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-8">
-        <LegalDocument doc={doc} variant="public" />
+        <DynamicLegalDocument kind={kind} role="individual" variant="public" />
       </main>
 
       <footer className="border-t border-slate-200 bg-slate-50 py-6 text-center text-[12px] text-slate-500">
