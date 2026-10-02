@@ -47,6 +47,7 @@ import { AdminVendorsPage } from './pages/admin/AdminVendorsPage.jsx'
 import { AdminReviewsRatingsPage } from './pages/admin/AdminReviewsRatingsPage.jsx'
 import { AdminTermsAndConditionsPage } from './pages/admin/AdminTermsAndConditionsPage.jsx'
 import { AdminPrivacyPolicyPage } from './pages/admin/AdminPrivacyPolicyPage.jsx'
+import { PublicLegalPage } from './pages/legal/PublicLegalPage.jsx'
 import { AdminFaqPage } from './pages/admin/AdminFaqPage.jsx'
 import { AdminReferralsPage } from './pages/admin/AdminReferralsPage.jsx'
 import { AdminUserWalletPage } from './pages/admin/AdminUserWalletPage.jsx'
@@ -67,6 +68,9 @@ function App() {
           <Route path="/b2b/auth" element={<AuthEntryPage variant="b2b" />} />
           <Route path="/b2c/auth" element={<AuthEntryPage variant="b2c" />} />
           <Route path="/auth" element={<Navigate to="/b2c/auth" replace />} />
+          <Route path="/terms" element={<PublicLegalPage kind="terms" />} />
+          <Route path="/privacy" element={<PublicLegalPage kind="privacy" />} />
+          <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
 
           <Route
             path="/app"
