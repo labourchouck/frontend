@@ -99,7 +99,7 @@ function GrievanceContacts() {
  */
 export function LegalDocument({ doc, variant = 'public', updatedAt = null }) {
   const { hash } = useLocation()
-  const otherDoc = doc.kind === 'terms' ? LEGAL_DOCS.privacy : LEGAL_DOCS.terms
+  const otherDoc = doc.kind === 'terms' ? LEGAL_DOCS.privacy : (doc.kind === 'privacy' ? LEGAL_DOCS.terms : null)
 
   useEffect(() => {
     if (!hash) return undefined
@@ -190,13 +190,15 @@ export function LegalDocument({ doc, variant = 'public', updatedAt = null }) {
         </div>
       </section>
 
-      <Link
-        to={OTHER_DOC_PATH[variant][doc.kind]}
-        className="mt-5 flex items-center justify-between rounded-2xl bg-white px-4 py-3.5 text-[14px] font-bold text-slate-800 ring-1 ring-slate-200 transition hover:ring-brand/40"
-      >
-        Also read: {otherDoc.title}
-        <ChevronRight className="h-4 w-4 text-brand" aria-hidden />
-      </Link>
+      {otherDoc && OTHER_DOC_PATH[variant]?.[doc.kind] ? (
+        <Link
+          to={OTHER_DOC_PATH[variant][doc.kind]}
+          className="mt-5 flex items-center justify-between rounded-2xl bg-white px-4 py-3.5 text-[14px] font-bold text-slate-800 ring-1 ring-slate-200 transition hover:ring-brand/40"
+        >
+          Also read: {otherDoc.title}
+          <ChevronRight className="h-4 w-4 text-brand" aria-hidden />
+        </Link>
+      ) : null}
     </article>
   )
 }

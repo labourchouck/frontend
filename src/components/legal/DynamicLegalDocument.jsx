@@ -18,8 +18,15 @@ export function DynamicLegalDocument({ kind, role = 'individual', variant = 'pub
 
   useEffect(() => {
     let cancelled = false
+    const endpoint = ENDPOINT[kind]
+    
+    if (!endpoint) {
+      setState({ key: requestKey, doc: null, updatedAt: null })
+      return
+    }
+
     apiClient
-      .get(ENDPOINT[kind], { params: { role } })
+      .get(endpoint, { params: { role } })
       .then((res) => {
         if (cancelled) return
         const data = res.data?.data

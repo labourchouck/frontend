@@ -361,4 +361,14 @@ export const PRIVACY = {
   ],
 }
 
-export const LEGAL_DOCS = { terms: TERMS, privacy: PRIVACY }
+export const SUPPORT = {
+  kind: 'support',
+  title: 'Help & Support',
+  subtitle: 'Contact us for assistance, grievance redressal, and other queries.',
+  intro: 'We are here to help. Reach out to our teams using the details below.',
+  sections: [
+    GRIEVANCE_SECTION,
+  ],
+}
+
+export const LEGAL_DOCS = { terms: TERMS, privacy: PRIVACY, support: SUPPORT }

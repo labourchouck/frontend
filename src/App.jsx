@@ -70,6 +70,7 @@ function App() {
           <Route path="/auth" element={<Navigate to="/b2c/auth" replace />} />
           <Route path="/terms" element={<PublicLegalPage kind="terms" />} />
           <Route path="/privacy" element={<PublicLegalPage kind="privacy" />} />
+          <Route path="/support" element={<PublicLegalPage kind="support" />} />
           <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
 
           <Route

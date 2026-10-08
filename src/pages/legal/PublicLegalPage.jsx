@@ -39,6 +39,9 @@ export function PublicLegalPage({ kind }) {
             <Link to="/privacy" className={kind === 'privacy' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
               Privacy
             </Link>
+            <Link to="/support" className={kind === 'support' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
+              Support
+            </Link>
           </nav>
         </div>
       </header>
