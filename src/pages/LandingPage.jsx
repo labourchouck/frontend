@@ -11,7 +11,6 @@ import { Hero } from '../components/landing/Hero'
 import { HowItWorks } from '../components/landing/HowItWorks'
 import { LabourCategoriesSection } from '../components/landing/LabourCategoriesSection'
 import { Navbar } from '../components/landing/Navbar'
-import { ScrollFrameSequence } from '../components/landing/ScrollFrameSequence'
 import { ScrollProgress } from '../components/landing/ScrollProgress'
 import { SEOMeta } from '../components/landing/SEOMeta'
 import { StatsSection } from '../components/landing/StatsSection'
@@ -58,7 +57,6 @@ export function LandingPage() {
       <Navbar />
       <main id="main-content">
         <Hero groups={groups} stats={catalogueStats} />
-        <ScrollFrameSequence />
         <EcosystemSection groups={groups} products={products} banners={banners} />
         <LabourCategoriesSection groups={groups} loading={loading} />
         <AppShowcaseSequence />
