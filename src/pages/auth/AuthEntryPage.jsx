@@ -453,6 +453,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                     />
                   </div>
 
+                  {/* Quick Test Logins — hidden from UI. Logic (HARDCODED_TEST_ACCOUNTS) is kept; uncomment to restore the shortcuts.
                   {mode === 'login' ? (
                     <div className="pt-2.5">
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -480,6 +481,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       </div>
                     </div>
                   ) : null}
+                  */}
                 </AuthField>
 
                 {mode === 'register' ? (
@@ -629,7 +631,8 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                 <p className="text-[14px] font-medium text-slate-500">
                   Code sent to <span className="font-bold text-slate-900">+91 {phone}</span>
                 </p>
-                {HARDCODED_TEST_ACCOUNTS[phone] ? (
+                {/* Test-account OTP banner hidden from UI (kept for logic). */}
+                {false && HARDCODED_TEST_ACCOUNTS[phone] ? (
                   <div className="rounded-2xl border border-brand/25 bg-brand/5 p-3 text-center space-y-1.5 shadow-sm">
                     <p className="text-[13px] font-bold text-brand">
                       {HARDCODED_TEST_ACCOUNTS[phone].title} Test Account — OTP: <span className="font-mono tracking-wider">{HARDCODED_TEST_ACCOUNTS[phone].otp}</span>
