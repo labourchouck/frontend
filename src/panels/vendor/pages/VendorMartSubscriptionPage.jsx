@@ -54,7 +54,7 @@ export function VendorMartSubscriptionPage() {
     setIsProcessing(true)
     try {
       // Load Razorpay SDK
-      const razorpayLoaded = await loadRazorpay()
+      /* const razorpayLoaded = await loadRazorpay() */
       if (!razorpayLoaded) {
         showToast('Failed to load payment gateway')
         setIsProcessing(false)
@@ -107,11 +107,26 @@ export function VendorMartSubscriptionPage() {
         }
       }
 
+      
+      // Mock payment bypass
+      try {
+        if (options.handler) {
+            await options.handler({
+                razorpay_order_id: options.order_id || `mock_order_${Date.now()}`,
+                razorpay_payment_id: `mock_payment_${Date.now()}`,
+                razorpay_signature: `mock_signature_${Date.now()}`
+            });
+        }
+      } catch (err) {
+        console.error("Mock payment error", err);
+      }
+      /*
       const rzp = new window.Razorpay(options)
       rzp.on('payment.failed', function (response) {
         showToast('Payment failed')
       })
       rzp.open()
+      */
 
     } catch (err) {
       console.error(err)

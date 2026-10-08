@@ -48,7 +48,7 @@ export function CorporateRequestDetailPage() {
   const handlePay = async () => {
     try {
       setIsInitializingRazorpay(true)
-      const isLoaded = await loadRazorpay()
+      /* const isLoaded = await loadRazorpay() */
       if (!isLoaded) {
         alert('Failed to load Razorpay SDK. Please check your connection.')
         setIsInitializingRazorpay(false)
@@ -106,12 +106,27 @@ export function CorporateRequestDetailPage() {
         theme: { color: '#059669' },
       }
 
+      
+      // Mock payment bypass
+      try {
+        if (options.handler) {
+            await options.handler({
+                razorpay_order_id: options.order_id || `mock_order_${Date.now()}`,
+                razorpay_payment_id: `mock_payment_${Date.now()}`,
+                razorpay_signature: `mock_signature_${Date.now()}`
+            });
+        }
+      } catch (err) {
+        console.error("Mock payment error", err);
+      }
+      /*
       const rzp = new window.Razorpay(options)
       rzp.on('payment.failed', function (response) {
         console.error('Payment Failed', response.error)
         alert(response.error.description || 'Payment failed')
       })
       rzp.open()
+      */
       setIsInitializingRazorpay(false)
     } catch (err) {
       console.error(err)

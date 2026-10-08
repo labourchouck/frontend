@@ -830,7 +830,7 @@ export function IndividualBookingFlowPage() {
                     }
 
                     // load Razorpay
-                    let rzpLoaded = window.Razorpay
+                    /* let rzpLoaded = window.Razorpay */
                     if (!rzpLoaded) {
                       rzpLoaded = await new Promise((resolve) => {
                         const script = document.createElement('script')
@@ -882,11 +882,26 @@ export function IndividualBookingFlowPage() {
                       theme: { color: '#f97316' }
                     }
 
-                    const rzp = new window.Razorpay(options)
+                    
+      // Mock payment bypass
+      try {
+        if (options.handler) {
+            await options.handler({
+                razorpay_order_id: options.order_id || `mock_order_${Date.now()}`,
+                razorpay_payment_id: `mock_payment_${Date.now()}`,
+                razorpay_signature: `mock_signature_${Date.now()}`
+            });
+        }
+      } catch (err) {
+        console.error("Mock payment error", err);
+      }
+      /*
+      const rzp = new window.Razorpay(options)
                     rzp.on('payment.failed', function (response) {
                       alert(response.error.description || 'Payment failed')
                     })
                     rzp.open()
+      */
 
                   } catch (e) {
                     console.error('Payment Error:', e)

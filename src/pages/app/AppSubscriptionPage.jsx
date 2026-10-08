@@ -78,7 +78,7 @@ export function AppSubscriptionPage() {
     try {
       setProcessingId(plan._id)
 
-      const res = await loadRazorpay()
+      /* const res = await loadRazorpay() */
       if (!res) {
         showToast('Razorpay SDK failed to load. Are you online?', 'error')
         setProcessingId(null)
@@ -119,11 +119,26 @@ export function AppSubscriptionPage() {
         }
       }
 
+      
+      // Mock payment bypass
+      try {
+        if (options.handler) {
+            await options.handler({
+                razorpay_order_id: options.order_id || `mock_order_${Date.now()}`,
+                razorpay_payment_id: `mock_payment_${Date.now()}`,
+                razorpay_signature: `mock_signature_${Date.now()}`
+            });
+        }
+      } catch (err) {
+        console.error("Mock payment error", err);
+      }
+      /*
       const rzp = new window.Razorpay(options)
       rzp.on('payment.failed', function (response) {
         showToast(response.error.description || 'Payment failed', 'error')
       })
       rzp.open()
+      */
 
     } catch (err) {
       console.error(err)

@@ -52,6 +52,7 @@ export function CorporateSubscriptionPage() {
   const handleSubscribe = async (plan) => {
     setIsProcessing(true)
     try {
+      /*
       // Load Razorpay SDK
       const razorpayLoaded = await loadRazorpay()
       if (!razorpayLoaded) {
@@ -59,6 +60,7 @@ export function CorporateSubscriptionPage() {
         setIsProcessing(false)
         return
       }
+      */
 
       // Initialize payment order
       const initRes = await createOrder({ planId: plan._id }).unwrap()
@@ -69,6 +71,24 @@ export function CorporateSubscriptionPage() {
         return
       }
 
+      // Mock payment bypass
+      try {
+        await verifyPayment({
+          razorpay_order_id: initRes.order.id,
+          razorpay_payment_id: `mock_payment_${Date.now()}`,
+          razorpay_signature: `mock_signature_${Date.now()}`,
+          planId: plan._id
+        }).unwrap()
+        showToast(`Successfully subscribed to ${plan.name}!`)
+        setTimeout(() => {
+          navigate('/corporate', { replace: true })
+        }, 1500)
+      } catch (err) {
+        console.error(err)
+        showToast('Payment verification failed')
+      }
+
+      /*
       const options = {
         key: initRes.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
         amount: initRes.order.amount,
@@ -108,6 +128,7 @@ export function CorporateSubscriptionPage() {
         showToast('Payment failed')
       })
       rzp.open()
+      */
 
     } catch (err) {
       console.error(err)

@@ -301,7 +301,7 @@ export function Checkout() {
       }
 
       // Online payment — Razorpay flow
-      const razorpayLoaded = await loadRazorpay()
+      /* const razorpayLoaded = await loadRazorpay() */
       if (!razorpayLoaded) {
         setSubmitError('Payment gateway failed to load. Please try again.')
         setSubmitting(false)
@@ -346,8 +346,23 @@ export function Checkout() {
         theme: { color: '#1caf62' },
       }
 
+      
+      // Mock payment bypass
+      try {
+        if (options.handler) {
+            await options.handler({
+                razorpay_order_id: options.order_id || `mock_order_${Date.now()}`,
+                razorpay_payment_id: `mock_payment_${Date.now()}`,
+                razorpay_signature: `mock_signature_${Date.now()}`
+            });
+        }
+      } catch (err) {
+        console.error("Mock payment error", err);
+      }
+      /*
       const rzp = new window.Razorpay(options)
       rzp.open()
+      */
     } catch (err) {
       setSubmitError(err instanceof ApiError ? err.message : err.message || 'Booking failed')
       setSubmitting(false)

@@ -453,8 +453,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                     />
                   </div>
 
-                  {/* Quick Test Logins — hidden from UI. Logic (HARDCODED_TEST_ACCOUNTS) is kept; uncomment to restore the shortcuts.
-                  {mode === 'login' ? (
+                  {false && mode === 'login' ? (
                     <div className="pt-2.5">
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
                         Quick Test Logins (OTP: 123456)
@@ -481,7 +480,6 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       </div>
                     </div>
                   ) : null}
-                  */}
                 </AuthField>
 
                 {mode === 'register' ? (
