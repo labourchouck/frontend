@@ -5,7 +5,7 @@ import { LEGAL_DOCS } from '../../data/legalContent.js'
 import { parseLegalText } from '../../lib/legalMarkup.js'
 import { LegalDocument } from './LegalDocument.jsx'
 
-const ENDPOINT = { terms: '/terms/public', privacy: '/privacy-policy' }
+const ENDPOINT = { terms: '/terms/public', privacy: '/privacy-policy', support: '/support-policy/public' }
 
 /**
  * Terms / Privacy Policy loaded from the database (editable in the Admin panel, per role).

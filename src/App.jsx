@@ -47,6 +47,7 @@ import { AdminVendorsPage } from './pages/admin/AdminVendorsPage.jsx'
 import { AdminReviewsRatingsPage } from './pages/admin/AdminReviewsRatingsPage.jsx'
 import { AdminTermsAndConditionsPage } from './pages/admin/AdminTermsAndConditionsPage.jsx'
 import { AdminPrivacyPolicyPage } from './pages/admin/AdminPrivacyPolicyPage.jsx'
+import { AdminSupportPolicyPage } from './pages/admin/AdminSupportPolicyPage.jsx'
 import { PublicLegalPage } from './pages/legal/PublicLegalPage.jsx'
 import { AdminFaqPage } from './pages/admin/AdminFaqPage.jsx'
 import { AdminReferralsPage } from './pages/admin/AdminReferralsPage.jsx'
@@ -169,6 +170,7 @@ function App() {
             <Route path="reviews" element={<AdminReviewsRatingsPage />} />
             <Route path="terms" element={<AdminTermsAndConditionsPage />} />
             <Route path="privacy-policy" element={<AdminPrivacyPolicyPage />} />
+            <Route path="support-policy" element={<AdminSupportPolicyPage />} />
             <Route path="faq" element={<AdminFaqPage />} />
           </Route>
 

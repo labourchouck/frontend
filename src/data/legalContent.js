@@ -365,8 +365,42 @@ export const SUPPORT = {
   kind: 'support',
   title: 'Help & Support',
   subtitle: 'Contact us for assistance, grievance redressal, and other queries.',
-  intro: 'We are here to help. Reach out to our teams using the details below.',
+  intro: 'Welcome to the Support Center for Mappto. We are here to help you with any issues, questions, or concerns you may have.',
   sections: [
+    {
+      id: 'customer-support',
+      title: 'Customer Support',
+      content: [
+        'Our dedicated customer support team is available to assist you with general inquiries, technical issues, and platform guidance.',
+        [
+          'Email: support@mappto.com',
+          'Hours of Operation: Monday to Saturday, 9:00 AM to 6:00 PM (IST)',
+          'Response Time: We aim to respond to all queries within 24 to 48 hours.',
+        ]
+      ]
+    },
+    {
+      id: 'technical-assistance',
+      title: 'Technical Assistance',
+      content: [
+        'If you are experiencing technical difficulties with our mobile application or website, please ensure you are using the latest version of the app. If the issue persists, provide us with a detailed description of the problem, including screenshots if possible, to help us resolve it quickly.'
+      ]
+    },
+    {
+      id: 'payments-billing',
+      title: 'Payments and Billing',
+      content: [
+        'For any concerns related to wallet balances, failed payments, subscriptions, or invoices, please contact our billing department. Provide your transaction ID or booking reference number for faster resolution.',
+        ['Email: billing@mappto.com']
+      ]
+    },
+    {
+      id: 'account-management',
+      title: 'Account Management',
+      content: [
+        'If you need help updating your profile, verifying your KYC documents, or deleting your account, you can manage most of these settings directly from the Profile section in the app. For further assistance, reach out to our support team.'
+      ]
+    },
     GRIEVANCE_SECTION,
   ],
 }
