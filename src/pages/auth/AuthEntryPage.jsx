@@ -579,11 +579,11 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       />
                       <label htmlFor="terms" className="text-[13px] text-slate-500">
                         I agree to the{' '}
-                        <Link to="/terms" target="_blank" className="font-medium text-brand hover:underline">
+                        <Link to={`/terms?role=${role}`} target="_blank" className="font-medium text-brand hover:underline">
                           Terms & Conditions
                         </Link>{' '}
                         and{' '}
-                        <Link to="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+                        <Link to={`/privacy?role=${role}`} target="_blank" className="font-medium text-brand hover:underline">
                           Privacy Policy
                         </Link>
                       </label>

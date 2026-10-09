@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { DynamicLegalDocument } from '../../components/legal/DynamicLegalDocument.jsx'
 import { COMPANY, LEGAL_DOCS } from '../../data/legalContent.js'
@@ -7,6 +7,9 @@ import { COMPANY, LEGAL_DOCS } from '../../data/legalContent.js'
 /** Public website page for the Terms (kind="terms") or Privacy Policy (kind="privacy"). */
 export function PublicLegalPage({ kind }) {
   const doc = LEGAL_DOCS[kind]
+  const [searchParams] = useSearchParams()
+  const role = searchParams.get('role') || 'individual'
+  const roleQuery = searchParams.has('role') ? `?role=${searchParams.get('role')}` : ''
 
   useEffect(() => {
     const previous = document.title
@@ -33,13 +36,13 @@ export function PublicLegalPage({ kind }) {
             <span className="text-[17px] font-black tracking-tight text-slate-900">{COMPANY.brand}</span>
           </Link>
           <nav className="ml-auto flex items-center gap-4 text-[13px] font-bold">
-            <Link to="/terms" className={kind === 'terms' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
+            <Link to={`/terms${roleQuery}`} className={kind === 'terms' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
               Terms
             </Link>
-            <Link to="/privacy" className={kind === 'privacy' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
+            <Link to={`/privacy${roleQuery}`} className={kind === 'privacy' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
               Privacy
             </Link>
-            <Link to="/support" className={kind === 'support' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
+            <Link to={`/support${roleQuery}`} className={kind === 'support' ? 'text-brand' : 'text-slate-500 hover:text-slate-800'}>
               Support
             </Link>
           </nav>
@@ -47,7 +50,7 @@ export function PublicLegalPage({ kind }) {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-8">
-        <DynamicLegalDocument kind={kind} role="individual" variant="public" />
+        <DynamicLegalDocument kind={kind} role={role} variant="public" />
       </main>
 
       <footer className="border-t border-slate-200 bg-slate-50 py-6 text-center text-[12px] text-slate-500">
