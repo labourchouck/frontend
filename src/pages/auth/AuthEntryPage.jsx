@@ -2,21 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
-  ArrowLeft,
   Building2,
   ClipboardList,
   HardHat,
   Home,
-  Phone,
-  ShieldCheck,
-  Sparkles,
-  User,
   Gift,
 } from 'lucide-react'
-import { MobileShell } from '../../layouts/MobileShell.jsx'
-import { AppAmbientBackground } from '../../components/app/AppAmbientBackground.jsx'
-import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
-import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { LabourCategorySetup } from '../../components/auth/LabourCategorySetup.jsx'
 import { ROLE_LABELS, USER_ROLES } from '../../constants/userRoles.js'
 import { getRoleHomePath } from '../../lib/roleHomePath.js'
@@ -79,9 +70,9 @@ function FeedbackBanner({ variant, children }) {
       ? 'border-amber-200/90 bg-amber-50 text-amber-950 ring-amber-100'
       : 'border-emerald-200/90 bg-emerald-50 text-emerald-950 ring-emerald-100'
   return (
-    <p role="alert" className={`rounded-2xl border px-4 py-3 text-sm font-medium leading-relaxed ring-1 ${styles}`}>
+    <div role="alert" className={`rounded-2xl border px-4 py-3 text-sm font-medium leading-relaxed ring-1 ${styles}`}>
       {children}
-    </p>
+    </div>
   )
 }
 
@@ -177,6 +168,15 @@ export function AuthEntryPage({ variant = 'b2c' }) {
     resetFlowToForm()
   }
 
+  useEffect(() => {
+    if (location.state?.defaultRole) {
+      setRole(location.state.defaultRole)
+    } else {
+      setRole(variant === 'b2b' ? USER_ROLES.CORPORATE : USER_ROLES.INDIVIDUAL)
+    }
+    resetFlowToForm()
+  }, [variant, location.state?.defaultRole])
+
   async function handleSendOtp() {
     setBanner(null)
     setChallengeId(null)
@@ -196,12 +196,32 @@ export function AuthEntryPage({ variant = 'b2c' }) {
           const b2cRoles = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
           const b2bRoles = [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]
           if (variant === 'b2c' && b2bRoles.includes(loginRole)) {
-            setBanner({ variant: 'error', message: 'This is a Business account. Please use the B2B sign-in page.' })
+            setBanner({
+              variant: 'error',
+              message: (
+                <span>
+                  This is a Business account.{' '}
+                  <Link to="/b2b/auth" className="font-bold underline text-amber-950 hover:text-black">
+                    Switch to B2B sign-in →
+                  </Link>
+                </span>
+              ),
+            })
             setBusy(false)
             return
           }
           if (variant === 'b2b' && b2cRoles.includes(loginRole)) {
-            setBanner({ variant: 'error', message: 'This is a Personal/Labour account. Please use the B2C sign-in page.' })
+            setBanner({
+              variant: 'error',
+              message: (
+                <span>
+                  This is a Personal/Labour account.{' '}
+                  <Link to="/b2c/auth" className="font-bold underline text-amber-950 hover:text-black">
+                    Switch to B2C sign-in →
+                  </Link>
+                </span>
+              ),
+            })
             setBusy(false)
             return
           }
@@ -324,28 +344,41 @@ export function AuthEntryPage({ variant = 'b2c' }) {
 
   if (step === 'work-setup') {
     return (
-      <>
-        <AppAmbientBackground />
-        <MobileShell transparent className="pb-0 pt-4">
+      <div className="relative min-h-screen w-full bg-white flex flex-col justify-between selection:bg-brand/20">
+        <div className="w-full max-w-md mx-auto bg-white relative min-h-screen p-4 flex flex-col justify-center">
           <LabourCategorySetup variant="auth" onComplete={() => {
             const returnPath = location.state?.from || getRoleHomePath(USER_ROLES.LABOUR)
             navigate(returnPath, { replace: true })
           }} />
-        </MobileShell>
-      </>
+        </div>
+      </div>
     )
   }
 
   return (
-    <>
-      <div className="absolute inset-x-0 top-0 -z-10">
-        <svg viewBox="0 0 375 220" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto text-brand fill-current drop-shadow-sm">
+    <div className="relative min-h-screen w-full bg-white selection:bg-brand/20 overflow-x-hidden">
+      {/* Green Wave Header: Spans 100% of the screen width with fixed height */}
+      <div className="absolute inset-x-0 top-0 h-[220px] pointer-events-none z-0 overflow-hidden">
+        <svg
+          viewBox="0 0 375 220"
+          preserveAspectRatio="none"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full text-brand fill-current drop-shadow-sm"
+        >
           <path d="M0 0H375V150C375 150 310 200 250 180C190 160 130 140 70 170C30 190 0 150 0 150V0Z" />
         </svg>
       </div>
-      <MobileShell transparent className="relative z-10 overflow-x-hidden pb-4 min-h-screen">
-        <div className="px-6 pt-12 pb-3 flex flex-col items-start">
-          <img src="/assets/images/mappto_logo_white.png" alt="Mappto" className="-ml-4 h-[110px] w-auto mb-8 drop-shadow-sm object-contain" />
+
+      {/* Main Content Container: Centered max-w-md with natural spacing */}
+      <div className="relative z-10 w-full max-w-md mx-auto px-6 pt-8 pb-12 flex flex-col">
+        {/* Header with Logo */}
+        <div className="flex flex-col items-start">
+          <img
+            src="/assets/images/mappto_logo_white.png"
+            alt="Mappto"
+            className="-ml-4 h-[110px] w-auto mb-9 object-contain"
+          />
           <h1 className="text-[32px] font-bold tracking-tight text-brand mt-4">
             {step === 'otp' ? 'Verification' : mode === 'login' ? 'Hi there!' : 'Welcome!'}
           </h1>
@@ -353,7 +386,11 @@ export function AuthEntryPage({ variant = 'b2c' }) {
             {step === 'otp'
               ? 'Enter the code sent to your number'
               : mode === 'login'
-              ? 'Welcome back.'
+              ? variant === 'b2b'
+                ? 'Sign in to your business account.'
+                : 'Welcome back.'
+              : variant === 'b2b'
+              ? 'Register your company or contractor business.'
               : 'Sign up to continue.'}
           </p>
         </div>
@@ -742,13 +779,34 @@ export function AuthEntryPage({ variant = 'b2c' }) {
           )}
         </AnimatePresence>
 
-        <p className="mt-4 text-center text-[12px] text-slate-500">
-          Admin?{' '}
-          <Link to="/admin/login" className="font-bold text-brand hover:underline">
-            Web login
-          </Link>
-        </p>
-      </MobileShell>
-    </>
+        {/* Bottom Links: Positioned naturally right below the form */}
+        <div className="mt-8 pt-4 border-t border-slate-100 text-center space-y-2">
+          <div className="text-[12px] text-slate-500">
+            {variant === 'b2b' ? (
+              <>
+                Looking for customer or labour login?{' '}
+                <Link to="/b2c/auth" className="font-bold text-brand hover:underline">
+                  Personal login
+                </Link>
+              </>
+            ) : (
+              <>
+                Enterprise or Contractor?{' '}
+                <Link to="/b2b/auth" className="font-bold text-brand hover:underline">
+                  Business login
+                </Link>
+              </>
+            )}
+          </div>
+
+          <p className="text-[12px] text-slate-400">
+            Admin?{' '}
+            <Link to="/admin/login" className="font-bold text-brand hover:underline">
+              Web login
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }
