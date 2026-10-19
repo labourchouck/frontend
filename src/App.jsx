@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useLayoutEffect, useEffect } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthProvider.jsx'
 import { ProtectedRoute } from './components/auth/ProtectedRoute.jsx'
 import { AppShell } from './layouts/AppShell.jsx'
@@ -59,9 +60,54 @@ import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useLayoutEffect(() => {
+    // Dismiss any active virtual keyboard when changing routes
+    if (
+      document.activeElement &&
+      typeof document.activeElement.blur === 'function' &&
+      document.activeElement !== document.body
+    ) {
+      document.activeElement.blur()
+    }
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [pathname])
+
+  useEffect(() => {
+    // Fix iOS Safari keyboard dismiss viewport shift bug
+    const handleFocusOut = (e) => {
+      const isInput = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')
+      if (!isInput) return
+
+      setTimeout(() => {
+        // If no other input was immediately focused, reset the viewport scroll to avoid white space gap
+        if (
+          !document.activeElement ||
+          (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')
+        ) {
+          if (window.scrollY !== 0) {
+            window.scrollTo(0, 0)
+          }
+          window.dispatchEvent(new Event('resize'))
+        }
+      }, 80)
+    }
+
+    window.addEventListener('focusout', handleFocusOut)
+    return () => window.removeEventListener('focusout', handleFocusOut)
+  }, [])
+
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />

@@ -139,14 +139,14 @@ export function AuthEntryPage({ variant = 'b2c' }) {
     clearOtpError()
     const nextEmpty = cells.findIndex((c) => c === '')
     queueMicrotask(() => {
-      otpInputRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus()
+      otpInputRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus({ preventScroll: true })
     })
   }
 
   useEffect(() => {
     if (step !== 'otp') return
     queueMicrotask(() => {
-      otpInputRefs.current[0]?.focus()
+      otpInputRefs.current[0]?.focus({ preventScroll: true })
     })
   }, [step])
 
@@ -325,6 +325,14 @@ export function AuthEntryPage({ variant = 'b2c' }) {
         signedInUser = user
       }
 
+      // Dismiss iOS virtual keyboard cleanly before unmounting/navigating
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur()
+      }
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+
       const needsWorkSetup =
         signedInUser.role === USER_ROLES.LABOUR && !(signedInUser.labourProfile?.categoryIds?.length > 0)
       if (needsWorkSetup) {
@@ -346,8 +354,8 @@ export function AuthEntryPage({ variant = 'b2c' }) {
 
   if (step === 'work-setup') {
     return (
-      <div className="relative min-h-screen w-full bg-white flex flex-col justify-between selection:bg-brand/20">
-        <div className="w-full max-w-md mx-auto bg-white relative min-h-screen p-4 flex flex-col justify-center">
+      <div className="relative min-h-dvh w-full bg-white flex flex-col justify-between selection:bg-brand/20">
+        <div className="w-full max-w-md mx-auto bg-white relative min-h-dvh p-4 flex flex-col justify-center">
           <LabourCategorySetup variant="auth" onComplete={() => {
             const returnPath = location.state?.from || getRoleHomePath(USER_ROLES.LABOUR)
             navigate(returnPath, { replace: true })
@@ -358,7 +366,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-white selection:bg-brand/20 overflow-x-hidden">
+    <div className="relative min-h-dvh w-full bg-white selection:bg-brand/20 overflow-x-hidden">
       {/* Green Wave Header: Spans 100% of the screen width with fixed height */}
       <div className="absolute inset-x-0 top-0 h-[220px] pointer-events-none z-0 overflow-hidden">
         <svg
@@ -712,7 +720,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                           next[i] = d
                           setOtpCells(next)
                           clearOtpError()
-                          if (i < 5) otpInputRefs.current[i + 1]?.focus()
+                          if (i < 5) otpInputRefs.current[i + 1]?.focus({ preventScroll: true })
                         } else {
                           next[i] = ''
                           setOtpCells(next)
@@ -737,18 +745,18 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                             next[i - 1] = ''
                             setOtpCells(next)
                             clearOtpError()
-                            otpInputRefs.current[i - 1]?.focus()
+                            otpInputRefs.current[i - 1]?.focus({ preventScroll: true })
                           }
                           return
                         }
                         if (e.key === 'ArrowLeft' && i > 0) {
                           e.preventDefault()
-                          otpInputRefs.current[i - 1]?.focus()
+                          otpInputRefs.current[i - 1]?.focus({ preventScroll: true })
                           return
                         }
                         if (e.key === 'ArrowRight' && i < 5) {
                           e.preventDefault()
-                          otpInputRefs.current[i + 1]?.focus()
+                          otpInputRefs.current[i + 1]?.focus({ preventScroll: true })
                           return
                         }
                         if (e.ctrlKey || e.metaKey) return

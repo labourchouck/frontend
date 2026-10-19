@@ -155,7 +155,7 @@ export function CorporateDashboardPage() {
   return (
     <>
       {/* Custom Header Block */}
-      <div className="-mx-4 bg-[#1caf62] px-4 pt-3 pb-10">
+      <div className="-mx-4 bg-[#1caf62] px-4 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <button

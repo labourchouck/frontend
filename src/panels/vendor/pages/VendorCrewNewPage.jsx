@@ -22,7 +22,7 @@ export function VendorCrewNewPage() {
   useEffect(() => {
     if (challengeId) {
       queueMicrotask(() => {
-        otpInputRefs.current[0]?.focus()
+        otpInputRefs.current[0]?.focus({ preventScroll: true })
       })
     }
   }, [challengeId])
@@ -41,7 +41,7 @@ export function VendorCrewNewPage() {
     setError('')
     const nextEmpty = cells.findIndex((c) => c === '')
     queueMicrotask(() => {
-      otpInputRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus()
+      otpInputRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus({ preventScroll: true })
     })
   }
 
@@ -210,7 +210,7 @@ export function VendorCrewNewPage() {
                       next[i] = d
                       setOtpCells(next)
                       setError('')
-                      if (i < 5) otpInputRefs.current[i + 1]?.focus()
+                      if (i < 5) otpInputRefs.current[i + 1]?.focus({ preventScroll: true })
                     } else {
                       next[i] = ''
                       setOtpCells(next)
@@ -235,18 +235,18 @@ export function VendorCrewNewPage() {
                         next[i - 1] = ''
                         setOtpCells(next)
                         setError('')
-                        otpInputRefs.current[i - 1]?.focus()
+                        otpInputRefs.current[i - 1]?.focus({ preventScroll: true })
                       }
                       return
                     }
                     if (e.key === 'ArrowLeft' && i > 0) {
                       e.preventDefault()
-                      otpInputRefs.current[i - 1]?.focus()
+                      otpInputRefs.current[i - 1]?.focus({ preventScroll: true })
                       return
                     }
                     if (e.key === 'ArrowRight' && i < 5) {
                       e.preventDefault()
-                      otpInputRefs.current[i + 1]?.focus()
+                      otpInputRefs.current[i + 1]?.focus({ preventScroll: true })
                       return
                     }
                     if (e.ctrlKey || e.metaKey) return

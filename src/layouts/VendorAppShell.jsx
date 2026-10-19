@@ -194,7 +194,7 @@ export function VendorAppShell() {
         ) : null}
 
         {!hideShellHeader ? (
-          <header className="shrink-0 z-30 px-3 pt-3">
+          <header className="shrink-0 z-30 px-3 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
             <GlassPanel className="flex items-center gap-3 px-3 py-2.5">
               <button
                 type="button"

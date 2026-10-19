@@ -47,8 +47,10 @@ function formatInr(n) {
 }
 
 function MenuRow({ icon: Icon, label, sub, badge, to, onClick, tone = 'default' }) {
-  const labelCls = tone === 'danger' ? 'text-rose-700' : 'text-slate-800'
-  const iconCls = tone === 'danger' ? 'text-rose-500' : 'text-slate-500'
+  const isDanger = tone === 'danger'
+  const labelCls = isDanger ? 'text-rose-600' : 'text-slate-800'
+  const iconCls = isDanger ? 'text-rose-600' : 'text-slate-500'
+  const chevronCls = isDanger ? 'text-rose-400' : 'text-slate-400'
   const body = (
     <>
       <Icon className={`h-[18px] w-[18px] shrink-0 ${iconCls}`} strokeWidth={1.9} aria-hidden />
@@ -64,11 +66,14 @@ function MenuRow({ icon: Icon, label, sub, badge, to, onClick, tone = 'default' 
         </span>
         {sub ? <span className="mt-0.5 truncate text-xs font-medium text-slate-500">{sub}</span> : null}
       </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+      <ChevronRight className={`h-4 w-4 shrink-0 ${chevronCls}`} aria-hidden />
     </>
   )
-  const cls =
-    'flex w-full items-center gap-3.5 px-4 py-3.5 transition hover:bg-slate-50 active:bg-slate-100'
+  const cls = `flex w-full items-center gap-3.5 px-4 py-3.5 transition ${
+    isDanger
+      ? 'bg-rose-50/60 text-rose-600 hover:bg-rose-100/70 active:bg-rose-100'
+      : 'hover:bg-slate-50 active:bg-slate-100'
+  }`
   return to ? (
     <Link to={to} className={cls}>
       {body}
@@ -364,7 +369,7 @@ export function AppProfilePage() {
           <MenuRow icon={ShieldCheck} label="Privacy policy" to="/app/privacy-policy" />
           <MenuRow icon={HelpCircle} label="FAQs" to="/app/faq" />
           <MenuRow icon={Headset} label="Help & support" to="/app/support" />
-          <MenuRow icon={ClipboardX} label="Request account deletion" onClick={() => setDeleteOpen(true)} />
+          <MenuRow icon={ClipboardX} label="Request account deletion" tone="danger" onClick={() => setDeleteOpen(true)} />
           <MenuRow icon={LogOut} label="Log out" onClick={handleSignOut} />
         </MenuGroup>
       </div>

@@ -372,7 +372,7 @@ export function AppShell() {
         {!hideShellHeader ? (
           <header
             ref={headerRef}
-            className={`z-30 ${isIndividualAppHome ? 'relative bg-brand px-4 pb-3.5 pt-3' : 'sticky top-0 px-3 pt-3'
+            className={`z-30 ${isIndividualAppHome ? 'relative bg-brand px-4 pb-3.5 pt-[max(0.75rem,env(safe-area-inset-top,0px))]' : 'sticky top-0 px-3 pt-[max(0.75rem,env(safe-area-inset-top,0px))]'
               }`}
           >
             {isIndividualAppHome ? (
