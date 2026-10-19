@@ -46,10 +46,10 @@ const ROLE_OPTIONS = [
 ]
 
 export const HARDCODED_TEST_ACCOUNTS = {
-  '1111111111': { otp: '123456', role: USER_ROLES.INDIVIDUAL, label: 'User', title: 'Customer / User' },
-  '2222222222': { otp: '123456', role: USER_ROLES.LABOUR, label: 'Labour', title: 'Labour' },
-  '3333333333': { otp: '123456', role: USER_ROLES.CONTRACTOR, label: 'Vendor', title: 'Vendor / Contractor' },
-  '4444444444': { otp: '123456', role: USER_ROLES.CORPORATE, label: 'Corporate', title: 'Corporate' },
+  '8643041429': { otp: '123456', role: USER_ROLES.INDIVIDUAL, label: 'Individual', title: 'Homeowner / Individual' },
+  '7828394005': { otp: '123456', role: USER_ROLES.LABOUR, label: 'Labour', title: 'Labour / Worker' },
+  '6267429441': { otp: '123456', role: USER_ROLES.CONTRACTOR, label: 'Contractor', title: 'Contractor / Vendor' },
+  '6263823004': { otp: '123456', role: USER_ROLES.CORPORATE, label: 'Corporate', title: 'Corporate Client' },
 }
 
 function isValidIndianMobile(digits) {
@@ -253,6 +253,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
       setOtpCells(Array(6).fill(''))
       setStep('otp')
       const testAcc = p ? HARDCODED_TEST_ACCOUNTS[p] : null
+      /*
       setBanner({
         variant: 'success',
         message: testAcc
@@ -261,6 +262,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
           ? `Demo OTP: enter the last 6 digits of ${p} (${demoOtpFromPhone(p)}).`
           : 'OTP sent. Check SMS — in development it may appear in the server terminal.',
       })
+      */
     } catch (e) {
       setBanner({
         variant: 'error',
@@ -780,6 +782,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
         </AnimatePresence>
 
         {/* Bottom Links: Positioned naturally right below the form */}
+        {/*
         <div className="mt-8 pt-4 border-t border-slate-100 text-center space-y-2">
           <div className="text-[12px] text-slate-500">
             {variant === 'b2b' ? (
@@ -806,6 +809,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
             </Link>
           </p>
         </div>
+        */}
       </div>
     </div>
   )
