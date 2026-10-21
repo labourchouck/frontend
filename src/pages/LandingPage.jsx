@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth.js'
+import { getRoleHomePath } from '../lib/roleHomePath.js'
 import { AppShowcaseSequence } from '../components/landing/AppShowcaseSequence'
 import { BuildMartSection } from '../components/landing/BuildMartSection'
 import { CorporateSection } from '../components/landing/CorporateSection'
@@ -22,7 +25,17 @@ import { captureReferralCodeFromUrl } from '../lib/referralCapture.js'
 
 export function LandingPage() {
   const [boot, setBoot] = useState(true)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { token, realUser, loading: authLoading } = useAuth()
   const { loading, groups, martCategories, products, banners } = useLandingData()
+
+  useEffect(() => {
+    if (authLoading) return
+    if (token && realUser?.role && !location.state?.viewWebsite) {
+      navigate(getRoleHomePath(realUser.role), { replace: true })
+    }
+  }, [authLoading, token, realUser, navigate, location.state?.viewWebsite])
 
   useEffect(() => {
     const t = window.setTimeout(() => setBoot(false), 700)
@@ -42,6 +55,10 @@ export function LandingPage() {
     }),
     [groups],
   )
+
+  if (!location.state?.viewWebsite && (authLoading || (token && realUser?.role))) {
+    return <PageSkeleton visible={true} />
+  }
 
   return (
     <>

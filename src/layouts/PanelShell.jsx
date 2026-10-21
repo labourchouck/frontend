@@ -134,6 +134,7 @@ export function PanelShell({
               <div className="border-t border-slate-200/70 p-3">
                 <Link
                   to="/"
+                  state={{ viewWebsite: true }}
                   className="flex w-full items-center justify-center rounded-xl border border-slate-200/90 bg-white py-3 text-sm font-semibold text-slate-700"
                 >
                   Visit website

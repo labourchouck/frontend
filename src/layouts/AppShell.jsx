@@ -329,6 +329,7 @@ export function AppShell() {
               <div className="border-t border-slate-200/70 bg-linear-to-t from-slate-50/50 to-white p-3">
                 <Link
                   to="/"
+                  state={{ viewWebsite: true }}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-brand/25 hover:text-brand"
                 >
                   Visit website

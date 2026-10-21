@@ -9,6 +9,7 @@ import {
   Gift,
 } from 'lucide-react'
 import { LabourCategorySetup } from '../../components/auth/LabourCategorySetup.jsx'
+import { AppRouteLoader } from '../../components/app/AppRouteLoader.jsx'
 import { ROLE_LABELS, USER_ROLES } from '../../constants/userRoles.js'
 import { getRoleHomePath } from '../../lib/roleHomePath.js'
 import { requestLoginOtp, requestRegisterOtp, verifyLogin, verifyRegister } from '../../api/authApi.js'
@@ -94,9 +95,17 @@ const inputClass =
 export function AuthEntryPage({ variant = 'b2c' }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { applySession } = useAuth()
+  const { applySession, token, realUser, loading } = useAuth()
   const reduce = useReducedMotion()
   const otpInputRefs = useRef([])
+
+  useEffect(() => {
+    if (loading || step === 'work-setup') return
+    if (token && realUser?.role) {
+      const returnPath = location.state?.from || getRoleHomePath(realUser.role)
+      navigate(returnPath, { replace: true })
+    }
+  }, [loading, step, token, realUser, navigate, location.state?.from])
 
   const [mode, setMode] = useState('login')
   const [step, setStep] = useState('form')
@@ -350,6 +359,10 @@ export function AuthEntryPage({ variant = 'b2c' }) {
     } finally {
       setBusy(false)
     }
+  }
+
+  if (loading || (token && realUser?.role && step !== 'work-setup')) {
+    return <AppRouteLoader />
   }
 
   if (step === 'work-setup') {

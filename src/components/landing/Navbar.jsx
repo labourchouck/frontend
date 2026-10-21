@@ -5,6 +5,8 @@ import { Briefcase, HardHat, Menu, PackageSearch, Store, X } from 'lucide-react'
 import { ButtonLink } from '../ui/ButtonLink'
 import { Container } from '../ui/Container'
 import { useLandingCta } from '../../hooks/useLandingCta.js'
+import { useAuth } from '../../hooks/useAuth.js'
+import { getRoleHomePath } from '../../lib/roleHomePath.js'
 
 const links = [
   { href: '#labour', label: 'Hire Labour', Icon: HardHat },
@@ -23,6 +25,8 @@ export function Navbar() {
   const [active, setActive] = useState('')
   const reduce = useReducedMotion()
   const cta = useLandingCta()
+  const { token, realUser, logout } = useAuth()
+  const isLoggedIn = Boolean(token && realUser?.role)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -95,18 +99,38 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link to="/b2c/auth" className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-            Sign in
-          </Link>
-          <Link
-            to="/b2b/auth"
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-          >
-            Business login
-          </Link>
-          <ButtonLink href="/app" variant="primary" className="!py-2.5 !text-xs" onClick={cta.hireLabour}>
-            Hire Labour
-          </ButtonLink>
+          {isLoggedIn ? (
+            <>
+              <Link
+                to={getRoleHomePath(realUser.role)}
+                className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-brand-active"
+              >
+                Go to Dashboard →
+              </Link>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/b2c/auth" className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Sign in
+              </Link>
+              <Link
+                to="/b2b/auth"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
+              >
+                Business login
+              </Link>
+              <ButtonLink href="/app" variant="primary" className="!py-2.5 !text-xs" onClick={cta.hireLabour}>
+                Hire Labour
+              </ButtonLink>
+            </>
+          )}
         </div>
 
         <button
@@ -167,22 +191,44 @@ export function Navbar() {
                 >
                   Register as Labour
                 </ButtonLink>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    to="/b2c/auth"
-                    className="rounded-2xl border border-slate-200 py-3 text-center text-sm font-semibold text-slate-800"
-                    onClick={() => setOpen(false)}
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    to="/b2b/auth"
-                    className="rounded-2xl border border-brand/30 bg-brand-muted py-3 text-center text-sm font-semibold text-slate-800"
-                    onClick={() => setOpen(false)}
-                  >
-                    Business login
-                  </Link>
-                </div>
+                {isLoggedIn ? (
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      to={getRoleHomePath(realUser.role)}
+                      className="flex items-center justify-center rounded-2xl bg-brand py-3 text-sm font-bold text-white shadow-sm"
+                      onClick={() => setOpen(false)}
+                    >
+                      Go to Dashboard →
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false)
+                        void logout()
+                      }}
+                      className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      to="/b2c/auth"
+                      className="rounded-2xl border border-slate-200 py-3 text-center text-sm font-semibold text-slate-800"
+                      onClick={() => setOpen(false)}
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      to="/b2b/auth"
+                      className="rounded-2xl border border-brand/30 bg-brand-muted py-3 text-center text-sm font-semibold text-slate-800"
+                      onClick={() => setOpen(false)}
+                    >
+                      Business login
+                    </Link>
+                  </div>
+                )}
               </div>
             </Container>
           </motion.div>
