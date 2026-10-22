@@ -99,14 +99,6 @@ export function AuthEntryPage({ variant = 'b2c' }) {
   const reduce = useReducedMotion()
   const otpInputRefs = useRef([])
 
-  useEffect(() => {
-    if (loading || step === 'work-setup') return
-    if (token && realUser?.role) {
-      const returnPath = location.state?.from || getRoleHomePath(realUser.role)
-      navigate(returnPath, { replace: true })
-    }
-  }, [loading, step, token, realUser, navigate, location.state?.from])
-
   const [mode, setMode] = useState('login')
   const [step, setStep] = useState('form')
   const [role, setRole] = useState(location.state?.defaultRole || (variant === 'b2b' ? USER_ROLES.CORPORATE : USER_ROLES.INDIVIDUAL))
@@ -125,6 +117,14 @@ export function AuthEntryPage({ variant = 'b2c' }) {
   const [challengeId, setChallengeId] = useState(null)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
+
+  useEffect(() => {
+    if (loading || step === 'work-setup') return
+    if (token && realUser?.role) {
+      const returnPath = location.state?.from || getRoleHomePath(realUser.role)
+      navigate(returnPath, { replace: true })
+    }
+  }, [loading, step, token, realUser, navigate, location.state?.from])
 
   const p = isValidIndianMobile(phone) ? phone : null
   const code = otpCells.join('')
