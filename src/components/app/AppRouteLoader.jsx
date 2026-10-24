@@ -25,11 +25,11 @@ export function AppRouteLoader() {
       >
         <div className="flex items-center gap-3">
           <motion.div
-            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-brand-bright to-brand shadow-[0_8px_24px_-8px_rgba(28,175,98,0.35)] ring-1 ring-brand/30"
+            className="flex h-12 shrink-0 items-center justify-center rounded-2xl px-3.5 bg-linear-to-br from-brand-bright to-brand shadow-[0_8px_24px_-8px_rgba(28,175,98,0.35)] ring-1 ring-brand/30"
             animate={reduce ? undefined : { scale: [1, 1.03, 1] }}
             transition={reduce ? undefined : { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <span className="text-lg font-black tracking-tight text-white drop-shadow-sm">LC</span>
+            <span className="text-base font-black tracking-tight text-white drop-shadow-sm">Mappto</span>
           </motion.div>
           <div className="min-w-0 flex-1 space-y-2">
             <ShimmerBar className="h-3.5 w-28" />
