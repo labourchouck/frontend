@@ -7,6 +7,7 @@ import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.
 import { AppModal } from '../../components/app-ui/feedback/AppModal.jsx'
 import { AppTextInput } from '../../components/app-ui/inputs/AppTextInput.jsx'
 import { AppButton } from '../../components/app-ui/buttons/AppButton.jsx'
+import { getBrowserLocation, reverseGeocode } from '../../lib/locationService.js'
 
 const LABEL_ICONS = { home: HomeIcon, office: Briefcase }
 const LABEL_OPTIONS = ['Home', 'Office', 'Other']
@@ -118,38 +119,30 @@ export function AppAddressBookPage() {
     setAddOpen(true)
   }, [])
 
-  const useCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) return
+  const useCurrentLocation = useCallback(async () => {
     setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const la = pos.coords.latitude
-        const ln = pos.coords.longitude
-        setHere({ lat: la, lng: ln })
-        let addr = ''
-        try {
-          const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-          if (apiKey) {
-            const res = await fetch(
-              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${la},${ln}&key=${apiKey}`,
-            )
-            const data = await res.json()
-            if (data.status === 'OK' && data.results?.[0]) addr = data.results[0].formatted_address
-          }
-        } catch {
-          /* reverse geocode is best-effort; user can still type the address */
-        }
-        setLocating(false)
-        setNewLabel('Home')
-        setNewAddress(addr)
-        setNewLat(la)
-        setNewLng(ln)
-        setSaveError('')
-        setAddOpen(true)
-      },
-      () => setLocating(false),
-      { enableHighAccuracy: false, timeout: 14_000, maximumAge: 60_000 },
-    )
+    try {
+      const pos = await getBrowserLocation()
+      const la = pos.lat
+      const ln = pos.lng
+      setHere({ lat: la, lng: ln })
+      let addr = ''
+      try {
+        addr = await reverseGeocode(la, ln)
+      } catch {
+        /* reverse geocode is best-effort; user can still type the address */
+      }
+      setNewLabel('Home')
+      setNewAddress(addr)
+      setNewLat(la)
+      setNewLng(ln)
+      setSaveError('')
+      setAddOpen(true)
+    } catch {
+      /* user can still open and enter manually */
+    } finally {
+      setLocating(false)
+    }
   }, [])
 
   const saveNewAddress = useCallback(

@@ -6,6 +6,7 @@ import { AppBottomSheetBackdrop, AppBottomSheetChrome, AppBottomSheetPanel } fro
 import { AppField } from '../app-ui/inputs/AppField.jsx'
 import { AppTextInput } from '../app-ui/inputs/AppTextInput.jsx'
 import { readAppUserLocation, formatAppUserLocationLabel } from '../../lib/appUserLocationStorage.js'
+import { getBrowserLocation, reverseGeocode } from '../../lib/locationService.js'
 import { submitBuildMartQuote } from '../../api/buildmartApi.js'
 import { ApiError } from '../../api/http.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -51,22 +52,22 @@ export function BuildMartRequestQuoteSheet({
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
-  const handleFetchLocation = () => {
+  const handleFetchLocation = async () => {
     const loc = readAppUserLocation()
     const label = formatAppUserLocationLabel(loc)
     if (label) {
       setForm((f) => ({ ...f, siteLocation: label }))
     } else {
       // Fallback if no location is saved in storage: ask for browser geolocation directly
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setForm((f) => ({ ...f, siteLocation: `GPS ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}` }))
-          },
-          () => {
-            alert('Could not fetch location. Please enter manually.')
-          }
-        )
+      try {
+        const pos = await getBrowserLocation()
+        const addr = await reverseGeocode(pos.lat, pos.lng)
+        setForm((f) => ({
+          ...f,
+          siteLocation: addr || `GPS ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`,
+        }))
+      } catch {
+        alert('Could not fetch location. Please enter manually.')
       }
     }
   }

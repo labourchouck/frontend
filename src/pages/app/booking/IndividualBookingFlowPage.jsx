@@ -36,6 +36,7 @@ import { SavedAddressPicker } from '../../../components/app/SavedAddressPicker.j
 import { useBookingSocket } from '../../../hooks/useBookingSocket.js'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { paymentsApi } from '../../../api/paymentsApi.js'
+import { getBrowserLocation, reverseGeocode } from '../../../lib/locationService.js'
 import {
   PAYMENT_METHODS,
   durationKindLabel,
@@ -437,29 +438,21 @@ export function IndividualBookingFlowPage() {
     }
   }, [draft.lat, draft.lng])
 
-  const pickLocation = () => {
-    if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude
-        const lng = pos.coords.longitude
-        if (window.google?.maps?.Geocoder) {
-          const geocoder = new window.google.maps.Geocoder()
-          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-            if (status === 'OK' && results[0]) {
-              syncDraft({ lat, lng, address: results[0].formatted_address })
-              setForceInput(true)
-            } else {
-              syncDraft({ lat, lng })
-            }
-          })
-        } else {
-          syncDraft({ lat, lng })
-        }
-      },
-      () => { },
-      { enableHighAccuracy: false, timeout: 10_000 },
-    )
+  const pickLocation = async () => {
+    try {
+      const pos = await getBrowserLocation()
+      const lat = pos.lat
+      const lng = pos.lng
+      const addr = await reverseGeocode(lat, lng)
+      if (addr) {
+        syncDraft({ lat, lng, address: addr })
+        setForceInput(true)
+      } else {
+        syncDraft({ lat, lng })
+      }
+    } catch {
+      // Best-effort
+    }
   }
 
   const applySavedAddress = (picked) => {

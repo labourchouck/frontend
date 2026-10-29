@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../../hooks/useAuth.js'
 import { CorporateRequestCheckout } from '../components/CorporateRequestCheckout.jsx'
 import { CorporateRequestLabourSelection } from '../components/CorporateRequestLabourSelection.jsx'
+import { getBrowserLocation, reverseGeocode } from '../../../lib/locationService.js'
 
 const inputClass =
   'w-full rounded-2xl border border-slate-200/90 bg-white px-4 py-3 text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand/35'
@@ -105,46 +106,27 @@ export function CorporateRequestNewPage() {
     }
   }, [])
 
-  const handleFetchLocation = () => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser')
-      return
-    }
-    
+  const handleFetchLocation = async () => {
     setIsFetchingLocation(true)
     setError('')
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude: lat, longitude: lng } = position.coords
-        setLatitude(lat)
-        setLongitude(lng)
-        
-        try {
-          const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-          if (!apiKey) {
-            setLocationText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
-            setIsFetchingLocation(false)
-            return
-          }
-          
-          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`)
-          const data = await res.json()
-          
-          if (data.results && data.results.length > 0) {
-            setLocationText(data.results[0].formatted_address)
-          } else {
-            setLocationText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
-          }
-        } catch (err) {
-          setLocationText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
-        }
-        setIsFetchingLocation(false)
-      },
-      (err) => {
-        setError('Could not fetch location. Please allow location permissions.')
-        setIsFetchingLocation(false)
+    try {
+      const pos = await getBrowserLocation()
+      const lat = pos.lat
+      const lng = pos.lng
+      setLatitude(lat)
+      setLongitude(lng)
+
+      const addr = await reverseGeocode(lat, lng)
+      if (addr) {
+        setLocationText(addr)
+      } else {
+        setLocationText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`)
       }
-    )
+    } catch (err) {
+      setError(err.message || 'Could not fetch location. Please allow location permissions.')
+    } finally {
+      setIsFetchingLocation(false)
+    }
   }
 
   const [notes, setNotes] = useState('')

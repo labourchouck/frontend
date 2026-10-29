@@ -28,6 +28,7 @@ import {
   VENDOR_TYPE_LABELS,
   VENDOR_TYPE_OPTIONS,
 } from '../../../constants/vendorVerification.js'
+import { getBrowserLocation, reverseGeocode } from '../../../lib/locationService.js'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { setUser } from '../../../store/slices/authSlice.js'
 import {
@@ -253,36 +254,22 @@ export function VendorProfilePage() {
     navigate('/b2b/auth', { replace: true })
   }
 
-  const handleFetchLocation = () => {
-    if (!navigator.geolocation) {
-      setBanner({ variant: 'error', message: 'Geolocation is not supported by your browser' })
-      return
-    }
-
+  const handleFetchLocation = async () => {
     setFetchingLocation(true)
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
-          const data = await response.json()
-          if (data && data.display_name) {
-            setForm(f => ({ ...f, businessAddress: data.display_name }))
-            setBanner({ variant: 'success', message: 'Location fetched successfully' })
-          } else {
-            setBanner({ variant: 'error', message: 'Address not found for current location' })
-          }
-        } catch (error) {
-          setBanner({ variant: 'error', message: 'Failed to fetch address' })
-        } finally {
-          setFetchingLocation(false)
-        }
-      },
-      (error) => {
-        setFetchingLocation(false)
-        setBanner({ variant: 'error', message: 'Failed to get current location. Please ensure location permissions are granted.' })
+    try {
+      const pos = await getBrowserLocation()
+      const addr = await reverseGeocode(pos.lat, pos.lng)
+      if (addr) {
+        setForm(f => ({ ...f, businessAddress: addr }))
+        setBanner({ variant: 'success', message: 'Location fetched successfully' })
+      } else {
+        setBanner({ variant: 'error', message: 'Address not found for current location' })
       }
-    )
+    } catch (error) {
+      setBanner({ variant: 'error', message: error.message || 'Failed to fetch address' })
+    } finally {
+      setFetchingLocation(false)
+    }
   }
 
   const uploadedTypes = new Set(documents.map((d) => d.documentType).filter(Boolean))
