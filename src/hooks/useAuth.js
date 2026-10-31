@@ -28,11 +28,7 @@ export function useAuth() {
   }, [])
 
   const logout = useCallback(async () => {
-    try {
-      await apiRequest('/auth/logout', { method: 'POST' })
-    } catch (e) {
-      // Ignore network errors on logout
-    }
+    // 1. Clear local credentials synchronously first so route guards and auth pages never see stale tokens
     clearBootRole()
     setBootRoleState(null)
     dispatch(clearSession())
@@ -40,6 +36,12 @@ export function useAuth() {
       dispatch(baseApi.util.resetApiState())
     } catch (err) {
       // Ignore if store is not ready
+    }
+    // 2. Notify backend (best-effort)
+    try {
+      await apiRequest('/auth/logout', { method: 'POST' })
+    } catch (e) {
+      // Ignore network errors on logout
     }
   }, [dispatch])
 

@@ -9,28 +9,46 @@ function isTextEntry(el) {
 }
 
 /**
- * Sets `data-keyboard="open"` on <html> while the on-screen keyboard is likely showing
- * (touch device + text field focused), so CSS can hide fixed footers that would otherwise
- * ride up above the keyboard.
+ * Sets `data-keyboard="open"` on <html> while the on-screen keyboard is showing,
+ * so CSS can hide fixed footers and remove excess bottom padding.
  */
 export function useKeyboardOpenFlag() {
   useEffect(() => {
-    if (!window.matchMedia('(pointer: coarse)').matches) return
     const root = document.documentElement
     let timer
+
     const sync = () => {
       clearTimeout(timer)
       timer = setTimeout(() => {
-        if (isTextEntry(document.activeElement)) root.setAttribute('data-keyboard', 'open')
-        else root.removeAttribute('data-keyboard')
+        const textActive = isTextEntry(document.activeElement)
+        const vv = window.visualViewport
+        // If visual viewport height is noticeably smaller than window innerHeight (virtual keyboard showing)
+        const vvCollapsed = vv ? vv.height < window.innerHeight * 0.85 : false
+        const isMobileScreen =
+          window.innerWidth <= 768 ||
+          (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches)
+
+        if (isMobileScreen && (textActive || vvCollapsed)) {
+          root.setAttribute('data-keyboard', 'open')
+        } else {
+          root.removeAttribute('data-keyboard')
+        }
       }, 50)
     }
+
     document.addEventListener('focusin', sync)
     document.addEventListener('focusout', sync)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', sync)
+    }
+
     return () => {
       clearTimeout(timer)
       document.removeEventListener('focusin', sync)
       document.removeEventListener('focusout', sync)
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', sync)
+      }
       root.removeAttribute('data-keyboard')
     }
   }, [])

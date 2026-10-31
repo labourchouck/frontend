@@ -218,7 +218,7 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
   const noResults = isSearching && filteredCategories.length === 0 && filteredServices.length === 0
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-1 flex-col min-h-0 w-full">
       <div className="shrink-0 bg-brand px-4 pb-3.5 pt-[max(0.75rem,env(safe-area-inset-top,0px))] shadow-[0_8px_20px_-14px_rgba(15,23,42,0.6)]">
         <div className="mb-3 flex items-center gap-2">
           <button
@@ -283,7 +283,7 @@ export function IndividualCategorySearchPanel({ tradeGroups, groupsLoading }) {
         {voice.error ? <p className="mt-1.5 px-1 text-[11px] font-semibold text-white">{voice.error}</p> : null}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-10 pt-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-24 pt-4 search-scroll-body">
         {groupsLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-7 w-7 animate-spin text-brand" aria-hidden />

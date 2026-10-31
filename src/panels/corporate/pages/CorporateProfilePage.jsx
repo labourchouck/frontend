@@ -106,17 +106,15 @@ export function CorporateProfilePage() {
   const [removeDocument] = useRemoveCorporateDocumentMutation()
   const [submitVerification] = useSubmitCorporateVerificationMutation()
 
-  const handleLogout = () => {
-    logout().finally(() => {
-      navigate('/b2b/auth')
-    })
+  const handleLogout = async () => {
+    await logout()
+    navigate('/b2b/auth', { replace: true, state: { from: null } })
   }
 
   const handleDeleteAccount = async () => {
     await apiRequest('/users/me', { method: 'DELETE' })
-    logout().finally(() => {
-      navigate('/b2b/auth')
-    })
+    await logout()
+    navigate('/b2b/auth', { replace: true, state: { from: null } })
   }
 
   const handleFetchLocation = async () => {

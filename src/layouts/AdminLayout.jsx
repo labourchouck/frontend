@@ -73,10 +73,10 @@ export function AdminLayout() {
 
   const title = getAdminTitle(pathname)
 
-  function handleLogout() {
+  async function handleLogout() {
     setProfileOpen(false)
-    logout()
-    navigate('/admin/login', { replace: true })
+    await logout()
+    navigate('/admin/login', { replace: true, state: { from: null } })
   }
 
   const displayName = user?.fullName?.trim() || user?.email?.split('@')[0] || 'Administrator'

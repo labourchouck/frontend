@@ -167,9 +167,10 @@ export function VendorAppShell() {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => {
-                    logout()
-                    navigate('/b2b/auth', { replace: true })
+                  onClick={async () => {
+                    setDrawerOpen(false)
+                    await logout()
+                    navigate('/b2b/auth', { replace: true, state: { from: null } })
                   }}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800"
                 >

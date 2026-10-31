@@ -348,9 +348,10 @@ export function AppShell() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => {
-                      logout()
-                      navigate('/b2c/auth', { replace: true })
+                    onClick={async () => {
+                      setDrawerOpen(false)
+                      await logout()
+                      navigate('/b2c/auth', { replace: true, state: { from: null } })
                     }}
                     className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/90 bg-rose-50 py-3 text-sm font-semibold text-rose-800 shadow-sm transition hover:bg-rose-50/90"
                   >
@@ -462,12 +463,17 @@ export function AppShell() {
         ) : null}
 
         <main
-          className={`relative z-10 flex-1 px-4 pb-32 ${hideShellHeader
-            ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]'
-            : isIndividualAppHome
-              ? 'pt-0'
-              : 'pt-4'
-            }`}
+          className={`relative z-10 flex flex-col flex-1 min-h-0 ${
+            pathname === '/app/search'
+              ? 'px-0 pt-0 pb-0'
+              : `px-4 pb-32 ${
+                  hideShellHeader
+                    ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]'
+                    : isIndividualAppHome
+                      ? 'pt-0'
+                      : 'pt-4'
+                }`
+          }`}
         >
           <AppPageTransition />
         </main>

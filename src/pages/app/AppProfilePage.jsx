@@ -241,7 +241,7 @@ export function AppProfilePage() {
 
   const handleSignOut = async () => {
     await logout()
-    navigate('/b2c/auth', { replace: true })
+    navigate('/b2c/auth', { replace: true, state: { from: null } })
   }
 
   const handleDeleteAccount = useCallback(async () => {
@@ -250,7 +250,7 @@ export function AppProfilePage() {
     try {
       await deleteCurrentUser()
       await logout()
-      navigate('/b2c/auth', { replace: true })
+      navigate('/b2c/auth', { replace: true, state: { from: null } })
     } catch (err) {
       setDeleteErr(err instanceof ApiError ? err.message : 'Could not delete account')
       setDeletingAccount(false)

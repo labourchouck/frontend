@@ -143,3 +143,11 @@ html[data-keyboard='open'] nav[aria-label='Bottom navigation'],
 html[data-keyboard='open'] .keyboard-hide {
   display: none !important;
 }
+
+html[data-keyboard='open'] main {
+  padding-bottom: 0 !important;
+}
+
+html[data-keyboard='open'] .search-scroll-body {
+  padding-bottom: 1rem !important;
+}
