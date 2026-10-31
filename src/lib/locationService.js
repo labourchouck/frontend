@@ -48,10 +48,17 @@ export function loadGoogleMapsSDK() {
 }
 
 /**
- * Promisified browser geolocation with automatic fallback from high to standard accuracy.
+ * Promisified browser geolocation using progressive accuracy listening.
  *
- * @param {PositionOptions} [options]
- * @returns {Promise<{ lat: number, lng: number, accuracy?: number }>}
+ * Uses watchPosition so mobile devices (Android/iOS fused location providers)
+ * can stream increasingly accurate GPS/Wi-Fi fixes instead of timing out
+ * on a single cold satellite acquisition and falling back to cell towers.
+ *
+ * @param {object} [options]
+ * @param {number} [options.timeout=15000] Maximum milliseconds to wait
+ * @param {number} [options.targetAccuracy=80] Target accuracy threshold in meters
+ * @param {number} [options.maximumAge=120000] Acceptable cached fix age in ms (2 min)
+ * @returns {Promise<{ lat: number, lng: number, accuracy: number }>}
  */
 export async function getBrowserLocation(options = {}) {
   if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -60,58 +67,106 @@ export async function getBrowserLocation(options = {}) {
     throw err
   }
 
-  const highAccuracyTimeout = options.timeout ?? 9000
+  const timeoutMs = options.timeout ?? 15000
+  const targetAccuracy = options.targetAccuracy ?? 80
+  const maxAge = options.maximumAge ?? 120000
 
-  // 1. Try with high accuracy first (GPS) with maximumAge: 0 to force fresh reading
-  try {
-    const pos = await new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: highAccuracyTimeout,
-        maximumAge: 0, // Do not use stale cached coordinates
-      })
-    })
-    return {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      accuracy: pos.coords.accuracy,
-    }
-  } catch (err) {
-    // If the user explicitly denied permission, do not retry
-    if (err && err.code === 1 /* PERMISSION_DENIED */) {
-      const error = new Error('Location permission denied. Please allow location access in your browser.')
-      error.code = err.code
-      throw error
+  return new Promise((resolve, reject) => {
+    let watchId = null
+    let timer = null
+    let bestPosition = null
+    let resolved = false
+
+    const cleanup = () => {
+      if (timer) {
+        clearTimeout(timer)
+        timer = null
+      }
+      if (watchId != null && navigator.geolocation.clearWatch) {
+        navigator.geolocation.clearWatch(watchId)
+        watchId = null
+      }
     }
 
-    // 2. Retry with standard accuracy (Wi-Fi/Cell IP) on timeout (3) or position unavailable (2)
-    try {
-      const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 15000,
-        })
-      })
-      return {
+    const finish = (pos) => {
+      if (resolved) return
+      resolved = true
+      cleanup()
+      resolve({
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
-        accuracy: pos.coords.accuracy,
-      }
-    } catch (fallbackErr) {
-      let msg = 'Could not determine GPS location. Please search or enter your area below.'
-      if (fallbackErr?.code === 1) {
-        msg = 'Location permission denied. Please allow location access in your browser.'
-      } else if (fallbackErr?.code === 2) {
-        msg = 'Location position unavailable. Please search or enter your area below.'
-      } else if (fallbackErr?.code === 3) {
-        msg = 'Location request timed out. Please try again or search below.'
-      }
-      const error = new Error(msg)
-      error.code = fallbackErr?.code
-      throw error
+        accuracy: pos.coords.accuracy ?? 10000,
+      })
     }
-  }
+
+    const onPosition = (pos) => {
+      if (!pos?.coords || resolved) return
+      const acc = pos.coords.accuracy ?? 10000
+
+      // High accuracy fix acquired (GPS / Wi-Fi <= 80m): resolve immediately
+      if (acc <= targetAccuracy) {
+        finish(pos)
+        return
+      }
+
+      // Track the best fix as GPS satellites lock
+      if (!bestPosition || acc < (bestPosition.coords.accuracy ?? 10000)) {
+        bestPosition = pos
+      }
+    }
+
+    const onError = (err) => {
+      if (resolved) return
+      // User explicitly denied permission
+      if (err?.code === 1 /* PERMISSION_DENIED */) {
+        resolved = true
+        cleanup()
+        const error = new Error('Location permission denied. Please allow location access in your device settings.')
+        error.code = 1
+        reject(error)
+      }
+    }
+
+    // Set overall timeout
+    timer = setTimeout(() => {
+      if (resolved) return
+
+      // If we acquired any reading within 600m accuracy during the watch, accept it
+      if (bestPosition && (bestPosition.coords.accuracy ?? 10000) <= 600) {
+        finish(bestPosition)
+        return
+      }
+
+      // Fallback: one final attempt
+      cleanup()
+      navigator.geolocation.getCurrentPosition(
+        (pos) => finish(pos),
+        (err) => {
+          if (bestPosition) {
+            finish(bestPosition)
+          } else {
+            let msg = 'Could not determine GPS location. Please search or select your area below.'
+            if (err?.code === 1) msg = 'Location permission denied. Please allow location access in your device settings.'
+            const error = new Error(msg)
+            error.code = err?.code ?? 3
+            reject(error)
+          }
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 },
+      )
+    }, timeoutMs)
+
+    try {
+      watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+        enableHighAccuracy: true,
+        timeout: timeoutMs,
+        maximumAge: maxAge,
+      })
+    } catch (e) {
+      cleanup()
+      reject(e)
+    }
+  })
 }
 
 /**

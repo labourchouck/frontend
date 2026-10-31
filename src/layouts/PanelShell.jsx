@@ -25,7 +25,11 @@ export function PanelShell({
 }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { logout, user } = useAuth()
+  const { logout, user, isAuthenticated } = useAuth()
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/b2b/auth" replace state={{ from: null }} />
+  }
   const [drawerOpen, setDrawerOpen] = useState(false)
   const reduce = useReducedMotion()
 

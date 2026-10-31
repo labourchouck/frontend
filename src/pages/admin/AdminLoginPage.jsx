@@ -25,6 +25,22 @@ export function AdminLoginPage() {
     }
   }, [loading, token, realUser, navigate])
 
+  // When logged out, lock history so pressing the Back button keeps the user on the admin login page
+  useEffect(() => {
+    if (token || realUser) return
+
+    window.history.pushState(null, '', window.location.href)
+
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [token, realUser])
+
   if (loading || (token && realUser?.role === USER_ROLES.ADMIN)) {
     return null
   }

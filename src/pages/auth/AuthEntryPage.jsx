@@ -105,12 +105,35 @@ function readAuthDraft() {
   }
 }
 
+function scrollFieldToTop(target) {
+  if (!target || typeof window === 'undefined') return
+  setTimeout(() => {
+    try {
+      const rect = target.getBoundingClientRect()
+      const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+      // Position the field near the top with 56px breathing space for notch/label
+      const targetY = Math.max(0, currentScrollY + rect.top - 56)
+      window.scrollTo({
+        top: targetY,
+        behavior: 'smooth',
+      })
+    } catch {
+      target.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+    }
+  }, 120)
+}
+
 export function AuthEntryPage({ variant = 'b2c' }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { applySession, token, realUser, loading } = useAuth()
   const reduce = useReducedMotion()
   const otpInputRefs = useRef([])
+  const fullNameRef = useRef(null)
+  const companyRef = useRef(null)
+  const gstRef = useRef(null)
+  const businessRef = useRef(null)
+  const referralRef = useRef(null)
 
   const [draft] = useState(readAuthDraft)
   const [mode, setMode] = useState(draft.mode || 'login')
@@ -149,6 +172,22 @@ export function AuthEntryPage({ variant = 'b2c' }) {
       navigate(returnPath, { replace: true })
     }
   }, [loading, step, token, realUser, navigate, location.state?.from])
+
+  // When logged out, lock history so pressing the Back button keeps the user on the auth page
+  useEffect(() => {
+    if (token || realUser) return
+
+    window.history.pushState(null, '', window.location.href)
+
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [token, realUser])
 
   const p = isValidIndianMobile(phone) ? phone : null
   const code = otpCells.join('')
@@ -530,6 +569,15 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       onChange={(e) => setPhoneDigits(e.target.value)}
                       onKeyDown={(e) => {
                         const allowed = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End']
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          if (mode === 'register') {
+                            fullNameRef.current?.focus()
+                          } else {
+                            void handleSendOtp()
+                          }
+                          return
+                        }
                         if (allowed.includes(e.key)) return
                         if (e.ctrlKey || e.metaKey) return
                         if (!/^\d$/.test(e.key)) e.preventDefault()
@@ -570,10 +618,23 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                   <>
                     <AuthField label="Full name">
                       <input
+                        ref={fullNameRef}
                         type="text"
-                        className={inputClass}
+                        className={`${inputClass} scroll-mt-14`}
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => {
+                          setFullName(e.target.value)
+                          scrollFieldToTop(e.currentTarget)
+                        }}
+                        onFocus={(e) => scrollFieldToTop(e.currentTarget)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            if (role === USER_ROLES.CORPORATE) companyRef.current?.focus()
+                            else if (role === USER_ROLES.CONTRACTOR) businessRef.current?.focus()
+                            else referralRef.current?.focus()
+                          }
+                        }}
                         placeholder="As on your ID"
                         autoComplete="name"
                       />
@@ -582,19 +643,41 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       <>
                         <AuthField label="Company name">
                           <input
+                            ref={companyRef}
                             type="text"
-                            className={inputClass}
+                            className={`${inputClass} scroll-mt-14`}
                             value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
+                            onChange={(e) => {
+                              setCompanyName(e.target.value)
+                              scrollFieldToTop(e.currentTarget)
+                            }}
+                            onFocus={(e) => scrollFieldToTop(e.currentTarget)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                gstRef.current?.focus()
+                              }
+                            }}
                           />
                         </AuthField>
                         <AuthField label="GST (optional)">
                           <input
+                            ref={gstRef}
                             type="text"
                             maxLength={15}
-                            className={inputClass}
+                            className={`${inputClass} scroll-mt-14`}
                             value={gstNumber}
-                            onChange={(e) => setGstNumber(e.target.value)}
+                            onChange={(e) => {
+                              setGstNumber(e.target.value)
+                              scrollFieldToTop(e.currentTarget)
+                            }}
+                            onFocus={(e) => scrollFieldToTop(e.currentTarget)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                referralRef.current?.focus()
+                              }
+                            }}
                           />
                         </AuthField>
                       </>
@@ -602,25 +685,45 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                     {role === USER_ROLES.CONTRACTOR ? (
                       <AuthField label="Business name">
                         <input
+                          ref={businessRef}
                           type="text"
-                          className={inputClass}
+                          className={`${inputClass} scroll-mt-14`}
                           value={businessName}
-                          onChange={(e) => setBusinessName(e.target.value)}
+                          onChange={(e) => {
+                            setBusinessName(e.target.value)
+                            scrollFieldToTop(e.currentTarget)
+                          }}
+                          onFocus={(e) => scrollFieldToTop(e.currentTarget)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              referralRef.current?.focus()
+                            }
+                          }}
                         />
                       </AuthField>
                     ) : null}
                     <AuthField label="Referral code (optional)">
                       <input
+                        ref={referralRef}
                         type="text"
                         maxLength={16}
                         placeholder="Enter a friend's code"
-                        className={inputClass}
+                        className={`${inputClass} scroll-mt-14`}
                         value={referralCode}
                         onChange={(e) => {
                           const next = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
                           setReferralCode(next)
                           setReferralCheck(null)
                           storeReferralCode(next)
+                          scrollFieldToTop(e.currentTarget)
+                        }}
+                        onFocus={(e) => scrollFieldToTop(e.currentTarget)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            void handleSendOtp()
+                          }
                         }}
                         onBlur={async () => {
                           const value = referralCode.trim()

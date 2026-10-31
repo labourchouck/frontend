@@ -25,9 +25,13 @@ export function useAutoDetectLocation(user) {
     let cancelled = false
     ;(async () => {
       try {
-        const { lat, lng } = await getBrowserLocation()
+        const { lat, lng, accuracy } = await getBrowserLocation()
+        // If accuracy is coarse (> 800m, typical of cell tower IP gateways) and an address exists, keep existing
+        if (accuracy > 800 && stored?.address) return
+
         const address = (await reverseGeocode(lat, lng)) || stored?.address || ''
-        if (cancelled) return
+        if (cancelled || !address) return
+
         writeAppUserLocation({ address, lat, lng, auto: true })
         window.dispatchEvent(new CustomEvent('lc-app-user-location-changed'))
         if (role === USER_ROLES.LABOUR) {

@@ -26,7 +26,11 @@ import { useAutoDetectLocation } from '../hooks/useAutoDetectLocation.js'
 export function AppShell() {
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
-  const { logout, user, isGuest } = useAuth()
+  const { logout, user, isGuest, isAuthenticated } = useAuth()
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/b2c/auth" replace state={{ from: null }} />
+  }
   useAutoDetectLocation(user)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)

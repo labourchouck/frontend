@@ -96,7 +96,7 @@ export function AppUserLocationModal({
     setGeoBusy(true)
     setHint('Getting accurate GPS coordinates…')
     try {
-      const pos = await getBrowserLocation()
+      const pos = await getBrowserLocation({ timeout: 15000, targetAccuracy: 60 })
       const la = pos.lat
       const ln = pos.lng
       setLat(la)
@@ -106,7 +106,11 @@ export function AppUserLocationModal({
       const resolvedAddress = await reverseGeocode(la, ln)
       if (resolvedAddress) {
         setAddress(resolvedAddress)
-        setHint('Location & address fetched. Tap "Save location" below.')
+        setHint(
+          pos.accuracy > 1000
+            ? 'Approximate location detected. Check address or select your area below.'
+            : 'Location & address fetched. Tap "Save location" below.',
+        )
       } else {
         setAddress((prev) => prev.trim() || `Location (${la.toFixed(5)}, ${ln.toFixed(5)})`)
         setHint('Coordinates updated. You can search or edit your area below.')

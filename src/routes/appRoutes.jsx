@@ -39,7 +39,7 @@ export const appShellChildRoutes = (
       path="booking/flow"
       
       element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]} allowGuest>
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]}>
           <IndividualBookingFlowPage />
         </RoleRoute>
       }
@@ -55,7 +55,7 @@ export const appShellChildRoutes = (
     <Route
       path="search"
       element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]} allowGuest>
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]}>
           <AppIndividualSearchPage />
         </RoleRoute>
       }
@@ -64,7 +64,7 @@ export const appShellChildRoutes = (
     <Route
       path="services"
       element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]} allowGuest>
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]}>
           <ServiceCatalog />
         </RoleRoute>
       }
@@ -73,7 +73,7 @@ export const appShellChildRoutes = (
     <Route
       path="sub-category/:id"
       element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]} allowGuest>
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]}>
           <AppSubCategoryServicePage />
         </RoleRoute>
       }
@@ -82,7 +82,7 @@ export const appShellChildRoutes = (
     <Route
       path="checkout"
       element={
-        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]} allowGuest>
+        <RoleRoute allow={[USER_ROLES.INDIVIDUAL]}>
           <Checkout />
         </RoleRoute>
       }
@@ -142,7 +142,7 @@ export const appShellChildRoutes = (
     <Route
       path="buildmart"
       element={
-        <RoleRoute allow={BUILDMART_ROLES} allowGuest>
+        <RoleRoute allow={BUILDMART_ROLES}>
           <BuildMartHomePage />
         </RoleRoute>
       }
@@ -150,7 +150,7 @@ export const appShellChildRoutes = (
     <Route
       path="buildmart/category/:categoryId"
       element={
-        <RoleRoute allow={BUILDMART_ROLES} allowGuest>
+        <RoleRoute allow={BUILDMART_ROLES}>
           <BuildMartCategoryPage />
         </RoleRoute>
       }
@@ -158,7 +158,7 @@ export const appShellChildRoutes = (
     <Route
       path="buildmart/product/:productId"
       element={
-        <RoleRoute allow={BUILDMART_ROLES} allowGuest>
+        <RoleRoute allow={BUILDMART_ROLES}>
           <BuildMartProductPage />
         </RoleRoute>
       }

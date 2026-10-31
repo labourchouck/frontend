@@ -128,7 +128,7 @@ function App() {
           <Route
             path="/app"
             element={
-              <ProtectedRoute roles={APP_B2C_ROLES} allowGuest>
+              <ProtectedRoute roles={APP_B2C_ROLES}>
                 <ErrorBoundary>
                   <AppShell />
                 </ErrorBoundary>

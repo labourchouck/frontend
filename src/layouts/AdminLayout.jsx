@@ -26,7 +26,11 @@ const STORAGE_KEY = 'lc-admin-sidebar-collapsed'
 export function AdminLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, isAuthenticated } = useAuth()
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/admin/login" replace state={{ from: null }} />
+  }
   const reduce = useReducedMotion()
 
   const [collapsed, setCollapsed] = useState(() => {

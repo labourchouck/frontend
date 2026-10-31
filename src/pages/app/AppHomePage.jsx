@@ -6,7 +6,11 @@ import { IndividualHomeScreen } from './home/IndividualHomeScreen.jsx'
 import { LabourHomeScreen } from './home/LabourHomeScreen.jsx'
 
 export function AppHomePage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/b2c/auth" replace state={{ from: null }} />
+  }
 
   const labourCategories = user?.labourProfile?.categoryIds
   const needsWorkCategories =
@@ -16,7 +20,7 @@ export function AppHomePage() {
     return <Navigate to="/app/work-categories" replace />
   }
 
-  if (!user || !user.role || user.role === USER_ROLES.INDIVIDUAL) {
+  if (user.role === USER_ROLES.INDIVIDUAL) {
     return <IndividualHomeScreen user={user} />
   }
 
