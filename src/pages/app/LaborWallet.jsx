@@ -73,7 +73,7 @@ export function LaborWallet() {
     setClearError('')
 
     try {
-      /* const razorpayLoaded = await loadRazorpay() */
+      const razorpayLoaded = await loadRazorpay()
       if (!razorpayLoaded) {
         setClearError('Payment gateway failed to load')
         setClearing(false)
@@ -123,22 +123,8 @@ export function LaborWallet() {
       }
 
       
-      // Mock payment bypass
-      try {
-        if (options.handler) {
-            await options.handler({
-                razorpay_order_id: options.order_id || `mock_order_${Date.now()}`,
-                razorpay_payment_id: `mock_payment_${Date.now()}`,
-                razorpay_signature: `mock_signature_${Date.now()}`
-            });
-        }
-      } catch (err) {
-        console.error("Mock payment error", err);
-      }
-      /*
       const rzp = new window.Razorpay(options)
       rzp.open()
-      */
     } catch (err) {
       setClearError(err instanceof ApiError ? err.message : err.message || 'Payment failed')
       setClearing(false)

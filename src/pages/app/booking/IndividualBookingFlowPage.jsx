@@ -823,7 +823,7 @@ export function IndividualBookingFlowPage() {
                     }
 
                     // load Razorpay
-                    /* let rzpLoaded = window.Razorpay */
+                    let rzpLoaded = Boolean(window.Razorpay)
                     if (!rzpLoaded) {
                       rzpLoaded = await new Promise((resolve) => {
                         const script = document.createElement('script')
@@ -847,7 +847,7 @@ export function IndividualBookingFlowPage() {
                     const { order } = orderRes.data
 
                     const options = {
-                      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB',
+                      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                       amount: order.amount,
                       currency: order.currency,
                       name: 'Mappto',
@@ -876,25 +876,11 @@ export function IndividualBookingFlowPage() {
                     }
 
                     
-      // Mock payment bypass
-      try {
-        if (options.handler) {
-            await options.handler({
-                razorpay_order_id: options.order_id || `mock_order_${Date.now()}`,
-                razorpay_payment_id: `mock_payment_${Date.now()}`,
-                razorpay_signature: `mock_signature_${Date.now()}`
-            });
-        }
-      } catch (err) {
-        console.error("Mock payment error", err);
-      }
-      /*
       const rzp = new window.Razorpay(options)
                     rzp.on('payment.failed', function (response) {
                       alert(response.error.description || 'Payment failed')
                     })
                     rzp.open()
-      */
 
                   } catch (e) {
                     console.error('Payment Error:', e)

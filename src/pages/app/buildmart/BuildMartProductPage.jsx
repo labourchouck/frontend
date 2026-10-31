@@ -233,7 +233,7 @@ export function BuildMartProductPage() {
 
       {/* Sticky action bar above the bottom nav */}
       {/* Sits flush on the bottom nav: 75px of content + its max(0.5rem, safe-area) bottom padding. */}
-      <div className="fixed inset-x-0 bottom-[calc(75px+max(0.5rem,env(safe-area-inset-bottom,0px)))] z-20 border-t border-slate-200/80 bg-white shadow-[0_-8px_20px_-14px_rgba(15,23,42,0.35)]">
+      <div className="keyboard-hide fixed inset-x-0 bottom-[calc(75px+max(0.5rem,env(safe-area-inset-bottom,0px)))] z-20 border-t border-slate-200/80 bg-white shadow-[0_-8px_20px_-14px_rgba(15,23,42,0.35)]">
         <motion.div
           className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5"
           initial={reduce ? false : { y: 12, opacity: 0 }}

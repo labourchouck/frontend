@@ -11,6 +11,17 @@ import {
 } from '../../../store/api/workforceApi.js'
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 
+function loadRazorpay() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) { resolve(true); return }
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
+
 function formatMoney(n) {
   if (n == null) return '—'
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
@@ -45,16 +56,55 @@ export function CorporateInvoicePage() {
         invoiceId: invoice._id
       }).unwrap()
 
-      const mockRazorpayResponse = {
-        razorpayOrderId: initRes.data?.paymentTransactionId || 'order_mock_' + Date.now(),
-        razorpayPaymentId: 'pay_mock_' + Date.now(),
-        razorpaySignature: 'mock_signature_123'
+      const order = initRes?.order
+      if (!order) throw new Error('Payment initialization failed')
+
+      const finishPayment = async (payload) => {
+        await verifyPayment(payload).unwrap()
+        // Remove review=true from URL if present to avoid reopening on refresh
+        setSearchParams({})
+        setShowReviewModal(true)
       }
 
-      await verifyPayment(mockRazorpayResponse).unwrap()
-      // Remove review=true from URL if present to avoid reopening on refresh
-      setSearchParams({})
-      setShowReviewModal(true)
+      // No Razorpay keys on the server: backend returns a mock order, so skip the SDK.
+      if (order.mock) {
+        await finishPayment({
+          razorpayOrderId: order.id,
+          razorpayPaymentId: 'pay_mock_' + Date.now(),
+          razorpaySignature: 'mock_signature_123',
+        })
+        return
+      }
+
+      const loaded = await loadRazorpay()
+      if (!loaded) {
+        alert('Failed to load Razorpay SDK. Please check your connection.')
+        return
+      }
+
+      const rzp = new window.Razorpay({
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'Mappto',
+        description: `Invoice payment`,
+        order_id: order.id,
+        handler: async (response) => {
+          try {
+            await finishPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            })
+          } catch (err) {
+            console.error('Payment verification failed', err)
+            alert('Payment verification failed. Contact support.')
+          }
+        },
+        theme: { color: '#2bb972' },
+      })
+      rzp.on('payment.failed', (response) => alert(response.error?.description || 'Payment failed'))
+      rzp.open()
     } catch (err) {
       console.error('Payment failed', err)
       alert('Payment failed. Please try again.')

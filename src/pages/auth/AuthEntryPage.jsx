@@ -92,6 +92,19 @@ function AuthField({ label, hint, children }) {
 const inputClass =
   'w-full border-b-2 border-slate-200 bg-transparent py-2 text-base font-semibold text-slate-900 transition-colors focus:border-brand focus:outline-none placeholder:text-slate-300'
 
+const AUTH_DRAFT_KEY = 'auth-entry-draft'
+
+/** Restores the sign-up form after returning from the in-app Terms/Privacy screen (one-shot). */
+function readAuthDraft() {
+  try {
+    const raw = sessionStorage.getItem(AUTH_DRAFT_KEY)
+    sessionStorage.removeItem(AUTH_DRAFT_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
 export function AuthEntryPage({ variant = 'b2c' }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -99,18 +112,29 @@ export function AuthEntryPage({ variant = 'b2c' }) {
   const reduce = useReducedMotion()
   const otpInputRefs = useRef([])
 
-  const [mode, setMode] = useState('login')
+  const [draft] = useState(readAuthDraft)
+  const [mode, setMode] = useState(draft.mode || 'login')
   const [step, setStep] = useState('form')
-  const [role, setRole] = useState(location.state?.defaultRole || (variant === 'b2b' ? USER_ROLES.CORPORATE : USER_ROLES.INDIVIDUAL))
-  const [phone, setPhone] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [companyName, setCompanyName] = useState('')
-  const [businessName, setBusinessName] = useState('')
-  const [gstNumber, setGstNumber] = useState('')
-  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [role, setRole] = useState(draft.role || location.state?.defaultRole || (variant === 'b2b' ? USER_ROLES.CORPORATE : USER_ROLES.INDIVIDUAL))
+  const [phone, setPhone] = useState(draft.phone || '')
+  const [fullName, setFullName] = useState(draft.fullName || '')
+  const [companyName, setCompanyName] = useState(draft.companyName || '')
+  const [businessName, setBusinessName] = useState(draft.businessName || '')
+  const [gstNumber, setGstNumber] = useState(draft.gstNumber || '')
+  const [termsAccepted, setTermsAccepted] = useState(Boolean(draft.termsAccepted))
   const [referralCode, setReferralCode] = useState(
-    () => captureReferralCodeFromUrl() || readStoredReferralCode(),
+    () => draft.referralCode || captureReferralCodeFromUrl() || readStoredReferralCode(),
   )
+  const saveDraft = () => {
+    try {
+      sessionStorage.setItem(
+        AUTH_DRAFT_KEY,
+        JSON.stringify({ mode, role, phone, fullName, companyName, businessName, gstNumber, termsAccepted, referralCode }),
+      )
+    } catch {
+      /* ignore */
+    }
+  }
   /** null = not checked yet, otherwise { valid, referrerName, refereeReward } */
   const [referralCheck, setReferralCheck] = useState(null)
   const [otpCells, setOtpCells] = useState(() => Array(6).fill(''))
@@ -639,11 +663,11 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       />
                       <label htmlFor="terms" className="text-[13px] text-slate-500">
                         I agree to the{' '}
-                        <Link to={`/terms?role=${role}`} target="_blank" className="font-medium text-brand hover:underline">
+                        <Link to={`/legal/terms?role=${role}`} onClick={saveDraft} className="font-medium text-brand hover:underline">
                           Terms & Conditions
                         </Link>{' '}
                         and{' '}
-                        <Link to={`/privacy?role=${role}`} target="_blank" className="font-medium text-brand hover:underline">
+                        <Link to={`/legal/privacy?role=${role}`} onClick={saveDraft} className="font-medium text-brand hover:underline">
                           Privacy Policy
                         </Link>
                       </label>

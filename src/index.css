@@ -137,3 +137,9 @@ select:focus-visible,
   font-weight: 700 !important;
   color: #0f172a !important;
 }
+
+/* Hide fixed footers while the on-screen keyboard is open (set by useKeyboardOpenFlag). */
+html[data-keyboard='open'] nav[aria-label='Bottom navigation'],
+html[data-keyboard='open'] .keyboard-hide {
+  display: none !important;
+}

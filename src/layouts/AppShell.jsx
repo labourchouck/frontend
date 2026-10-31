@@ -21,11 +21,13 @@ import { adminInitials } from '../lib/formatAdminLastLogin.js'
 import { readAppUserLocation } from '../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../components/app/AppUserLocationModal.jsx'
 import { APP_HOME_LOCATION, APP_HOME_PATH, hasBookingFlowQuery } from '../lib/bookingFlowNavigation.js'
+import { useAutoDetectLocation } from '../hooks/useAutoDetectLocation.js'
 
 export function AppShell() {
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
   const { logout, user, isGuest } = useAuth()
+  useAutoDetectLocation(user)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())

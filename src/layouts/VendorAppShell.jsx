@@ -14,6 +14,7 @@ import { NotificationBell } from '../components/notifications/NotificationBell.j
 import { AppBottomNav } from '../components/app-ui/navigation/AppBottomNav.jsx'
 import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
+import { useAutoDetectLocation } from '../hooks/useAutoDetectLocation.js'
 
 function vendorHidesShellHeader(pathname) {
   if (pathname === '/vendor') return true
@@ -32,6 +33,7 @@ export function VendorAppShell() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { logout, user } = useAuth()
+  useAutoDetectLocation(user)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const reduce = useReducedMotion()
 

@@ -50,17 +50,20 @@ import { AdminTermsAndConditionsPage } from './pages/admin/AdminTermsAndConditio
 import { AdminPrivacyPolicyPage } from './pages/admin/AdminPrivacyPolicyPage.jsx'
 import { AdminSupportPolicyPage } from './pages/admin/AdminSupportPolicyPage.jsx'
 import { PublicLegalPage } from './pages/legal/PublicLegalPage.jsx'
+import { InAppLegalPage } from './pages/legal/InAppLegalPage.jsx'
 import { AdminFaqPage } from './pages/admin/AdminFaqPage.jsx'
 import { AdminReferralsPage } from './pages/admin/AdminReferralsPage.jsx'
 import { AdminUserWalletPage } from './pages/admin/AdminUserWalletPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
 import { PushNotificationManager } from './hooks/usePushNotifications.js'
+import { useKeyboardOpenFlag } from './hooks/useKeyboardOpenFlag.js'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'
 import { USER_ROLES } from './constants/userRoles.js'
 
 function ScrollToTop() {
+  useKeyboardOpenFlag()
   const { pathname } = useLocation()
 
   useLayoutEffect(() => {
@@ -115,6 +118,8 @@ function App() {
           <Route path="/b2b/auth" element={<AuthEntryPage variant="b2b" />} />
           <Route path="/b2c/auth" element={<AuthEntryPage variant="b2c" />} />
           <Route path="/auth" element={<Navigate to="/b2c/auth" replace />} />
+          <Route path="/legal/terms" element={<InAppLegalPage kind="terms" />} />
+          <Route path="/legal/privacy" element={<InAppLegalPage kind="privacy" />} />
           <Route path="/terms" element={<PublicLegalPage kind="terms" />} />
           <Route path="/privacy" element={<PublicLegalPage kind="privacy" />} />
           <Route path="/support" element={<PublicLegalPage kind="support" />} />

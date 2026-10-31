@@ -4,9 +4,11 @@ import { CORPORATE_STATUS } from '../constants/userRoles.js'
 import { corporateNavigation, getCorporateTitle } from '../config/corporateNavigation.js'
 import { PanelShell } from './PanelShell.jsx'
 import { CorporateNotificationListener } from '../panels/corporate/components/CorporateNotificationListener.jsx'
+import { useAutoDetectLocation } from '../hooks/useAutoDetectLocation.js'
 
 export function CorporateShell() {
   const { user } = useAuth()
+  useAutoDetectLocation(user)
   const { headerTagline, bottomNav, drawerNav } = corporateNavigation
 
   const headerBadge = useMemo(() => {

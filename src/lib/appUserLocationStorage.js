@@ -12,13 +12,13 @@ export function readAppUserLocation() {
     const lat = typeof j.lat === 'number' && Number.isFinite(j.lat) ? j.lat : null
     const lng = typeof j.lng === 'number' && Number.isFinite(j.lng) ? j.lng : null
     if (!address && lat == null && lng == null) return null
-    return { address, lat, lng }
+    return { address, lat, lng, auto: j.auto === true }
   } catch {
     return null
   }
 }
 
-/** @param {{ address?: string, lat?: number | null, lng?: number | null }} loc */
+/** @param {{ address?: string, lat?: number | null, lng?: number | null, auto?: boolean }} loc `auto` marks a GPS-detected value that may be refreshed silently. */
 export function writeAppUserLocation(loc) {
   const address = typeof loc.address === 'string' ? loc.address.trim() : ''
   const lat = loc.lat != null && Number.isFinite(Number(loc.lat)) ? Number(loc.lat) : null
@@ -27,7 +27,7 @@ export function writeAppUserLocation(loc) {
     localStorage.removeItem(KEY)
     return
   }
-  localStorage.setItem(KEY, JSON.stringify({ address, lat, lng, updatedAt: Date.now() }))
+  localStorage.setItem(KEY, JSON.stringify({ address, lat, lng, auto: loc.auto === true, updatedAt: Date.now() }))
 }
 
 export function clearAppUserLocation() {
