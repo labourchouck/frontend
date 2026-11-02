@@ -7,6 +7,7 @@ import { VendorPageLayout } from '../../../components/vendor/VendorPageLayout.js
 import { vendorApi } from '../../../api/vendorApi.js'
 import { paymentsApi } from '../../../api/paymentsApi.js'
 import { useAuth } from '../../../hooks/useAuth.js'
+import { pickRazorpayKey } from '../../../lib/razorpayKey.js'
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -75,7 +76,7 @@ export function VendorMartSubscriptionPage() {
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        key: pickRazorpayKey(initRes.data?.keyId),
         amount: initRes.data.order.amount,
         currency: initRes.data.order.currency,
         name: 'Mappto',

@@ -58,6 +58,7 @@ import {
   BOOKING_FLOW_PATH,
   buildBookingFlowPath,
 } from '../../../lib/bookingFlowNavigation.js'
+import { pickRazorpayKey } from '../../../lib/razorpayKey.js'
 
 const TIME_SLOTS = ['9:00 AM – 12:00 PM', '12:00 PM – 3:00 PM', '3:00 PM – 6:00 PM', '6:00 PM – 9:00 PM']
 
@@ -863,7 +864,7 @@ export function IndividualBookingFlowPage() {
                     const { order } = orderRes.data
 
                     const options = {
-                      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                      key: pickRazorpayKey(orderRes.data?.keyId),
                       amount: order.amount,
                       currency: order.currency,
                       name: 'Mappto',

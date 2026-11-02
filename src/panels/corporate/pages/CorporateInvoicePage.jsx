@@ -10,6 +10,7 @@ import {
   useGetRequestQuery
 } from '../../../store/api/workforceApi.js'
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
+import { pickRazorpayKey } from '../../../lib/razorpayKey.js'
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -83,7 +84,7 @@ export function CorporateInvoicePage() {
       }
 
       const rzp = new window.Razorpay({
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: pickRazorpayKey(initRes?.keyId),
         amount: order.amount,
         currency: order.currency || 'INR',
         name: 'Mappto',

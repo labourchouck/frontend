@@ -20,6 +20,7 @@ import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { BookingServiceHighlight } from '../../components/app/booking/BookingServiceHighlight.jsx'
 import { ReviewModal } from '../../components/app/ReviewModal.jsx'
+import { pickRazorpayKey } from '../../lib/razorpayKey.js'
 
 const BOOKING_STEPS = [
   { id: 'CREATED', label: 'Booking Created' },
@@ -172,7 +173,7 @@ export function JobTracking() {
       const { order } = orderRes.data
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYe1C0k011xHMB', // fallback
+        key: pickRazorpayKey(orderRes.data?.keyId),
         amount: order.amount,
         currency: order.currency,
         name: 'Mappto',

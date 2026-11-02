@@ -4,6 +4,7 @@ import { CheckCircle2, Shield, Loader2, AlertTriangle, ChevronRight, Sparkles, X
 import { userSubscriptionApi } from '../../api/userSubscriptionApi'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
+import { pickRazorpayKey } from '../../lib/razorpayKey.js'
 
 function Toast({ message, variant = 'success' }) {
   if (!message) return null
@@ -89,7 +90,7 @@ export function AppSubscriptionPage() {
       const { order, keyId } = orderRes.data
 
       const options = {
-        key: keyId,
+        key: pickRazorpayKey(keyId),
         amount: order.amount,
         currency: order.currency,
         name: 'Mappto',

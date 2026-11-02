@@ -16,6 +16,7 @@ import { paymentsApi } from '../../api/paymentsApi.js'
 import { ApiError } from '../../api/http.js'
 import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+import { pickRazorpayKey } from '../../lib/razorpayKey.js'
 
 function formatInr(amount) {
   return `₹${Number(amount || 0).toLocaleString('en-IN')}`
@@ -89,7 +90,7 @@ export function LaborWallet() {
       if (!order) throw new Error('Payment initialization failed')
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        key: pickRazorpayKey(payRes.data?.keyId),
         amount: order.amount,
         currency: order.currency || 'INR',
         order_id: order.id,

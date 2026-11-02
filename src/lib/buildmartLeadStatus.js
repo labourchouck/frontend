@@ -64,3 +64,27 @@ export function formatUpdateTime(value) {
 
 /** Mart base path for the app the user is in (corporate has its own shell). */
 export const martBasePath = (pathname) => (pathname.startsWith('/corporate') ? '/corporate/mart' : '/app/buildmart')
+
+/** Mirror of the server rule: a request only moves forward; won and lost are final. */
+export const NEXT_STATUSES = {
+  new: ['contacted', 'quoted', 'won', 'lost'],
+  contacted: ['quoted', 'won', 'lost'],
+  quoted: ['won', 'lost'],
+  won: [],
+  lost: [],
+}
+
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/**
+ * Options for the status dropdown: the current status (shown as selected) plus only the later ones.
+ * Earlier statuses are not offered, so a lead cannot be sent backwards.
+ */
+export function statusSelectOptions(current) {
+  return [
+    { value: current, label: `Current: ${cap(current)}` },
+    ...(NEXT_STATUSES[current] || []).map((s) => ({ value: s, label: `Mark as ${cap(s)}` })),
+  ]
+}
+
+export const isFinalStatus = (status) => (NEXT_STATUSES[status] || []).length === 0

@@ -10,6 +10,7 @@ import { useGetRequestQuery, useRateCorporateAssignmentMutation, useInitPaymentM
 import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 import { useAuth } from '../../../hooks/useAuth.js'
+import { pickRazorpayKey } from '../../../lib/razorpayKey.js'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -77,7 +78,7 @@ export function CorporateRequestDetailPage() {
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        key: pickRazorpayKey(initRes?.keyId),
         amount: initRes.order?.amount,
         currency: initRes.order?.currency,
         name: 'Mappto',

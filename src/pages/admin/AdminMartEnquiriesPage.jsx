@@ -9,6 +9,7 @@ import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppSearchableSelect } from '../../components/app-ui/inputs/AppSearchableSelect.jsx'
 import { LeadTimeline } from '../../components/buildmart/LeadTimeline.jsx'
+import { isFinalStatus, statusSelectOptions } from '../../lib/buildmartLeadStatus.js'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -85,6 +86,8 @@ export function AdminBuildMartLeadsPage() {
   }, [load])
 
   async function handleStatusChange(id, next) {
+    const current = items.find((l) => l._id === id)?.status
+    if (next === current) return
     try {
       await updateBuildMartLeadStatus(id, next)
       await load()
@@ -277,17 +280,20 @@ export function AdminBuildMartLeadsPage() {
                     ) : null}
                     
                     <div className="w-full">
-                      <AppSearchableSelect
-                        value={lead.status}
-                        onChange={(val) => handleStatusChange(lead._id, val)}
-                        options={STATUS_OPTIONS.filter((o) => o.value !== 'all').map((o) => ({
-                          label: `Mark as ${o.label}`,
-                          value: o.value
-                        }))}
-                        hideSearch
-                        placeholder="Update Status"
-                        className="font-bold text-slate-700"
-                      />
+                      {isFinalStatus(lead.status) ? (
+                        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-center text-sm font-bold capitalize text-slate-600" data-testid="final-status">
+                          Final status: {lead.status}
+                        </p>
+                      ) : (
+                        <AppSearchableSelect
+                          value={lead.status}
+                          onChange={(val) => handleStatusChange(lead._id, val)}
+                          options={statusSelectOptions(lead.status)}
+                          hideSearch
+                          placeholder="Update Status"
+                          className="font-bold text-slate-700"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>

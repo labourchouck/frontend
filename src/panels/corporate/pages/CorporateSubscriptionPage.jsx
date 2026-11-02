@@ -8,6 +8,7 @@ import {
   useCreateCorporateSubscriptionOrderMutation,
   useVerifyCorporateSubscriptionPaymentMutation
 } from '../../../store/api/workforceApi.js'
+import { pickRazorpayKey } from '../../../lib/razorpayKey.js'
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -70,7 +71,7 @@ export function CorporateSubscriptionPage() {
       }
 
       const options = {
-        key: initRes.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+        key: pickRazorpayKey(initRes?.keyId),
         amount: initRes.order.amount,
         currency: initRes.order.currency,
         name: 'Mappto',
