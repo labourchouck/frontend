@@ -14,6 +14,7 @@ import { CorporateTermsPage } from '../panels/corporate/pages/CorporateTermsPage
 import { CorporatePrivacyPolicyPage } from '../panels/corporate/pages/CorporatePrivacyPolicyPage.jsx'
 import { CorporateFaqPage } from '../panels/corporate/pages/CorporateFaqPage.jsx'
 import { BuildMartHomePage } from '../pages/app/buildmart/BuildMartHomePage.jsx'
+import { BuildMartOrdersPage } from '../pages/app/buildmart/BuildMartOrdersPage.jsx'
 import { BuildMartProductPage } from '../pages/app/buildmart/BuildMartProductPage.jsx'
 
 /** Nested `/corporate/*` routes — Fragment of `<Route>` nodes for React Router. */
@@ -34,6 +35,7 @@ export const corporateChildRoutes = (
     <Route path="privacy-policy" element={<CorporatePrivacyPolicyPage />} />
     <Route path="faq" element={<CorporateFaqPage />} />
     <Route path="mart" element={<BuildMartHomePage />} />
+    <Route path="mart/orders" element={<BuildMartOrdersPage />} />
     <Route path="mart/product/:productId" element={<BuildMartProductPage />} />
   </>
 )

@@ -17,6 +17,7 @@ import { ReferAndEarnPage } from '../pages/app/ReferAndEarnPage.jsx'
 import { LabourNotificationsPage } from '../pages/app/labour/LabourNotificationsPage.jsx'
 import { IndividualBookingFlowPage } from '../pages/app/booking/IndividualBookingFlowPage.jsx'
 import { BuildMartHomePage } from '../pages/app/buildmart/BuildMartHomePage.jsx'
+import { BuildMartOrdersPage } from '../pages/app/buildmart/BuildMartOrdersPage.jsx'
 import { BuildMartCategoryPage } from '../pages/app/buildmart/BuildMartCategoryPage.jsx'
 import { BuildMartProductPage } from '../pages/app/buildmart/BuildMartProductPage.jsx'
 import { AppIndividualSearchPage } from '../pages/app/AppIndividualSearchPage.jsx'
@@ -144,6 +145,14 @@ export const appShellChildRoutes = (
       element={
         <RoleRoute allow={BUILDMART_ROLES}>
           <BuildMartHomePage />
+        </RoleRoute>
+      }
+    />
+    <Route
+      path="buildmart/orders"
+      element={
+        <RoleRoute allow={BUILDMART_ROLES}>
+          <BuildMartOrdersPage />
         </RoleRoute>
       }
     />

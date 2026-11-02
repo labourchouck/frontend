@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2, Loader2, MessageCircle, MapPin } from 'lucide-react'
 import { AppBottomSheetBackdrop, AppBottomSheetChrome, AppBottomSheetPanel } from '../app-ui/feedback/AppBottomSheet.jsx'
@@ -29,6 +30,8 @@ export function BuildMartRequestQuoteSheet({
 }) {
   const { user } = useAuth()
   const reduce = useReducedMotion()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [form, setForm] = useState(INITIAL)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -150,6 +153,16 @@ export function BuildMartRequestQuoteSheet({
                     Notify on WhatsApp
                   </a>
                 ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose()
+                    navigate(pathname.startsWith('/corporate') ? '/corporate/mart/orders' : '/app/buildmart/orders')
+                  }}
+                  className="w-full rounded-2xl bg-brand py-3 text-sm font-extrabold text-white shadow-sm"
+                >
+                  Track this request
+                </button>
                 <button
                   type="button"
                   onClick={onClose}

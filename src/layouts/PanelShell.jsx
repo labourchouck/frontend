@@ -46,7 +46,8 @@ export function PanelShell({
     /\/jobs\/[^/]+$/.test(pathname) ||
     /\/crew\/[^/]+$/.test(pathname) ||
     pathname.includes('/invoice') ||
-    pathname.includes('/subscription')
+    pathname.includes('/subscription') ||
+    pathname.endsWith('/mart/orders')
 
   useEffect(() => {
     queueMicrotask(() => setDrawerOpen(false))

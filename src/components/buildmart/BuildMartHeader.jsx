@@ -1,6 +1,6 @@
-import { Menu, ChevronDown, MapPin, Mic, Search } from 'lucide-react'
+import { Menu, ChevronDown, ClipboardList, MapPin, Mic, Search } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { readAppUserLocation } from '../../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../app/AppUserLocationModal.jsx'
@@ -36,6 +36,8 @@ function RotatingHint() {
 
 export function BuildMartHeader({ onOpenDrawer }) {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const ordersPath = pathname.startsWith('/corporate') ? '/corporate/mart/orders' : '/app/buildmart/orders'
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
   const voice = useVoiceSearch((text) => navigate(`/app/buildmart/category/all?q=${encodeURIComponent(text)}`))
@@ -87,11 +89,22 @@ export function BuildMartHeader({ onOpenDrawer }) {
             </div>
           </div>
 
-          <img
-            src="/assets/images/mappto_logo_tile_white.png"
-            alt="Mappto"
-            className="h-10 w-10 shrink-0 rounded-xl object-contain shadow-[0_4px_12px_-4px_rgba(15,23,42,0.45)]"
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(ordersPath)}
+              className="flex h-10 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-xs font-extrabold text-white ring-1 ring-white/25 transition active:scale-95 hover:bg-white/25"
+              aria-label="My Mart orders and updates"
+            >
+              <ClipboardList className="h-[18px] w-[18px]" aria-hidden />
+              <span>Orders</span>
+            </button>
+            <img
+              src="/assets/images/mappto_logo_tile_white.png"
+              alt="Mappto"
+              className="h-10 w-10 shrink-0 rounded-xl object-contain shadow-[0_4px_12px_-4px_rgba(15,23,42,0.45)]"
+            />
+          </div>
         </div>
 
         <div

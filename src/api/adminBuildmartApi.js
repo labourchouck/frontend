@@ -12,8 +12,8 @@ export async function fetchAdminBuildMartLeads({ page = 1, limit = 20, status = 
   return data?.data ?? data
 }
 
-export async function updateBuildMartLeadStatus(id, status) {
-  const data = await apiRequest(`/admin/buildmart/leads/${id}`, { method: 'PATCH', body: { status } })
+export async function updateBuildMartLeadStatus(id, status, note) {
+  const data = await apiRequest(`/admin/buildmart/leads/${id}`, { method: 'PATCH', body: { status, ...(note ? { note } : {}) } })
   return data?.data?.lead ?? data?.lead ?? data
 }
 

@@ -8,6 +8,7 @@ import {
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppSearchableSelect } from '../../components/app-ui/inputs/AppSearchableSelect.jsx'
+import { LeadTimeline } from '../../components/buildmart/LeadTimeline.jsx'
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All' },
@@ -245,6 +246,22 @@ export function AdminBuildMartLeadsPage() {
                     <p className="text-[10px] font-bold text-slate-400 pt-2">
                       Received: {new Date(lead.createdAt).toLocaleString()} · Source: {lead.source || 'buildmart_app'}
                     </p>
+
+                    <details className="group mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2" data-testid="lead-updates">
+                      <summary className="cursor-pointer select-none text-xs font-bold text-slate-700">
+                        Updates ({(lead.statusHistory || []).length || 1})
+                      </summary>
+                      <div className="mt-3">
+                        <LeadTimeline
+                          audience="staff"
+                          history={
+                            lead.statusHistory?.length
+                              ? lead.statusHistory
+                              : [{ status: 'new', at: lead.createdAt }, ...(lead.status !== 'new' ? [{ status: lead.status, at: lead.updatedAt }] : [])]
+                          }
+                        />
+                      </div>
+                    </details>
                   </div>
                   <div className="flex shrink-0 flex-col gap-2 sm:items-end w-full sm:w-auto mt-3 sm:mt-0">
                     {customerWa ? (
