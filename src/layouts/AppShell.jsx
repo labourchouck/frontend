@@ -475,7 +475,7 @@ export function AppShell() {
               ? 'px-0 pt-0 pb-0'
               : `px-4 pb-32 ${
                   hideShellHeader
-                    ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))]'
+                    ? 'pt-[max(0.5rem,env(safe-area-inset-top,0px))] [--shell-top-inset:0px] [--shell-sticky-top:env(safe-area-inset-top,0px)]'
                     : isIndividualAppHome
                       ? 'pt-0'
                       : 'pt-4'

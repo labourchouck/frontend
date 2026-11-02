@@ -34,8 +34,10 @@ export function AppStackScreenHeader({ title, backTo = '/app', onBack, variant, 
     )
   }
 
+  // Inside AppShell the page container already pads for the status bar (--shell-top-inset is 0 there), so the
+  // header must not add it a second time; it sticks just below the status bar instead (--shell-sticky-top).
   return (
-    <header className="sticky top-0 z-30 pb-3 pt-[max(0.25rem,env(safe-area-inset-top))]">
+    <header className="sticky top-[var(--shell-sticky-top,0px)] z-30 pb-3 pt-[max(0.25rem,var(--shell-top-inset,env(safe-area-inset-top,0px)))]">
       <GlassPanel className="flex items-center gap-3 px-3 py-2.5">
         {onBack ? (
           <button

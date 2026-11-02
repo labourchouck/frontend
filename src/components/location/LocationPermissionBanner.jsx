@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MapPinOff, Navigation, X } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -10,6 +10,7 @@ export function LocationPermissionBanner({ className = '' }) {
   const [locStatus, setLocStatus] = useState(null)
   const [dismissed, setDismissed] = useState(false)
   const [busy, setBusy] = useState(false)
+  const boxRef = useRef(null)
 
   useEffect(() => {
     const handleStatus = (e) => {
@@ -37,7 +38,27 @@ export function LocationPermissionBanner({ className = '' }) {
     return () => clearInterval(id)
   }, [gpsOff, dismissed, user?.role])
 
-  if (dismissed || !locStatus) return null
+  const visible = !dismissed && Boolean(locStatus)
+
+  // Tell other floating banners (e.g. the notifications prompt) how much room this one takes, so they stack above it.
+  useEffect(() => {
+    const root = document.documentElement
+    const node = boxRef.current
+    if (!visible || !node) {
+      root.style.removeProperty('--location-banner-h')
+      return undefined
+    }
+    const update = () => root.style.setProperty('--location-banner-h', `${Math.ceil(node.getBoundingClientRect().height) + 8}px`)
+    update()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null
+    ro?.observe(node)
+    return () => {
+      ro?.disconnect()
+      root.style.removeProperty('--location-banner-h')
+    }
+  }, [visible])
+
+  if (!visible) return null
 
   // If we already have a valid saved location, don't nag the user with a full banner unless requested
   const stored = readAppUserLocation()
@@ -59,6 +80,7 @@ export function LocationPermissionBanner({ className = '' }) {
   return (
     <AnimatePresence>
       <motion.div
+        ref={boxRef}
         initial={{ opacity: 0, y: 10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.98 }}
