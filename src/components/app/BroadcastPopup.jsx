@@ -81,7 +81,7 @@ export function BroadcastPopup() {
       }
     }
     recoverPending()
-    const pollId = setInterval(recoverPending, 20000)
+    const pollId = setInterval(recoverPending, 10000)
     const onVisible = () => {
       if (document.visibilityState === 'visible') recoverPending()
     }
