@@ -188,7 +188,7 @@ export function CorporateRequestDetailPage() {
 
   return (
     <div className="space-y-4 pb-8">
-      <header className="sticky top-0 z-30 pt-3 mb-2">
+      <header className="sticky top-0 z-30 -mx-4 mb-2 bg-white px-4 pb-1 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
         <GlassPanel className="flex items-center justify-between px-3 py-2.5">
           <Link to="/corporate/requests" className="inline-flex items-center gap-2 text-sm font-bold text-brand hover:text-brand/80 transition-colors">
             <ArrowLeft className="h-4 w-4" aria-hidden />

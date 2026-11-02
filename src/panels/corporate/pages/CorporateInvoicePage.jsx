@@ -169,7 +169,7 @@ export function CorporateInvoicePage() {
 
   return (
     <div className="space-y-6 pb-12 max-w-4xl mx-auto print:p-0 print:m-0 print:space-y-0">
-      <header className="sticky top-0 z-30 pt-3 mb-6 print:hidden">
+      <header className="sticky top-0 z-30 -mx-4 mb-6 bg-white px-4 pb-1 pt-[max(0.75rem,env(safe-area-inset-top,0px))] print:hidden">
         <GlassPanel className="flex items-center justify-between px-3 py-2.5">
           <button 
             onClick={() => navigate('/corporate/billing')}

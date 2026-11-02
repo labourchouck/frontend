@@ -9,7 +9,7 @@ import { GlassPanel } from './GlassPanel.jsx'
 export function FixedStackHeader({ title, backTo, badge }) {
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 mx-auto w-full max-w-lg px-3 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
+      <header className="fixed inset-x-0 top-0 z-40 mx-auto w-full max-w-lg bg-white px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
         <GlassPanel className="flex items-center gap-3 px-3 py-2.5">
           <Link
             to={backTo}
@@ -26,7 +26,7 @@ export function FixedStackHeader({ title, backTo, badge }) {
           ) : null}
         </GlassPanel>
       </header>
-      <div aria-hidden className="h-[calc(4.5rem+env(safe-area-inset-top,0px))]" />
+      <div aria-hidden className="h-[calc(5rem+env(safe-area-inset-top,0px))]" />
     </>
   )
 }
