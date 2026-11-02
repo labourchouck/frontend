@@ -55,6 +55,7 @@ export function B2cBookingCard({ booking, isLabour }) {
                 </>
               )}
             </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Booking for</p>
             <p className="truncate text-base font-extrabold text-slate-900 leading-tight">
               {booking.serviceId?.name || subcategory?.name || 'Service Booking'}
             </p>

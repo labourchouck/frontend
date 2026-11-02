@@ -1,12 +1,18 @@
-/** Selected trade / skill — prominent highlight on booking steps. */
-export function BookingServiceHighlight({ categoryName, groupName, kicker = 'Booking for' }) {
-  if (!categoryName && !groupName) return null
+/**
+ * Selected service — prominent highlight on booking steps.
+ * Leads with the service the user picked (e.g. "Home Appliance Repair Technician") and keeps the
+ * category / group underneath for context.
+ */
+export function BookingServiceHighlight({ serviceName, categoryName, groupName, kicker = 'Booking for' }) {
+  const title = serviceName || categoryName
+  if (!title) return null
+  const context = [serviceName ? categoryName : null, groupName].filter(Boolean).join(' · ')
 
   return (
     <div className="lc-booking-highlight" role="status">
       <p className="lc-booking-highlight-kicker">{kicker}</p>
-      {categoryName ? <p className="lc-booking-highlight-title">{categoryName}</p> : null}
-      {groupName ? <p className="lc-booking-highlight-sub">{groupName}</p> : null}
+      <p className="lc-booking-highlight-title">{title}</p>
+      {context ? <p className="lc-booking-highlight-sub">{context}</p> : null}
     </div>
   )
 }

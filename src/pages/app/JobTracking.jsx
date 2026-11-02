@@ -18,6 +18,7 @@ import { useSocket } from '../../context/SocketContext.jsx'
 import { setActiveBooking, updateBookingStatus as updateBookingStatusAction, clearActiveBooking } from '../../store/slices/activeBookingSlice.js'
 import { AppStackScreenHeader } from '../../components/app/AppStackScreenHeader.jsx'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
+import { BookingServiceHighlight } from '../../components/app/booking/BookingServiceHighlight.jsx'
 import { ReviewModal } from '../../components/app/ReviewModal.jsx'
 
 const BOOKING_STEPS = [
@@ -241,6 +242,11 @@ export function JobTracking() {
   return (
     <div className="space-y-4 pb-8">
       <AppStackScreenHeader title="Job Tracking" backTo="/app" />
+
+      <BookingServiceHighlight
+        serviceName={booking.serviceId?.name}
+        categoryName={booking.subcategoryId?.name}
+      />
 
       {/* Status Badge */}
       <GlassPanel className="border-brand/20 bg-brand/5 px-4 py-3 text-center">

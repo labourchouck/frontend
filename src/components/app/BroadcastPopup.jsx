@@ -19,6 +19,10 @@ export function BroadcastPopup() {
   const [timeLeft, setTimeLeft] = useState(30)
   const [responding, setResponding] = useState(false)
   const [error, setError] = useState('')
+  const incomingRef = useRef(null)
+  useEffect(() => {
+    incomingRef.current = incoming
+  }, [incoming])
 
   // Only render for labour users
   const isLabour = user?.role === USER_ROLES.LABOUR || user?.role === 'labour'
@@ -58,14 +62,46 @@ export function BroadcastPopup() {
       }
     }
 
-    socket.on('BOOKING_RECEIVED', handleBroadcast)
+    // The live event is easy to miss (app was closed, socket reconnecting), so also pull any
+    // offer that is still open for this worker. Scheduled jobs stay open for up to 30 minutes.
+    const recoverPending = async () => {
+      if (incomingRef.current) return
+      try {
+        const res = await broadcastsApi.getPending()
+        const offer = res?.data?.offers?.[0]
+        if (offer && !incomingRef.current) {
+          console.log('[BroadcastPopup] recovered pending offer', offer.bookingId, offer.type, `${Math.round(offer.timeoutMs / 1000)}s left`)
+          setIncoming(offer)
+          setTimeLeft(Math.max(1, Math.floor((offer.timeoutMs || 30000) / 1000)))
+          setError('')
+          setResponding(false)
+        }
+      } catch (err) {
+        console.warn('[BroadcastPopup] pending offers fetch failed:', err?.message || err)
+      }
+    }
+    recoverPending()
+    const pollId = setInterval(recoverPending, 20000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') recoverPending()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    socket.on('connect', recoverPending)
+
+    socket.on('BOOKING_RECEIVED', (data) => {
+      console.log('[BroadcastPopup] BOOKING_RECEIVED via socket', data?.bookingId, data?.type)
+      handleBroadcast(data)
+    })
     const handleExpired = (data) => {
       setIncoming((prev) => (prev?.bookingId === data.bookingId ? null : prev))
     }
     socket.on('BOOKING_EXPIRED', handleExpired)
 
     return () => {
-      socket.off('BOOKING_RECEIVED', handleBroadcast)
+      clearInterval(pollId)
+      document.removeEventListener('visibilitychange', onVisible)
+      socket.off('connect', recoverPending)
+      socket.off('BOOKING_RECEIVED')
       socket.off('BOOKING_EXPIRED', handleExpired)
     }
   }, [socket, isLabour])
@@ -163,12 +199,19 @@ export function BroadcastPopup() {
                   </span>
                   <div>
                     <p className="text-base font-extrabold text-slate-900">New Job!</p>
-                    <p className="text-xs text-slate-500">{incoming.type || 'INSTANT'} booking</p>
+                    <p className="text-xs text-slate-500">
+                      {incoming.type || 'INSTANT'} booking
+                      {incoming.type === 'SCHEDULED' && incoming.scheduledAt
+                        ? ` · ${new Date(incoming.scheduledAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`
+                        : ''}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 ring-1 ring-amber-200/80">
                   <Clock className="h-3.5 w-3.5 text-amber-600" aria-hidden />
-                  <span className="text-sm font-extrabold text-amber-700">{timeLeft}s</span>
+                  <span className="text-sm font-extrabold text-amber-700">
+                    {timeLeft >= 60 ? `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}` : `${timeLeft}s`}
+                  </span>
                 </div>
               </div>
 

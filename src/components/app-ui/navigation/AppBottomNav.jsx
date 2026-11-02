@@ -11,7 +11,7 @@ export function AppBottomNav({ items }) {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-30 bg-white shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.16)] print:hidden"
-      style={{ paddingBottom: 'max(0.125rem, calc(env(safe-area-inset-bottom, 0px) - 0.5rem))' }}
+      style={{ paddingBottom: 'max(0.125rem, calc(env(safe-area-inset-bottom, 0px) * 0.4))' }}
       aria-label="Bottom navigation"
     >
       <div className="mx-auto flex w-full max-w-lg items-stretch justify-around px-1 pt-1">
@@ -20,7 +20,7 @@ export function AppBottomNav({ items }) {
             key={`${id}-${to}`}
             to={to}
             end={Boolean(end)}
-            className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 outline-none transition active:scale-95 ${
+            className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 outline-none transition active:scale-95 ${
               center ? '-mt-3 max-w-[4.25rem] flex-[1.15]' : ''
             }`}
           >

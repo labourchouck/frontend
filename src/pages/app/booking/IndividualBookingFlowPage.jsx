@@ -255,6 +255,7 @@ export function IndividualBookingFlowPage() {
             syncDraft({
               categoryId: String(cat._id),
               serviceId: srv ? String(srv._id) : String(cat._id),
+              serviceName: srv?.name || '',
               categoryName: cat.name || '',
               groupId: String(g._id),
               groupName: g.name || '',
@@ -529,6 +530,13 @@ export function IndividualBookingFlowPage() {
     }
     writeAppUserLocation({ address: draft.address.trim(), lat: draft.lat, lng: draft.lng })
 
+    // Never guess a location: a made-up fallback sends the booking to the wrong city, so no nearby
+    // worker ever receives it.
+    if (!Number.isFinite(Number(draft.lat)) || !Number.isFinite(Number(draft.lng)) || (!draft.lat && !draft.lng)) {
+      alert('Please choose your service location from the search suggestions or use "current location" so nearby workers can find you.')
+      return
+    }
+
     try {
       const uploadedImageUrls = []
       for (const file of imageFiles) {
@@ -542,8 +550,8 @@ export function IndividualBookingFlowPage() {
         serviceId: draft.serviceId || draft.categoryId,
         type: draft.bookingType === 'scheduled' ? 'SCHEDULED' : 'INSTANT',
         locationText: draft.address.trim(),
-        lat: draft.lat || 28.6139,
-        lng: draft.lng || 77.2090,
+        lat: draft.lat,
+        lng: draft.lng,
         paymentMethod: draft.paymentMethod || 'CASH',
         notes: draft.notes,
         durationKind: draft.durationKind,
@@ -579,6 +587,7 @@ export function IndividualBookingFlowPage() {
     return (
       <div className="space-y-4 pb-8">
         <AppStackScreenHeader title="Booking confirmed" onBack={() => navigate('/app/my-bookings')} />
+        <BookingServiceHighlight serviceName={draft.serviceName} categoryName={draft.categoryName} groupName={draft.groupName} />
         <GlassPanel className="p-6 text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-500" aria-hidden />
           <p className="mt-4 text-lg font-black text-slate-900">Your job is scheduled!</p>
@@ -612,7 +621,7 @@ export function IndividualBookingFlowPage() {
     return (
       <div className="pb-8">
         <AppStackScreenHeader title="Matching labour" onBack={() => goStep('summary')} />
-        <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
+        <BookingServiceHighlight serviceName={draft.serviceName} categoryName={draft.categoryName} groupName={draft.groupName} />
 
         <div className="px-4 mt-6">
           <div className="lc-booking-flow-card">
@@ -680,7 +689,7 @@ export function IndividualBookingFlowPage() {
           title={step === 'payment' ? 'Payment' : 'Worker on the way'}
           onBack={() => (step === 'payment' ? goStep('active') : navigate('/app/my-bookings', { replace: true }))}
         />
-        <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
+        <BookingServiceHighlight serviceName={draft.serviceName} categoryName={draft.categoryName} groupName={draft.groupName} />
 
         {worker ? (
           <GlassPanel className="overflow-hidden border-slate-200/90 p-0">
@@ -999,7 +1008,7 @@ export function IndividualBookingFlowPage() {
       />
 
       <div className="space-y-4 px-4">
-        <BookingServiceHighlight categoryName={draft.categoryName} groupName={draft.groupName} />
+        <BookingServiceHighlight serviceName={draft.serviceName} categoryName={draft.categoryName} groupName={draft.groupName} />
 
         {step !== 'searching' ? (
           <div className="lc-booking-flow-card py-3">
@@ -1276,8 +1285,12 @@ export function IndividualBookingFlowPage() {
                 <div className="flex justify-between gap-2">
                   <span className="lc-booking-flow-muted">Service</span>
                   <span className="text-right font-bold text-black">
-                    <span className="lc-booking-highlight-title block text-base">{draft.categoryName}</span>
-                    {draft.groupName ? <span className="text-xs font-semibold">{draft.groupName}</span> : null}
+                    <span className="lc-booking-highlight-title block text-base">{draft.serviceName || draft.categoryName}</span>
+                    {[draft.serviceName ? draft.categoryName : null, draft.groupName].filter(Boolean).length ? (
+                      <span className="text-xs font-semibold">
+                        {[draft.serviceName ? draft.categoryName : null, draft.groupName].filter(Boolean).join(' · ')}
+                      </span>
+                    ) : null}
                   </span>
                 </div>
                 <div className="flex justify-between">
