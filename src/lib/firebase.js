@@ -34,12 +34,15 @@ export const getMessagingIfSupported = () => {
  * Full push setup: register the service worker, ask permission, fetch the FCM token.
  * Returns the token string, or null if unsupported / permission denied.
  */
-export const requestFcmToken = async () => {
+export const requestFcmToken = async ({ askPermission = true } = {}) => {
   const messaging = await getMessagingIfSupported()
   if (!messaging) return null
   if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) return null
 
-  const permission = await Notification.requestPermission()
+  // Browsers only reliably show the permission dialog when it follows a click, so the app asks from a button
+  // (askPermission: true) and otherwise only uses a permission the user already granted.
+  let permission = Notification.permission
+  if (permission === 'default' && askPermission) permission = await Notification.requestPermission()
   if (permission !== 'granted') return null
 
   const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')

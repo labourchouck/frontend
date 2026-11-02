@@ -60,7 +60,26 @@ export function loadGoogleMapsSDK() {
  * @param {number} [options.maximumAge=120000] Acceptable cached fix age in ms (2 min)
  * @returns {Promise<{ lat: number, lng: number, accuracy: number }>}
  */
+/** Lets the "location is off" banner react to ANY device-location attempt (current-location buttons, auto-detect…). */
+function emitLocationStatus(detail) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent('lc-location-status-changed', { detail }))
+}
+
 export async function getBrowserLocation(options = {}) {
+  try {
+    const pos = await readBrowserLocation(options)
+    emitLocationStatus({ status: 'success', lat: pos.lat, lng: pos.lng })
+    return pos
+  } catch (err) {
+    // 1 = permission denied, 2 = position unavailable (GPS off). Timeouts / unsupported are not a user-fixable switch.
+    if (err?.code === 1) emitLocationStatus({ status: 'permission_denied', code: 1, message: err.message })
+    else if (err?.code === 2) emitLocationStatus({ status: 'location_off', code: 2, message: err.message })
+    throw err
+  }
+}
+
+async function readBrowserLocation(options = {}) {
   if (typeof navigator === 'undefined' || !navigator.geolocation) {
     const err = new Error('Location is not supported on this device or browser.')
     err.code = 0

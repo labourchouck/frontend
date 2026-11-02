@@ -4,6 +4,7 @@ import { buildGuestUser, clearBootRole, readBootRole, writeBootRole } from '../l
 import { clearSession, setCredentials } from '../store/slices/authSlice.js'
 import { baseApi } from '../store/api/baseApi.js'
 import { apiRequest } from '../api/http.js'
+import { unregisterFcmToken } from '../api/notificationsApi.js'
 
 export function useAuth() {
   const dispatch = useDispatch()
@@ -28,6 +29,16 @@ export function useAuth() {
   }, [])
 
   const logout = useCallback(async () => {
+    // 0. Stop push notifications for this account on this device (needs the token, so before clearing it)
+    try {
+      const fcmToken = localStorage.getItem('lc_fcm_token')
+      if (fcmToken) {
+        await Promise.race([unregisterFcmToken(fcmToken), new Promise((resolve) => setTimeout(resolve, 1500))])
+        localStorage.removeItem('lc_fcm_token')
+      }
+    } catch {
+      // Best-effort: never block logging out
+    }
     // 1. Clear local credentials synchronously first so route guards and auth pages never see stale tokens
     clearBootRole()
     setBootRoleState(null)

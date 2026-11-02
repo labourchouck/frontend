@@ -26,6 +26,17 @@ export function LocationPermissionBanner({ className = '' }) {
     return () => window.removeEventListener('lc-location-status-changed', handleStatus)
   }, [])
 
+  const gpsOff = locStatus?.status === 'location_off'
+
+  // While GPS is switched off, quietly retry so the banner disappears by itself once the user turns it on.
+  useEffect(() => {
+    if (!gpsOff || dismissed) return undefined
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') requestDeviceLocation(user?.role)
+    }, 5000)
+    return () => clearInterval(id)
+  }, [gpsOff, dismissed, user?.role])
+
   if (dismissed || !locStatus) return null
 
   // If we already have a valid saved location, don't nag the user with a full banner unless requested
@@ -48,10 +59,11 @@ export function LocationPermissionBanner({ className = '' }) {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: -10, scale: 0.98 }}
+        initial={{ opacity: 0, y: 10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -10, scale: 0.98 }}
-        className={`relative z-25 mx-3 sm:mx-4 my-2.5 overflow-hidden rounded-2xl border border-amber-300/80 bg-linear-to-r from-amber-500/15 via-amber-50/90 to-amber-100/60 p-3 sm:p-3.5 shadow-md shadow-amber-500/5 backdrop-blur-sm ${className}`}
+        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+        // Floats above the bottom bar instead of sitting in the page flow, so it never pushes headers down.
+        className={`keyboard-hide fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto max-w-md overflow-hidden rounded-2xl border border-amber-300/80 bg-linear-to-r from-amber-500/15 via-amber-50/90 to-amber-100/60 p-3 sm:p-3.5 shadow-md shadow-amber-500/5 backdrop-blur-sm ${className}`}
       >
         <div className="flex items-center gap-3">
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-700 ring-1 ring-amber-500/30">

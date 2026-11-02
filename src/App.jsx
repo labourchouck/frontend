@@ -56,7 +56,7 @@ import { AdminReferralsPage } from './pages/admin/AdminReferralsPage.jsx'
 import { AdminUserWalletPage } from './pages/admin/AdminUserWalletPage.jsx'
 
 import { BroadcastPopup } from './components/app/BroadcastPopup.jsx'
-import { PushNotificationManager } from './hooks/usePushNotifications.js'
+import { PushNotificationManager } from './components/notifications/PushNotificationManager.jsx'
 import { useKeyboardOpenFlag } from './hooks/useKeyboardOpenFlag.js'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 import { APP_B2C_ROLES, CORPORATE_ROLES, VENDOR_ROLES } from './constants/panelRoles.js'

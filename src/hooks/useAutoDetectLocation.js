@@ -4,6 +4,13 @@ import { getBrowserLocation, reverseGeocode } from '../lib/locationService.js'
 import { USER_ROLES } from '../constants/userRoles.js'
 
 let isFetchingLocation = false
+let lastLocationStatus = null
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('lc-location-status-changed', (e) => {
+    if (e.detail?.status && e.detail.status !== 'fetching') lastLocationStatus = e.detail.status
+  })
+}
 
 /**
  * Actively requests current live device coordinates and reverse-geocodes them.
@@ -81,8 +88,10 @@ export function useAutoDetectLocation(user) {
     // When the user turns on GPS in phone quick settings and returns to the app
     const handleResume = () => {
       const stored = readAppUserLocation()
-      // If location is missing or older than 2 minutes, refresh immediately
-      if (!stored?.lat || !stored?.lng || Date.now() - (stored?.updatedAt || 0) > 120000) {
+      const blocked = lastLocationStatus === 'location_off' || lastLocationStatus === 'permission_denied'
+      // Retry at once if GPS/permission was off (the user may have just turned it on), or if the saved
+      // location is missing or older than 2 minutes.
+      if (blocked || !stored?.lat || !stored?.lng || Date.now() - (stored?.updatedAt || 0) > 120000) {
         requestDeviceLocation(role)
       }
     }

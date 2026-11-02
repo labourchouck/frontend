@@ -30,6 +30,7 @@ import { uploadMedia, assetUrlFromUpload } from '../../../api/uploadApi.js'
 import { BookingFindingScreen } from '../../../components/app/booking/BookingFindingScreen.jsx'
 import { BookingTypeSheet } from '../../../components/app/booking/BookingTypeSheet.jsx'
 import { BookingStepProgress } from '../../../components/app/booking/BookingStepProgress.jsx'
+import { checkScheduleLeadTime, MIN_SCHEDULE_LEAD_MINUTES } from '../../../lib/bookingLeadTime.js'
 import { BookingServiceHighlight } from '../../../components/app/booking/BookingServiceHighlight.jsx'
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 import { SavedAddressPicker } from '../../../components/app/SavedAddressPicker.jsx'
@@ -335,7 +336,7 @@ export function IndividualBookingFlowPage() {
       if (ampm === 'AM' && h === 12) h = 0
 
       const slotMinutes = h * 60 + m
-      return slotMinutes > currentMinutes + 30
+      return slotMinutes >= currentMinutes + MIN_SCHEDULE_LEAD_MINUTES
     })
   }, [draft.serviceDate, timeSlots])
 
@@ -492,6 +493,12 @@ export function IndividualBookingFlowPage() {
       }
       if (draft.serviceDate === todayISODate() && draft.timeSlot < currentIstStr) {
         setFormError('Start time cannot be in the past.')
+        return false
+      }
+      // Workers are alerted 1 hour before the job, so the booking must start at least 1 hour from now.
+      const lead = checkScheduleLeadTime(draft.serviceDate, draft.timeSlot)
+      if (!lead.ok) {
+        setFormError(lead.message)
         return false
       }
       if (draft.durationKind !== 'multi_day' && draft.timeSlot >= draft.endTime) {
