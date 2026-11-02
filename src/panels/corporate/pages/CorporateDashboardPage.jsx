@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Building2, ClipboardList, Clock, FileText, Plus, Menu, MapPin, Bell, ChevronDown, BarChart3, LifeBuoy, Users, IdCard, ShoppingBag, ArrowRight, Truck, ChevronRight } from 'lucide-react'
+import { Building2, ClipboardList, Clock, FileText, Plus, Menu, MapPin, Bell, ChevronDown, BarChart3, LifeBuoy, Users, IdCard, ShoppingBag, ArrowRight, Truck, ChevronRight, ShieldAlert } from 'lucide-react'
 import { useAuth } from '../../../hooks/useAuth.js'
 import { CORPORATE_STATUS } from '../../../constants/userRoles.js'
 import { ApprovalGate } from '../../../components/shared/ApprovalGate.jsx'
@@ -15,10 +15,17 @@ import { fetchLabourCategoriesGrouped } from '../../../api/labourCategoriesApi.j
 
 export function CorporateDashboardPage() {
   const { user } = useAuth()
-  const approved = user?.corporateProfile?.status === CORPORATE_STATUS.APPROVED
+  const profile = user?.corporateProfile
+  const status = profile?.status || CORPORATE_STATUS.PENDING
+  const approved = status === CORPORATE_STATUS.APPROVED
+  const submittedAt = profile?.documentsSubmittedAt
+  const reviewNote = profile?.reviewNote
+  const inReview = Boolean(submittedAt) && !approved && status !== CORPORATE_STATUS.REJECTED
+  const isRejected = status === CORPORATE_STATUS.REJECTED
+
   const { data, isLoading } = useGetCorporateDashboardQuery(undefined, { skip: !approved })
-  const { data: bannersData, isLoading: isLoadingBanners } = useGetCorporateBannersQuery(undefined, { skip: !approved })
-  const { data: subData } = useGetCorporateMySubscriptionQuery(undefined, { skip: !approved })
+  const { data: bannersData, isLoading: isLoadingBanners } = useGetCorporateBannersQuery()
+  const { data: subData } = useGetCorporateMySubscriptionQuery()
   const { data: requestsData, isLoading: isLoadingRequests } = useGetMyRequestsQuery(undefined, { skip: !approved })
 
   const activeSub = subData?.subscription
@@ -138,26 +145,14 @@ export function CorporateDashboardPage() {
   }, [])
 
 
-  if (!approved) {
-    return (
-      <div className="space-y-4">
-        <ApprovalGate
-          title="Corporate approval required"
-          message="Upload company documents on your profile. Operations will verify your account before projects and bulk requests unlock."
-          profileTo="/corporate/profile"
-        />
-      </div>
-    )
-  }
-
   const stats = data?.stats || {}
 
   return (
     <>
       {/* Custom Header Block */}
       <div className="-mx-4 bg-[#1caf62] px-4 pt-[max(0.75rem,env(safe-area-inset-top,0px))] pb-10">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-2 mb-8">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <button
               onClick={() => window.dispatchEvent(new Event('lc-open-panel-drawer'))}
               className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[18px] bg-white text-[#1caf62] hover:bg-slate-50 transition-all shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
@@ -165,25 +160,25 @@ export function CorporateDashboardPage() {
               <Menu className="h-6 w-6" />
             </button>
             <div 
-              className="flex items-center gap-1.5 cursor-pointer group"
+              className="flex min-w-0 flex-1 items-center gap-1.5 cursor-pointer group"
               onClick={() => setLocModalOpen(true)}
             >
-              <MapPin className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
-              <div className="flex flex-col min-w-0 max-w-[180px]">
+              <MapPin className="h-6 w-6 shrink-0 text-white group-hover:scale-110 transition-transform" />
+              <div className="flex min-w-0 flex-1 flex-col">
                 <span className="text-[11px] font-medium text-white/90 uppercase tracking-wide truncate">Your location</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-bold text-white truncate">{userLocLabel || 'Select location'}</span>
+                <div className="flex min-w-0 items-center gap-1">
+                  <span className="min-w-0 truncate text-sm font-bold text-white">{userLocLabel || 'Select location'}</span>
                   <ChevronDown className="h-4 w-4 text-white shrink-0" />
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2.5">
             <button className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[18px] bg-white text-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
               <Bell className="h-5 w-5" />
             </button>
             <Link to="/corporate/profile" className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[18px] bg-white text-emerald-600 font-extrabold shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-[15px]">
-              {user?.corporateProfile?.companyName?.substring(0, 2).toUpperCase() || 'CP'}
+              {profile?.companyName?.substring(0, 2).toUpperCase() || 'CP'}
             </Link>
           </div>
         </div>
@@ -195,11 +190,11 @@ export function CorporateDashboardPage() {
             <span role="img" aria-label="wave" className="shrink-0 ml-1.5 animate-wave">👋</span>
           </h2>
           <p className="text-sm font-bold text-white/95">
-            {user?.corporateProfile?.companyName || 'Your Business'}
+            {profile?.companyName || 'Your Business'}
           </p>
           <div className="mt-1">
             <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold text-white uppercase tracking-wider backdrop-blur-md">
-              {user?.corporateProfile?.status || 'APPROVED'}
+              {approved ? 'APPROVED' : inReview ? 'UNDER REVIEW' : isRejected ? 'CORRECTION NEEDED' : 'APPROVAL PENDING'}
             </span>
           </div>
         </div>
@@ -207,7 +202,79 @@ export function CorporateDashboardPage() {
 
       {/* Content Card overlapping the green background */}
       <div className="-mx-4 -mt-5 bg-slate-50 rounded-t-[32px] p-4 sm:p-5 min-h-[50vh] relative z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] space-y-5">
-        <AppSurface flush tone="brandWash" className="border-slate-800/10 bg-slate-900 text-white relative group rounded-2xl overflow-hidden">
+        
+        {/* Prominent Verification / Approval Required Card when not approved */}
+        {!approved && (
+          <div className="relative z-30">
+            <div className={`rounded-2xl border p-4 shadow-sm backdrop-blur-md ${
+              inReview 
+                ? 'border-sky-200 bg-sky-50/95 text-sky-950 ring-1 ring-sky-200/50' 
+                : isRejected 
+                ? 'border-rose-200 bg-rose-50/95 text-rose-950 ring-1 ring-rose-200/50'
+                : 'border-amber-200 bg-amber-50/95 text-amber-950 ring-1 ring-amber-200/50'
+            }`}>
+              <div className="flex items-start gap-3.5">
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-sm ${
+                  inReview 
+                    ? 'bg-sky-100 text-sky-700' 
+                    : isRejected 
+                    ? 'bg-rose-100 text-rose-700'
+                    : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {inReview ? <Clock className="h-5 w-5" /> : <ShieldAlert className="h-5 w-5" />}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base font-extrabold text-slate-900">
+                      {inReview 
+                        ? 'Verification Under Review' 
+                        : isRejected 
+                        ? 'Verification Needs Correction' 
+                        : 'Corporate Approval Required'}
+                    </h2>
+                    <span className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                      inReview 
+                        ? 'bg-sky-100 text-sky-700' 
+                        : isRejected 
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {inReview ? 'In Review' : isRejected ? 'Action Required' : 'Step Required'}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600 font-medium">
+                    {inReview
+                      ? 'Your company documents have been submitted and are currently waiting for admin approval. Full workforce operations and bulk booking will unlock once approved.'
+                      : isRejected
+                      ? (reviewNote || 'Please update your verification documents on your profile and re-submit for review.')
+                      : 'Upload company documents on your profile. Operations will verify your account before projects and bulk requests unlock.'}
+                  </p>
+                  <div className="mt-3.5 flex items-center gap-3">
+                    <Link to="/corporate/profile">
+                      <button
+                        type="button"
+                        className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-sm transition-transform active:scale-95 ${
+                          inReview 
+                            ? 'bg-sky-600 hover:bg-sky-700' 
+                            : isRejected 
+                            ? 'bg-rose-600 hover:bg-rose-700'
+                            : 'bg-[#1caf62] hover:bg-[#158f4f]'
+                        }`}
+                      >
+                        {inReview ? 'View Documents' : 'Complete Verification'}
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Home page content below approval section: blurred when !approved */}
+        <div className={!approved ? 'relative filter blur-[2.5px] opacity-60 pointer-events-none select-none transition-all duration-300 space-y-5' : 'space-y-5'}>
+          <AppSurface flush tone="brandWash" className="border-slate-800/10 bg-slate-900 text-white relative group rounded-2xl overflow-hidden">
           {/* Background Banners */}
           {!isLoadingBanners && bannersData?.banners?.length > 0 && (
             <>
@@ -679,6 +746,7 @@ export function CorporateDashboardPage() {
             </div>
           </section>
         )}
+        </div>
       </div>
 
       <AppUserLocationModal

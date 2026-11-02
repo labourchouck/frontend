@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { BannerToast } from '../../../components/ui/BannerToast.jsx'
+import { FixedStackHeader } from '../../../components/ui/FixedStackHeader.jsx'
 import {
   Briefcase,
   Building2,
@@ -15,6 +16,7 @@ import {
   Trash2,
   Upload,
   LogOut,
+  Pencil,
 } from 'lucide-react'
 import { apiRequest } from '../../../api/http.js'
 import { VendorDeleteAccountModal } from '../../../components/vendor/VendorDeleteAccountModal.jsx'
@@ -41,6 +43,7 @@ import {
   getCorporateVerificationProgress,
   normalizeGst,
   normalizePan,
+  getCorporateFieldErrors,
 } from '../../../lib/corporateVerificationChecklist.js'
 import { CorporateVerificationChecklist } from '../../../components/corporate/CorporateVerificationChecklist.jsx'
 import { CorporateVerificationHero } from '../../../components/corporate/CorporateVerificationHero.jsx'
@@ -56,6 +59,7 @@ import {
 
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-brand/35'
+const errorInputClass = 'border-rose-300 focus:ring-rose-300/50'
 const labelClass = 'mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500'
 
 const BENEFIT_ICONS = [Briefcase, HardHat, IndianRupee]
@@ -77,7 +81,6 @@ function profileToForm(profile, user) {
 }
 
 export function CorporateProfilePage() {
-  const reduce = useReducedMotion()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -96,6 +99,10 @@ export function CorporateProfilePage() {
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
+  const dismissBanner = useCallback(() => setBanner(null), [])
+  const hasSavedDetails = Boolean(profile?.companyName && profile?.panNumber)
+  const [editingDetails, setEditingDetails] = useState(false)
+  const detailsEditable = canEdit && (editingDetails || !hasSavedDetails)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCitySuggestions, setShowCitySuggestions] = useState(false)
   const [showStateSuggestions, setShowStateSuggestions] = useState(false)
@@ -143,6 +150,8 @@ export function CorporateProfilePage() {
     () => buildProfileFromForm({ ...form, documents }),
     [form, documents],
   )
+  const fieldErrors = useMemo(() => getCorporateFieldErrors(form), [form])
+  const firstFieldError = fieldErrors.panNumber || fieldErrors.gstNumber || fieldErrors.contactEmail
   const progress = useMemo(() => getCorporateVerificationProgress(draftProfile), [draftProfile])
   const ui = getBusinessVerificationUiState({
     status,
@@ -176,6 +185,10 @@ export function CorporateProfilePage() {
   const saveDetails = async () => {
     if (!canEdit) return
     setBanner(null)
+    if (firstFieldError) {
+      setBanner({ variant: 'error', message: firstFieldError })
+      return
+    }
     setBusy(true)
     try {
       const res = await patchCorporateMe({
@@ -186,6 +199,7 @@ export function CorporateProfilePage() {
         pincode: String(form.pincode || '').replace(/\D/g, '').slice(0, 6),
       }).unwrap()
       refreshUser(res)
+      setEditingDetails(false)
       setBanner({ variant: 'success', message: 'Company details saved' })
     } catch (err) {
       setBanner({ variant: 'error', message: err?.data?.message || err?.message || 'Could not save details' })
@@ -244,6 +258,10 @@ export function CorporateProfilePage() {
 
   const handleSubmit = async () => {
     setBanner(null)
+    if (firstFieldError) {
+      setBanner({ variant: 'error', message: firstFieldError })
+      return
+    }
     if (!progress.readyToSubmit) {
       setBanner({
         variant: 'error',
@@ -279,28 +297,14 @@ export function CorporateProfilePage() {
 
   return (
     <div className="space-y-4 pb-10">
-      <AnimatePresence>
-        {banner ? (
-          <motion.p
-            initial={reduce ? false : { opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0 }}
-            className={`fixed left-4 right-4 top-[max(4.5rem,env(safe-area-inset-top))] z-120 mx-auto max-w-md rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white shadow-xl ${
-              banner.variant === 'success'
-                ? 'border border-emerald-300/40 bg-emerald-900/95'
-                : 'border border-rose-300/40 bg-rose-900/95'
-            }`}
-            role="status"
-          >
-            {banner.message}
-          </motion.p>
-        ) : null}
-      </AnimatePresence>
+      <FixedStackHeader title="Business verification" backTo="/corporate" badge={phaseLabels[ui.phase] || 'In progress'} />
+
+      {/* Toast: floats above the bottom nav and dismisses itself */}
+      <BannerToast banner={banner} onDismiss={dismissBanner} />
 
       <CorporateVerificationHero
         title={ui.title}
         subtitle={ui.subtitle}
-        phaseLabel={phaseLabels[ui.phase] || 'In progress'}
         tone={ui.tone}
         companyLine={profile?.companyName || form.companyName || undefined}
       />
@@ -366,7 +370,7 @@ export function CorporateProfilePage() {
               className={inputClass}
               value={form.companyName}
               onChange={setField('companyName')}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
               placeholder="As per registration certificate"
             />
           </div>
@@ -376,10 +380,12 @@ export function CorporateProfilePage() {
             </label>
             <input
               id="panNumber"
-              className={`${inputClass} font-mono uppercase`}
+              className={`${inputClass} font-mono uppercase ${fieldErrors.panNumber ? errorInputClass : ''}`}
+              aria-invalid={Boolean(fieldErrors.panNumber)}
+              onBlur={() => fieldErrors.panNumber && setBanner({ variant: 'error', message: fieldErrors.panNumber })}
               value={form.panNumber}
               onChange={(e) => setForm((f) => ({ ...f, panNumber: normalizePan(e.target.value) }))}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
               placeholder="ABCDE1234F"
               maxLength={10}
             />
@@ -390,10 +396,12 @@ export function CorporateProfilePage() {
             </label>
             <input
               id="gstNumber"
-              className={`${inputClass} font-mono uppercase`}
+              className={`${inputClass} font-mono uppercase ${fieldErrors.gstNumber ? errorInputClass : ''}`}
+              aria-invalid={Boolean(fieldErrors.gstNumber)}
+              onBlur={() => fieldErrors.gstNumber && setBanner({ variant: 'error', message: fieldErrors.gstNumber })}
               value={form.gstNumber}
               onChange={(e) => setForm((f) => ({ ...f, gstNumber: normalizeGst(e.target.value) }))}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
               placeholder="22AAAAA0000A1Z5"
               maxLength={15}
             />
@@ -407,7 +415,7 @@ export function CorporateProfilePage() {
               className={inputClass}
               value={form.cinNumber}
               onChange={setField('cinNumber')}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
               placeholder="U12345MH2020PTC123456"
             />
           </div>
@@ -420,7 +428,7 @@ export function CorporateProfilePage() {
               className={inputClass}
               value={form.contactPersonName}
               onChange={setField('contactPersonName')}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
             />
           </div>
           <div className="sm:col-span-2">
@@ -428,7 +436,7 @@ export function CorporateProfilePage() {
               <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500" htmlFor="registeredAddress">
                 Registered office address *
               </label>
-              {canEdit && (
+              {detailsEditable && (
                 <button
                   type="button"
                   onClick={handleFetchLocation}
@@ -445,7 +453,7 @@ export function CorporateProfilePage() {
               className={inputClass}
               value={form.registeredAddress}
               onChange={setField('registeredAddress')}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
               placeholder="Street, area, landmark"
             />
           </div>
@@ -469,9 +477,9 @@ export function CorporateProfilePage() {
                 }
                 setForm(f => ({ ...f, city: value, state: newState }))
               }}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
             />
-            {showCitySuggestions && canEdit && (
+            {showCitySuggestions && detailsEditable && (
               <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5 custom-scrollbar">
                 {INDIAN_CITIES.filter(c => c.city.toLowerCase().includes(form.city.toLowerCase())).length > 0 ? (
                   INDIAN_CITIES.filter(c => c.city.toLowerCase().includes(form.city.toLowerCase())).map((c, i) => (
@@ -505,9 +513,9 @@ export function CorporateProfilePage() {
               onFocus={() => setShowStateSuggestions(true)}
               onBlur={() => setTimeout(() => setShowStateSuggestions(false), 200)}
               onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
             />
-            {showStateSuggestions && canEdit && (
+            {showStateSuggestions && detailsEditable && (
               <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5 custom-scrollbar">
                 {INDIAN_STATES.filter(s => s.toLowerCase().includes(form.state.toLowerCase())).length > 0 ? (
                   INDIAN_STATES.filter(s => s.toLowerCase().includes(form.state.toLowerCase())).map((s, i) => (
@@ -541,7 +549,7 @@ export function CorporateProfilePage() {
               onChange={(e) =>
                 setForm((f) => ({ ...f, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))
               }
-              disabled={!canEdit}
+              disabled={!detailsEditable}
               placeholder="110001"
             />
           </div>
@@ -552,10 +560,15 @@ export function CorporateProfilePage() {
             <input
               id="contactEmail"
               type="email"
-              className={inputClass}
+              inputMode="email"
+              autoComplete="email"
+              className={`${inputClass} ${fieldErrors.contactEmail ? errorInputClass : ''}`}
+              aria-invalid={Boolean(fieldErrors.contactEmail)}
+              onBlur={() => fieldErrors.contactEmail && setBanner({ variant: 'error', message: fieldErrors.contactEmail })}
               value={form.contactEmail}
               onChange={setField('contactEmail')}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
+              placeholder="name@company.com"
             />
           </div>
           <div>
@@ -567,16 +580,42 @@ export function CorporateProfilePage() {
               className={inputClass}
               value={form.website}
               onChange={setField('website')}
-              disabled={!canEdit}
+              disabled={!detailsEditable}
               placeholder="https://"
             />
           </div>
         </div>
 
         {canEdit ? (
-          <AppPrimaryButton type="button" className="mt-4 w-full py-3 text-sm" disabled={busy} onClick={saveDetails}>
-            Save company details
-          </AppPrimaryButton>
+          detailsEditable ? (
+            <div className="mt-4 flex gap-2">
+              {hasSavedDetails ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setForm(profileToForm(profile, user))
+                    setEditingDetails(false)
+                  }}
+                  className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              ) : null}
+              <AppPrimaryButton type="button" className="w-full flex-1 py-3 text-sm" disabled={busy} onClick={saveDetails}>
+                Save company details
+              </AppPrimaryButton>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditingDetails(true)}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-brand/30 bg-brand/5 py-3 text-sm font-bold text-brand transition hover:bg-brand/10"
+            >
+              <Pencil className="h-4 w-4" aria-hidden />
+              Edit company details
+            </button>
+          )
         ) : null}
       </GlassPanel>
 

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { BannerToast } from '../../components/ui/BannerToast.jsx'
 import {
   ArrowRight,
   Briefcase,
@@ -60,7 +60,6 @@ async function videoFileForSubmit(videoFile, videoPreviewUrl) {
 }
 
 export function AppKycPage() {
-  const reduce = useReducedMotion()
   const dispatch = useDispatch()
   const { user } = useAuth()
 
@@ -70,6 +69,7 @@ export function AppKycPage() {
   const [videoPreviewUrl, setVideoPreviewUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
+  const dismissBanner = useCallback(() => setBanner(null), [])
 
   const profile = user?.labourProfile
   const kyc = profile?.kycStatus || KYC_STATUS.PENDING
@@ -203,21 +203,7 @@ export function AppKycPage() {
 
   return (
     <div className="space-y-4 pb-8">
-      <AnimatePresence>
-        {banner ? (
-          <motion.p
-            initial={reduce ? false : { opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0 }}
-            className={`fixed left-4 right-4 top-[max(4.5rem,env(safe-area-inset-top))] z-120 mx-auto max-w-md rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white shadow-xl ${
-              banner.variant === 'success' ? 'bg-emerald-900/95 border border-emerald-300/40' : 'bg-rose-900/95 border border-rose-300/40'
-            }`}
-            role="status"
-          >
-            {banner.message}
-          </motion.p>
-        ) : null}
-      </AnimatePresence>
+      <BannerToast banner={banner} onDismiss={dismissBanner} />
 
       <LabourKycHero
         title={ui.title}

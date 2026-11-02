@@ -22,6 +22,7 @@ import { readAppUserLocation } from '../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../components/app/AppUserLocationModal.jsx'
 import { APP_HOME_LOCATION, APP_HOME_PATH, hasBookingFlowQuery } from '../lib/bookingFlowNavigation.js'
 import { useAutoDetectLocation } from '../hooks/useAutoDetectLocation.js'
+import { LocationPermissionBanner } from '../components/location/LocationPermissionBanner.jsx'
 
 export function AppShell() {
   const { pathname, search } = useLocation()
@@ -465,6 +466,8 @@ export function AppShell() {
             )}
           </header>
         ) : null}
+
+        <LocationPermissionBanner />
 
         <main
           className={`relative z-10 flex flex-col flex-1 min-h-0 ${

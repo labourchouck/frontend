@@ -12,6 +12,7 @@ import { AppBottomNav } from '../components/app-ui/navigation/AppBottomNav.jsx'
 import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { BOOT_ROUTES } from '../constants/bootFlow.js'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
+import { LocationPermissionBanner } from '../components/location/LocationPermissionBanner.jsx'
 
 export function PanelShell({
   panelId,
@@ -184,8 +185,10 @@ export function PanelShell({
           </header>
         ) : null}
 
+        <LocationPermissionBanner />
+
         <main
-          className={`relative z-10 flex-1 px-4 pb-32 print:p-0 ${
+          className={`relative z-10 flex-1 px-4 pb-24 print:p-0 ${
             hideShellHeader ? 'pt-0 print:pt-0' : 'pt-4'
           }`}
         >

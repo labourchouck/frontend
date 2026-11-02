@@ -1,6 +1,8 @@
 import { CORPORATE_DOCUMENT_TYPES } from '../constants/corporateVerification.js'
 
-const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
+export const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
+export const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const PINCODE_RE = /^\d{6}$/
 
 export function normalizePan(value) {
@@ -18,7 +20,19 @@ export function normalizeGst(value) {
 }
 
 function isPanFieldComplete(pan) {
-  return normalizePan(pan).length === 10
+  return PAN_RE.test(normalizePan(pan))
+}
+
+/** Inline format errors for the company form; empty string means valid (or optional and blank). */
+export function getCorporateFieldErrors(form = {}) {
+  const pan = normalizePan(form.panNumber)
+  const gst = normalizeGst(form.gstNumber)
+  const email = String(form.contactEmail || '').trim()
+  return {
+    panNumber: pan && !PAN_RE.test(pan) ? 'Enter a valid PAN, e.g. ABCDE1234F' : '',
+    gstNumber: gst && !GST_RE.test(gst) ? 'Enter a valid 15-character GSTIN, e.g. 22AAAAA0000A1Z5' : '',
+    contactEmail: email && !EMAIL_RE.test(email) ? 'Enter a valid email address, e.g. name@company.com' : '',
+  }
 }
 
 /** Checklist mirrors backend `corporateVerification.js` and the profile form fields. */
@@ -65,7 +79,7 @@ export function getCorporateVerificationChecklist(profile = {}) {
     },
     {
       id: 'pan_number',
-      label: 'Company PAN (10 characters)',
+      label: 'Company PAN (valid format)',
       done: isPanFieldComplete(profile.panNumber),
       required: true,
       section: 'form',

@@ -22,6 +22,7 @@ import {
   readStoredReferralCode,
   storeReferralCode,
 } from '../../lib/referralCapture.js'
+import { GST_RE, normalizeGst } from '../../lib/corporateVerificationChecklist.js'
 
 const ROLE_OPTIONS = [
   {
@@ -143,7 +144,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
   const [fullName, setFullName] = useState(draft.fullName || '')
   const [companyName, setCompanyName] = useState(draft.companyName || '')
   const [businessName, setBusinessName] = useState(draft.businessName || '')
-  const [gstNumber, setGstNumber] = useState(draft.gstNumber || '')
+  const [gstNumber, setGstNumber] = useState(() => normalizeGst(draft.gstNumber || ''))
   const [termsAccepted, setTermsAccepted] = useState(Boolean(draft.termsAccepted))
   const [referralCode, setReferralCode] = useState(
     () => draft.referralCode || captureReferralCodeFromUrl() || readStoredReferralCode(),
@@ -164,11 +165,22 @@ export function AuthEntryPage({ variant = 'b2c' }) {
   const [challengeId, setChallengeId] = useState(null)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
+  const [resendTimer, setResendTimer] = useState(30)
 
   useEffect(() => {
     if (loading || step === 'work-setup') return
     if (token && realUser?.role) {
-      const returnPath = location.state?.from || getRoleHomePath(realUser.role)
+      const roleHome = getRoleHomePath(realUser.role)
+      let returnPath = location.state?.from
+      if (
+        !returnPath ||
+        (returnPath.startsWith('/corporate') && realUser.role !== USER_ROLES.CORPORATE) ||
+        (returnPath.startsWith('/vendor') && realUser.role !== USER_ROLES.CONTRACTOR) ||
+        (returnPath.startsWith('/admin') && realUser.role !== USER_ROLES.ADMIN) ||
+        (returnPath.startsWith('/app') && ![USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR].includes(realUser.role))
+      ) {
+        returnPath = roleHome
+      }
       navigate(returnPath, { replace: true })
     }
   }, [loading, step, token, realUser, navigate, location.state?.from])
@@ -222,6 +234,23 @@ export function AuthEntryPage({ variant = 'b2c' }) {
     })
   }, [step])
 
+  useEffect(() => {
+    if (step !== 'otp') return
+    if (resendTimer <= 0) return
+
+    const timer = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [step, resendTimer > 0])
+
   function setPhoneDigits(value) {
     const digits = String(value).replace(/\D/g, '').slice(0, 10)
     setPhone(digits)
@@ -233,6 +262,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
     setChallengeId(null)
     setBanner(null)
     setOtpCells(Array(6).fill(''))
+    setResendTimer(30)
   }
 
   function switchMode(next) {
@@ -259,45 +289,49 @@ export function AuthEntryPage({ variant = 'b2c' }) {
       })
       return
     }
+
+    const testAcc = p ? HARDCODED_TEST_ACCOUNTS[p] : null
+    const b2bRoles = [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]
+    const b2cRoles = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
+
+    if (variant === 'b2b' && testAcc && !b2bRoles.includes(testAcc.role)) {
+      setBanner({
+        variant: 'error',
+        message: 'This mobile number is already registered as a Personal account. Please sign in with your business mobile number.',
+      })
+      return
+    }
+    if (variant === 'b2c' && testAcc && !b2cRoles.includes(testAcc.role)) {
+      setBanner({
+        variant: 'error',
+        message: 'This mobile number is already registered as a Business account. Please sign in with your personal mobile number.',
+      })
+      return
+    }
+
     setBusy(true)
     try {
       if (mode === 'login') {
-        const res = await requestLoginOtp({ phone: p })
+        const res = await requestLoginOtp({ phone: p, scope: variant })
         const loginRole = res.data?.role
-        if (loginRole) {
-          const b2cRoles = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
-          const b2bRoles = [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]
-          if (variant === 'b2c' && b2bRoles.includes(loginRole)) {
-            setBanner({
-              variant: 'error',
-              message: (
-                <span>
-                  This is a Business account.{' '}
-                  <Link to="/b2b/auth" className="font-bold underline text-amber-950 hover:text-black">
-                    Switch to B2B sign-in →
-                  </Link>
-                </span>
-              ),
-            })
-            setBusy(false)
-            return
-          }
-          if (variant === 'b2b' && b2cRoles.includes(loginRole)) {
-            setBanner({
-              variant: 'error',
-              message: (
-                <span>
-                  This is a Personal/Labour account.{' '}
-                  <Link to="/b2c/auth" className="font-bold underline text-amber-950 hover:text-black">
-                    Switch to B2C sign-in →
-                  </Link>
-                </span>
-              ),
-            })
-            setBusy(false)
-            return
-          }
+
+        if (variant === 'b2b' && loginRole && !b2bRoles.includes(loginRole)) {
+          setBanner({
+            variant: 'error',
+            message: 'This mobile number is already registered as a Personal account. Please sign in with your business mobile number.',
+          })
+          setBusy(false)
+          return
         }
+        if (variant === 'b2c' && loginRole && !b2cRoles.includes(loginRole)) {
+          setBanner({
+            variant: 'error',
+            message: 'This mobile number is already registered as a Business account. Please sign in with your personal mobile number.',
+          })
+          setBusy(false)
+          return
+        }
+
         setChallengeId(res.data?.challengeId ?? null)
       } else {
         if (role === USER_ROLES.CORPORATE && !companyName.trim()) {
@@ -310,6 +344,17 @@ export function AuthEntryPage({ variant = 'b2c' }) {
           setBusy(false)
           return
         }
+        const cleanGst = variant === 'b2b' ? normalizeGst(gstNumber) : undefined
+        if (cleanGst && (cleanGst.length !== 15 || !GST_RE.test(cleanGst))) {
+          setBanner({
+            variant: 'error',
+            message: 'Please enter a valid 15-character GSTIN (e.g. 22AAAAA0000A1Z5) or leave it blank.',
+          })
+          setBusy(false)
+          gstRef.current?.focus()
+          scrollFieldToTop(gstRef.current)
+          return
+        }
         if (!termsAccepted) {
           setBanner({ variant: 'error', message: 'You must accept the Terms and Conditions.' })
           setBusy(false)
@@ -318,13 +363,15 @@ export function AuthEntryPage({ variant = 'b2c' }) {
         const res = await requestRegisterOtp({
           phone: p,
           role,
+          scope: variant,
           fullName: fullName.trim() || undefined,
+          gstNumber: cleanGst || undefined,
         })
         setChallengeId(res.data?.challengeId ?? null)
       }
       setOtpCells(Array(6).fill(''))
       setStep('otp')
-      const testAcc = p ? HARDCODED_TEST_ACCOUNTS[p] : null
+      setResendTimer(30)
       /*
       setBanner({
         variant: 'success',
@@ -345,6 +392,62 @@ export function AuthEntryPage({ variant = 'b2c' }) {
     }
   }
 
+  async function handleResendOtp() {
+    if (resendTimer > 0 || busy || !p) return
+    setBanner(null)
+    setOtpCells(Array(6).fill(''))
+
+    const testAcc = p ? HARDCODED_TEST_ACCOUNTS[p] : null
+    const b2bRoles = [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]
+    const b2cRoles = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
+
+    if (variant === 'b2b' && testAcc && !b2bRoles.includes(testAcc.role)) {
+      setBanner({
+        variant: 'error',
+        message: 'This mobile number is already registered as a Personal account. Please sign in with your business mobile number.',
+      })
+      return
+    }
+    if (variant === 'b2c' && testAcc && !b2cRoles.includes(testAcc.role)) {
+      setBanner({
+        variant: 'error',
+        message: 'This mobile number is already registered as a Business account. Please sign in with your personal mobile number.',
+      })
+      return
+    }
+
+    setBusy(true)
+    try {
+      let res
+      if (mode === 'login') {
+        res = await requestLoginOtp({ phone: p, scope: variant })
+      } else {
+        res = await requestRegisterOtp({
+          phone: p,
+          role,
+          scope: variant,
+          fullName: fullName.trim() || undefined,
+        })
+      }
+      setChallengeId(res.data?.challengeId ?? null)
+      setResendTimer(30)
+      setBanner({
+        variant: 'success',
+        message: `OTP has been resent to +91 ${phone}.`,
+      })
+      queueMicrotask(() => {
+        otpInputRefs.current[0]?.focus({ preventScroll: true })
+      })
+    } catch (e) {
+      setBanner({
+        variant: 'error',
+        message: e instanceof ApiError ? e.message : 'Could not resend OTP. Try again.',
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleVerifyOtp() {
     setBanner(null)
     if (code.length !== 6) {
@@ -359,12 +462,50 @@ export function AuthEntryPage({ variant = 'b2c' }) {
       setBanner({ variant: 'error', message: 'Phone number is invalid. Go back and fix it.' })
       return
     }
+
+    const testAcc = p ? HARDCODED_TEST_ACCOUNTS[p] : null
+    const b2bRoles = [USER_ROLES.CORPORATE, USER_ROLES.CONTRACTOR]
+    const b2cRoles = [USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR]
+
+    if (variant === 'b2b' && testAcc && !b2bRoles.includes(testAcc.role)) {
+      setBanner({
+        variant: 'error',
+        message: 'This mobile number is already registered as a Personal account. Please sign in with your business mobile number.',
+      })
+      return
+    }
+    if (variant === 'b2c' && testAcc && !b2cRoles.includes(testAcc.role)) {
+      setBanner({
+        variant: 'error',
+        message: 'This mobile number is already registered as a Business account. Please sign in with your personal mobile number.',
+      })
+      return
+    }
+
     setBusy(true)
     try {
       let signedInUser
       if (mode === 'login') {
-        const res = await verifyLogin({ phone: p, code, challengeId })
+        const res = await verifyLogin({ phone: p, code, challengeId, scope: variant })
         const { token, user } = res.data
+
+        if (variant === 'b2b' && !b2bRoles.includes(user.role)) {
+          setBanner({
+            variant: 'error',
+            message: 'This mobile number is already registered as a Personal account. Please sign in with your business mobile number.',
+          })
+          setBusy(false)
+          return
+        }
+        if (variant === 'b2c' && !b2cRoles.includes(user.role)) {
+          setBanner({
+            variant: 'error',
+            message: 'This mobile number is already registered as a Business account. Please sign in with your personal mobile number.',
+          })
+          setBusy(false)
+          return
+        }
+
         applySession(token, user)
         signedInUser = user
       } else {
@@ -380,12 +521,14 @@ export function AuthEntryPage({ variant = 'b2c' }) {
           challengeId,
           fullName: fullName.trim(),
         }
+        const cleanGst = variant === 'b2b' ? normalizeGst(gstNumber) : undefined
         if (role === USER_ROLES.CORPORATE) {
           body.companyName = companyName.trim()
-          if (gstNumber.trim()) body.gstNumber = gstNumber.trim().toUpperCase()
+          if (cleanGst) body.gstNumber = cleanGst
         }
         if (role === USER_ROLES.CONTRACTOR) {
           body.businessName = businessName.trim()
+          if (cleanGst) body.gstNumber = cleanGst
         }
         if (referralCode.trim()) {
           body.referralCode = referralCode.trim().toUpperCase()
@@ -411,7 +554,17 @@ export function AuthEntryPage({ variant = 'b2c' }) {
         setStep('work-setup')
         setBanner(null)
       } else {
-        const returnPath = location.state?.from || getRoleHomePath(signedInUser.role)
+        const roleHome = getRoleHomePath(signedInUser.role)
+        let returnPath = location.state?.from
+        if (
+          !returnPath ||
+          (returnPath.startsWith('/corporate') && signedInUser.role !== USER_ROLES.CORPORATE) ||
+          (returnPath.startsWith('/vendor') && signedInUser.role !== USER_ROLES.CONTRACTOR) ||
+          (returnPath.startsWith('/admin') && signedInUser.role !== USER_ROLES.ADMIN) ||
+          (returnPath.startsWith('/app') && ![USER_ROLES.INDIVIDUAL, USER_ROLES.LABOUR].includes(signedInUser.role))
+        ) {
+          returnPath = roleHome
+        }
         navigate(returnPath, { replace: true })
       }
     } catch (e) {
@@ -502,9 +655,9 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                           key={opt.role}
                           type="button"
                           onClick={() => setRole(opt.role)}
-                          className={`group relative flex flex-col items-center justify-center gap-1.5 rounded-[1rem] border p-2 text-center transition-all duration-300 active:scale-95 ${
+                          className={`group relative flex flex-col items-center justify-center gap-1.5 rounded-2xl border p-2 text-center transition-all duration-300 active:scale-95 ${
                             active
-                              ? 'border-brand bg-brand/5 shadow-sm shadow-brand/10'
+                              ? 'border-transparent bg-brand/5 shadow-sm shadow-brand/10'
                               : 'border-slate-200/60 bg-transparent hover:border-brand/30'
                           }`}
                         >
@@ -519,7 +672,7 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                           {active && (
                             <motion.div
                               layoutId="role-active-indicator"
-                              className="absolute inset-0 rounded-[1.25rem] border-2 border-brand"
+                              className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-brand"
                               initial={false}
                               transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                             />
@@ -640,47 +793,25 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       />
                     </AuthField>
                     {role === USER_ROLES.CORPORATE ? (
-                      <>
-                        <AuthField label="Company name">
-                          <input
-                            ref={companyRef}
-                            type="text"
-                            className={`${inputClass} scroll-mt-14`}
-                            value={companyName}
-                            onChange={(e) => {
-                              setCompanyName(e.target.value)
-                              scrollFieldToTop(e.currentTarget)
-                            }}
-                            onFocus={(e) => scrollFieldToTop(e.currentTarget)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                gstRef.current?.focus()
-                              }
-                            }}
-                          />
-                        </AuthField>
-                        <AuthField label="GST (optional)">
-                          <input
-                            ref={gstRef}
-                            type="text"
-                            maxLength={15}
-                            className={`${inputClass} scroll-mt-14`}
-                            value={gstNumber}
-                            onChange={(e) => {
-                              setGstNumber(e.target.value)
-                              scrollFieldToTop(e.currentTarget)
-                            }}
-                            onFocus={(e) => scrollFieldToTop(e.currentTarget)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                referralRef.current?.focus()
-                              }
-                            }}
-                          />
-                        </AuthField>
-                      </>
+                      <AuthField label="Company name">
+                        <input
+                          ref={companyRef}
+                          type="text"
+                          className={`${inputClass} scroll-mt-14`}
+                          value={companyName}
+                          onChange={(e) => {
+                            setCompanyName(e.target.value)
+                            scrollFieldToTop(e.currentTarget)
+                          }}
+                          onFocus={(e) => scrollFieldToTop(e.currentTarget)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              gstRef.current?.focus()
+                            }
+                          }}
+                        />
+                      </AuthField>
                     ) : null}
                     {role === USER_ROLES.CONTRACTOR ? (
                       <AuthField label="Business name">
@@ -697,10 +828,69 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault()
+                              gstRef.current?.focus()
+                            }
+                          }}
+                        />
+                      </AuthField>
+                    ) : null}
+                    {variant === 'b2b' && (role === USER_ROLES.CORPORATE || role === USER_ROLES.CONTRACTOR) ? (
+                      <AuthField
+                        label="GST (optional)"
+                        hint={
+                          <span
+                            className={`text-xs font-mono tabular-nums ${
+                              !gstNumber
+                                ? 'text-slate-400'
+                                : GST_RE.test(gstNumber)
+                                ? 'font-bold text-emerald-600'
+                                : gstNumber.length === 15
+                                ? 'font-bold text-amber-500'
+                                : 'text-slate-400'
+                            }`}
+                          >
+                            {gstNumber ? `${gstNumber.length}/15` : '15 characters'}
+                          </span>
+                        }
+                      >
+                        <input
+                          ref={gstRef}
+                          type="text"
+                          maxLength={15}
+                          placeholder="22AAAAA0000A1Z5"
+                          className={`${inputClass} font-mono uppercase tracking-wider scroll-mt-14`}
+                          value={gstNumber}
+                          onChange={(e) => {
+                            const formatted = normalizeGst(e.target.value)
+                            setGstNumber(formatted)
+                            if (banner?.variant === 'error' && banner.message?.toLowerCase().includes('gst')) {
+                              setBanner(null)
+                            }
+                            scrollFieldToTop(e.currentTarget)
+                          }}
+                          onFocus={(e) => scrollFieldToTop(e.currentTarget)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
                               referralRef.current?.focus()
                             }
                           }}
                         />
+                        {gstNumber.length > 0 && gstNumber.length < 15 && (
+                          <p className="mt-1 text-[11px] text-slate-400">
+                            Format: 2-digit state + 10-char PAN + 1 entity + Z + 1 check digit (e.g. 22AAAAA0000A1Z5)
+                          </p>
+                        )}
+                        {gstNumber.length === 15 && !GST_RE.test(gstNumber) && (
+                          <p className="mt-1 text-[11px] font-medium text-amber-600">
+                            Invalid GSTIN format. Example: 22AAAAA0000A1Z5
+                          </p>
+                        )}
+                        {gstNumber.length === 15 && GST_RE.test(gstNumber) && (
+                          <p className="mt-1 text-[11px] font-medium text-emerald-600 flex items-center gap-1">
+                            <span>✓</span> Valid GSTIN format
+                          </p>
+                        )}
                       </AuthField>
                     ) : null}
                     <AuthField label="Referral code (optional)">
@@ -904,6 +1094,24 @@ export function AuthEntryPage({ variant = 'b2c' }) {
                       }}
                     />
                   ))}
+                </div>
+
+                <div className="flex items-center justify-between text-[13px] pt-1">
+                  <span className="font-medium text-slate-500">Didn't receive code?</span>
+                  {resendTimer > 0 ? (
+                    <span className="font-semibold text-slate-400">
+                      Resend in <span className="font-bold text-brand tabular-nums">{resendTimer}s</span>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void handleResendOtp()}
+                      className="font-bold text-brand hover:text-brand-active hover:underline disabled:opacity-50 transition-colors"
+                    >
+                      Resend OTP
+                    </button>
+                  )}
                 </div>
               </div>
 

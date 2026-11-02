@@ -1,0 +1,100 @@
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { MapPinOff, Navigation, X } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth.js'
+import { requestDeviceLocation } from '../../hooks/useAutoDetectLocation.js'
+import { readAppUserLocation } from '../../lib/appUserLocationStorage.js'
+
+export function LocationPermissionBanner({ className = '' }) {
+  const { user } = useAuth()
+  const [locStatus, setLocStatus] = useState(null)
+  const [dismissed, setDismissed] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    const handleStatus = (e) => {
+      const detail = e.detail || {}
+      if (detail.status === 'success') {
+        setLocStatus(null)
+        setDismissed(false)
+      } else if (detail.status === 'location_off' || detail.status === 'permission_denied') {
+        setLocStatus(detail)
+      }
+    }
+
+    window.addEventListener('lc-location-status-changed', handleStatus)
+    return () => window.removeEventListener('lc-location-status-changed', handleStatus)
+  }, [])
+
+  if (dismissed || !locStatus) return null
+
+  // If we already have a valid saved location, don't nag the user with a full banner unless requested
+  const stored = readAppUserLocation()
+  if (stored?.lat && stored?.lng && locStatus.status !== 'permission_denied' && locStatus.status !== 'location_off') {
+    return null
+  }
+
+  const isPermission = locStatus.status === 'permission_denied'
+
+  const handleAction = async () => {
+    setBusy(true)
+    try {
+      await requestDeviceLocation(user?.role)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -10, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -10, scale: 0.98 }}
+        className={`relative z-25 mx-3 sm:mx-4 my-2.5 overflow-hidden rounded-2xl border border-amber-300/80 bg-linear-to-r from-amber-500/15 via-amber-50/90 to-amber-100/60 p-3 sm:p-3.5 shadow-md shadow-amber-500/5 backdrop-blur-sm ${className}`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-700 ring-1 ring-amber-500/30">
+            <MapPinOff className="h-5 w-5" aria-hidden />
+            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+            </span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xs font-extrabold tracking-tight text-amber-950 sm:text-sm">
+              {isPermission ? 'Location permission needed' : 'Device location is turned off'}
+            </h2>
+            <p className="mt-0.5 text-[11px] leading-tight text-amber-900/80 sm:text-xs">
+              {isPermission
+                ? 'Allow location access so we can automatically fetch your current area.'
+                : 'Turn on GPS on your mobile to auto-detect your location.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handleAction}
+              className="inline-flex items-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-brand/20 transition-all hover:bg-brand-active active:scale-95 disabled:opacity-60"
+            >
+              <Navigation className={`h-3 w-3 ${busy ? 'animate-spin' : ''}`} aria-hidden />
+              <span>{busy ? 'Detecting…' : isPermission ? 'Allow' : 'Turn On'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-amber-900/60 hover:bg-amber-200/50 hover:text-amber-950"
+              aria-label="Dismiss location banner"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+

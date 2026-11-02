@@ -15,6 +15,7 @@ import { AppBottomNav } from '../components/app-ui/navigation/AppBottomNav.jsx'
 import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
 import { useAutoDetectLocation } from '../hooks/useAutoDetectLocation.js'
+import { LocationPermissionBanner } from '../components/location/LocationPermissionBanner.jsx'
 
 function vendorHidesShellHeader(pathname) {
   if (pathname === '/vendor') return true
@@ -222,6 +223,8 @@ export function VendorAppShell() {
             </GlassPanel>
           </header>
         ) : null}
+
+        <LocationPermissionBanner />
 
         <main
           className={`relative z-10 min-w-0 flex-1 overflow-y-auto overscroll-contain overflow-x-hidden pb-28 ${hideShellHeader

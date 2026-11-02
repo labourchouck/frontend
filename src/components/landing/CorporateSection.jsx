@@ -168,7 +168,7 @@ export function CorporateSection({ banners = [] }) {
         <div>
           <SectionHeading
             titleId="corporate-heading"
-            eyebrow="Corporate · B2B"
+            eyebrow="Corporate · Business Solutions"
             title="Staff entire projects, not just a shift"
             subtitle="Builders, infra companies, factories and facility teams use the Corporate panel to request manpower at scale, verify attendance, and pay on one invoice."
             dark

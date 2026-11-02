@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { BannerToast } from '../../../components/ui/BannerToast.jsx'
+import { FixedStackHeader } from '../../../components/ui/FixedStackHeader.jsx'
+import { motion } from 'framer-motion'
 import {
   Briefcase,
   CheckCircle2,
@@ -74,7 +76,6 @@ function profileToForm(profile, user) {
 }
 
 export function VendorProfilePage() {
-  const reduce = useReducedMotion()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -93,6 +94,7 @@ export function VendorProfilePage() {
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
+  const dismissBanner = useCallback(() => setBanner(null), [])
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [activeSubscription, setActiveSubscription] = useState(null)
   const [showCitySuggestions, setShowCitySuggestions] = useState(false)
@@ -280,28 +282,12 @@ export function VendorProfilePage() {
 
   return (
     <motion.div className="min-w-0 space-y-4 overflow-x-hidden px-4 pb-10">
-      <AnimatePresence>
-        {banner ? (
-          <motion.p
-            initial={reduce ? false : { opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0 }}
-            className={`fixed left-4 right-4 top-[max(4.5rem,env(safe-area-inset-top))] z-120 mx-auto max-w-md rounded-2xl px-4 py-3 text-center text-sm font-semibold text-white shadow-xl ${
-              banner.variant === 'success'
-                ? 'border border-emerald-300/40 bg-emerald-900/95'
-                : 'border border-rose-300/40 bg-rose-900/95'
-            }`}
-            role="status"
-          >
-            {banner.message}
-          </motion.p>
-        ) : null}
-      </AnimatePresence>
+      <FixedStackHeader title="Business verification" backTo="/vendor" badge={phaseLabels[ui.phase] || 'In progress'} />
+      <BannerToast banner={banner} onDismiss={dismissBanner} />
 
       <VendorVerificationHero
         title={ui.title}
         subtitle={ui.subtitle}
-        phaseLabel={phaseLabels[ui.phase] || 'In progress'}
         tone={ui.tone}
         businessLine={
           profile?.businessName || form.businessName

@@ -69,7 +69,7 @@ export async function getBrowserLocation(options = {}) {
 
   const timeoutMs = options.timeout ?? 15000
   const targetAccuracy = options.targetAccuracy ?? 80
-  const maxAge = options.maximumAge ?? 120000
+  const maxAge = options.maximumAge ?? 0
 
   return new Promise((resolve, reject) => {
     let watchId = null
@@ -117,13 +117,20 @@ export async function getBrowserLocation(options = {}) {
 
     const onError = (err) => {
       if (resolved) return
-      // User explicitly denied permission
       if (err?.code === 1 /* PERMISSION_DENIED */) {
         resolved = true
         cleanup()
         const error = new Error('Location permission denied. Please allow location access in your device settings.')
         error.code = 1
         reject(error)
+      } else if (err?.code === 2 /* POSITION_UNAVAILABLE */) {
+        if (!bestPosition) {
+          resolved = true
+          cleanup()
+          const error = new Error('Device location is turned off. Please turn on GPS on your mobile.')
+          error.code = 2
+          reject(error)
+        }
       }
     }
 
@@ -145,14 +152,15 @@ export async function getBrowserLocation(options = {}) {
           if (bestPosition) {
             finish(bestPosition)
           } else {
-            let msg = 'Could not determine GPS location. Please search or select your area below.'
+            let msg = 'Could not determine GPS location. Please ensure device location is enabled.'
             if (err?.code === 1) msg = 'Location permission denied. Please allow location access in your device settings.'
+            if (err?.code === 2) msg = 'Device location is turned off. Please turn on GPS on your mobile.'
             const error = new Error(msg)
             error.code = err?.code ?? 3
             reject(error)
           }
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
       )
     }, timeoutMs)
 
