@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { ArrowLeft, Fingerprint, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Fingerprint, Menu, ShieldCheck } from 'lucide-react'
+import { useAuth } from '../../../hooks/useAuth.js'
+import { isLabourLocked } from '../../../lib/labourAccess.js'
 
 const TONE_BADGE = {
   emerald: 'bg-emerald-500/25 text-emerald-100 ring-emerald-400/40',
@@ -18,6 +20,8 @@ const TONE_GRADIENT = {
 
 export function LabourKycHero({ title, subtitle, phaseLabel, tone = 'violet', maskedAadhaar, maskedPan }) {
   const reduce = useReducedMotion()
+  const { user } = useAuth()
+  const locked = isLabourLocked(user)
   const badgeClass = TONE_BADGE[tone] || TONE_BADGE.violet
   const gradient = TONE_GRADIENT[tone] || TONE_GRADIENT.violet
 
@@ -37,13 +41,25 @@ export function LabourKycHero({ title, subtitle, phaseLabel, tone = 'violet', ma
 
         <div className="relative p-4 sm:p-5">
           <div className="flex items-start gap-3">
-            <Link
-              to="/app"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 backdrop-blur-sm transition hover:bg-white/20"
-              aria-label="Back to home"
-            >
-              <ArrowLeft className="h-5 w-5" aria-hidden />
-            </Link>
+            {locked ? (
+              // Until approved there is no home to go back to: the menu holds only help pages and sign out.
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event('lc-open-app-drawer'))}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 backdrop-blur-sm transition hover:bg-white/20"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" aria-hidden />
+              </button>
+            ) : (
+              <Link
+                to="/app"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 backdrop-blur-sm transition hover:bg-white/20"
+                aria-label="Back to home"
+              >
+                <ArrowLeft className="h-5 w-5" aria-hidden />
+              </Link>
+            )}
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 ring-1 ring-violet-400/30">
               <Fingerprint className="h-5 w-5 text-violet-200" aria-hidden />
             </span>

@@ -25,7 +25,8 @@ export function BroadcastPopup() {
   }, [incoming])
 
   // Only render for labour users
-  const isLabour = user?.role === USER_ROLES.LABOUR || user?.role === 'labour'
+  // Only approved labour receive offers; without KYC approval they never see a broadcast.
+  const isLabour = (user?.role === USER_ROLES.LABOUR || user?.role === 'labour') && user?.labourProfile?.kycStatus === 'verified'
 
   // Listen for broadcast events
   useEffect(() => {

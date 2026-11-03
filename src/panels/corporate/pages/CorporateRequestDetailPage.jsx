@@ -353,7 +353,8 @@ export function CorporateRequestDetailPage() {
                   const serv = crew.services?.[0]
                   const categoryName = crew.category || crew.categoryName || ''
                   const serviceName = serv?.name || crew.serviceName || categoryName || 'Labour'
-                  const adminPrice = Number(crew.adminPrice ?? serv?.adminPrice ?? serv?.price ?? 0)
+                  // Admin's price when set (> 0), otherwise the labour's own price — never ₹0 just because no override exists.
+                  const adminPrice = [crew.adminPrice, serv?.adminPrice, serv?.price].map(Number).find((n) => n > 0) || 0
 
                   return (
                     <li key={crew._id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50">

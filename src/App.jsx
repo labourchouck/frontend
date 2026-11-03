@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import { AuthProvider } from './context/AuthProvider.jsx'
 import { ProtectedRoute } from './components/auth/ProtectedRoute.jsx'
 import { AppShell } from './layouts/AppShell.jsx'
+import { LabourKycGate } from './components/labour/LabourKycGate.jsx'
 import { CorporateShell } from './layouts/CorporateShell.jsx'
 import { VendorAppShell } from './layouts/VendorAppShell.jsx'
 import { AdminLayout } from './layouts/AdminLayout.jsx'
@@ -130,7 +131,9 @@ function App() {
             element={
               <ProtectedRoute roles={APP_B2C_ROLES}>
                 <ErrorBoundary>
-                  <AppShell />
+                  <LabourKycGate>
+                    <AppShell />
+                  </LabourKycGate>
                 </ErrorBoundary>
               </ProtectedRoute>
             }

@@ -73,6 +73,19 @@ const byRole = {
   },
 }
 
+/** What a labour sees until the admin approves their KYC: no tabs, only verification and help pages. */
+export const LABOUR_LOCKED_NAVIGATION = {
+  headerTagline: 'Complete KYC to start receiving jobs',
+  bottomNav: [],
+  drawerNav: [
+    { id: 'kyc', to: '/app/kyc', label: 'KYC verification', icon: ShieldCheck },
+    { id: 'support', to: '/app/support', label: 'Support', icon: LifeBuoy },
+    { id: 'terms', to: '/app/terms', label: 'Terms & Conditions', icon: FileText },
+    { id: 'privacy-policy', to: '/app/privacy-policy', label: 'Privacy Policy', icon: FileText },
+    { id: 'faq', to: '/app/faq', label: 'FAQs', icon: FileText },
+  ],
+}
+
 export function getAppNavigation(role) {
   if (role && byRole[role]) return byRole[role]
   return byRole[USER_ROLES.INDIVIDUAL]

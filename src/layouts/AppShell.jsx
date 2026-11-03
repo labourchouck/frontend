@@ -5,6 +5,7 @@ import { ChevronDown, LogOut, MapPin, Menu, Sparkles, X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.js'
 import {
   getAppNavigation,
+  LABOUR_LOCKED_NAVIGATION,
   getAppShellTitle,
   hideBuildMartShellHeader,
   isBuildMartRoute,
@@ -16,6 +17,7 @@ import { appSpring } from '../components/app/appMotion.js'
 import { GlassPanel } from '../components/ui/GlassPanel.jsx'
 import { NotificationBell } from '../components/notifications/NotificationBell.jsx'
 import { AppBottomNav } from '../components/app-ui/navigation/AppBottomNav.jsx'
+import { isLabourLocked } from '../lib/labourAccess.js'
 import { AppBadge } from '../components/app-ui/data-display/AppBadge.jsx'
 import { adminInitials } from '../lib/formatAdminLastLogin.js'
 import { readAppUserLocation } from '../lib/appUserLocationStorage.js'
@@ -39,7 +41,11 @@ export function AppShell() {
   const headerRef = useRef(null)
   const reduce = useReducedMotion()
 
-  const { headerTagline, bottomNav, drawerNav } = useMemo(() => getAppNavigation(user?.role), [user?.role])
+  const labourLocked = isLabourLocked(user)
+  const { headerTagline, bottomNav, drawerNav } = useMemo(
+    () => (labourLocked ? LABOUR_LOCKED_NAVIGATION : getAppNavigation(user?.role)),
+    [labourLocked, user?.role],
+  )
 
   const isIndividualAppHome = user?.role === USER_ROLES.INDIVIDUAL && pathname === '/app'
   const isLabourAppHome = user?.role === USER_ROLES.LABOUR && pathname === '/app'
@@ -486,7 +492,7 @@ export function AppShell() {
         </main>
       </div>
 
-      <AppBottomNav items={bottomNav} />
+      {bottomNav.length > 0 ? <AppBottomNav items={bottomNav} /> : null}
 
       {isIndividualAppHome ? (
         <AppUserLocationModal
