@@ -33,6 +33,35 @@ export const workforceApi = baseApi.injectEndpoints({
     toggleCorporateAttendance: build.mutation({
       query: (body) => ({ url: '/corporate/attendance/toggle', method: 'POST', body }),
       transformResponse: unwrap,
+      // Tick the box immediately; the server response / refetch then confirms it (rolled back if the call fails).
+      async onQueryStarted({ recordId, action }, { dispatch, getState, queryFulfilled }) {
+        const now = new Date().toISOString()
+        const patches = workforceApi.util
+          .selectInvalidatedBy(getState(), ['CorporateVendorAttendance'])
+          .filter((q) => q.endpointName === 'getCorporateVendorAttendance')
+          .map((q) =>
+            dispatch(
+              workforceApi.util.updateQueryData('getCorporateVendorAttendance', q.originalArgs, (draft) => {
+                for (const job of draft?.jobs ?? []) {
+                  const rec = job.attendanceRecords?.find((r) => r._id === recordId)
+                  if (!rec) continue
+                  if (action === 'clientCheckIn') {
+                    rec.clientCheckIn = true
+                    rec.clientCheckInAt = rec.clientCheckInAt || now
+                  } else if (action === 'clientCheckOut') {
+                    rec.clientCheckOut = true
+                    rec.clientCheckOutAt = rec.clientCheckOutAt || now
+                  }
+                }
+              }),
+            ),
+          )
+        try {
+          await queryFulfilled
+        } catch {
+          patches.forEach((patch) => patch.undo())
+        }
+      },
       invalidatesTags: ['Attendance', 'CorporateVendorAttendance', 'CorporateDashboard'],
     }),
     getCorporateTransactions: build.query({

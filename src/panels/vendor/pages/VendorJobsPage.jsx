@@ -22,6 +22,13 @@ const TABS = [
   { id: 'completed', label: 'Done' },
 ]
 
+function formatShiftTime(t) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || ''))
+  if (!m) return t
+  const h = Number(m[1])
+  return `${((h + 11) % 12) + 1}:${m[2]} ${h >= 12 ? 'PM' : 'AM'}`
+}
+
 function formatDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
@@ -160,6 +167,16 @@ export function VendorJobsPage() {
                             ({days} {days === 1 ? 'day' : 'days'})
                           </span>
                         </p>
+                        {req?.shiftStart ? (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-slate-600">
+                            <Clock className="h-3 w-3 text-brand" aria-hidden /> Shift starts {formatShiftTime(req.shiftStart)}
+                          </p>
+                        ) : null}
+                        {req?.notes ? (
+                          <p className="mt-1.5 line-clamp-3 rounded-lg bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-900">
+                            <span className="font-bold">Notes: </span>{req.notes}
+                          </p>
+                        ) : null}
                       </div>
                       <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300" aria-hidden />
                     </div>

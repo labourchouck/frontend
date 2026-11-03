@@ -21,6 +21,7 @@ import { VendorPageLayout } from '../../components/vendor/VendorPageLayout.jsx'
 import { isVendorPanelUnlocked } from '../../lib/vendorDemo.js'
 import { useEffect, useState } from 'react'
 import { vendorApi } from '../../api/vendorApi.js'
+import { useSocket } from '../../context/SocketContext.jsx'
 import { filterVendorJobs } from '../../lib/vendorDummyData.js'
 import { formatVendorInr, openVendorDrawer, vendorInitials, vendorTimeGreeting } from '../../lib/vendorUiHelpers.js'
 
@@ -45,6 +46,7 @@ export function VendorHomeScreen({ user }) {
   const [pendingJobs, setPendingJobs] = useState([])
   const [banners, setBanners] = useState([])
   const [bannerIdx, setBannerIdx] = useState(0)
+  const socket = useSocket()
 
   useEffect(() => {
     if (reduce || banners.length === 0) return undefined
@@ -55,27 +57,53 @@ export function VendorHomeScreen({ user }) {
   }, [reduce, banners])
 
   useEffect(() => {
-    if (!verified || !unlocked) return
+    if (!verified || !unlocked) return undefined
+    let cancelled = false
 
-    const loadDashboard = async () => {
+    // Stats, pending offers and banners are re-fetched quietly (no spinner), so the screen stays current without a reload.
+    const loadDashboard = async (withBanners) => {
       try {
         const statsRes = await vendorApi.getDashboardStats()
+        if (cancelled) return
         setStats(statsRes?.data?.stats || {})
         setActiveSubscription(statsRes?.data?.activeSubscription || null)
-        
+
         const jobsRes = await vendorApi.getJobs()
+        if (cancelled) return
         const allJobs = jobsRes?.data?.allocations || []
-        const pending = allJobs.filter(a => !a.vendorAcceptedAt && !a.vendorRejectedAt)
+        const pending = allJobs.filter((a) => !a.vendorAcceptedAt && !a.vendorRejectedAt)
         setPendingJobs(pending.slice(0, 2))
 
-        const bannersRes = await vendorApi.getBanners()
-        setBanners(bannersRes?.data?.banners || [])
+        if (withBanners) {
+          const bannersRes = await vendorApi.getBanners()
+          if (!cancelled) setBanners(bannersRes?.data?.banners || [])
+        }
       } catch (err) {
         console.error('Failed to load vendor dashboard', err)
       }
     }
-    loadDashboard()
-  }, [verified, unlocked])
+    loadDashboard(true)
+
+    const refresh = () => loadDashboard(false)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    const timer = window.setInterval(onVisible, 30000)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', refresh)
+    // New offers / approvals / attendance arrive as notifications over the socket — refresh straight away.
+    socket?.on('NOTIFICATION', refresh)
+    socket?.on('B2B_DIRECT_REQUEST', refresh)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', refresh)
+      socket?.off('NOTIFICATION', refresh)
+      socket?.off('B2B_DIRECT_REQUEST', refresh)
+    }
+  }, [verified, unlocked, socket])
 
   const firstName = user?.fullName?.split(/\s/)?.[0]
   const businessName = user?.contractorProfile?.businessName || user?.fullName || 'Vendor'

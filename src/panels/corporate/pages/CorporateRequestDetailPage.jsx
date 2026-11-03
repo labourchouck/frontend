@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Users, Star, Loader2, Clock, CheckCircle2 } from 'lucide-react'
@@ -10,6 +10,7 @@ import { useGetRequestQuery, useRateCorporateAssignmentMutation, useInitPaymentM
 import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
 import { BookingReviewModal } from '../../../components/app/booking/BookingReviewModal.jsx'
 import { useAuth } from '../../../hooks/useAuth.js'
+import { useSocket } from '../../../context/SocketContext.jsx'
 import { pickRazorpayKey } from '../../../lib/razorpayKey.js'
 
 function formatDate(d) {
@@ -23,7 +24,18 @@ export function CorporateRequestDetailPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const forcePayment = searchParams.get('payment') === 'true'
-  const { data, isLoading, isError } = useGetRequestQuery(id, { skip: !id })
+  const { data, isLoading, isError, refetch } = useGetRequestQuery(id, { skip: !id })
+  const socket = useSocket()
+
+  // The vendor closing a shift pushes ATTENDANCE_UPDATED — refresh so the payment button unlocks without a reload.
+  useEffect(() => {
+    if (!socket || !id) return undefined
+    const onUpdate = (p) => {
+      if (!p?.requestId || String(p.requestId) === String(id)) refetch()
+    }
+    socket.on('ATTENDANCE_UPDATED', onUpdate)
+    return () => socket.off('ATTENDANCE_UPDATED', onUpdate)
+  }, [socket, id, refetch])
   const [initPayment, { isLoading: isInit }] = useInitPaymentMutation()
   const [verifyPayment, { isLoading: isVerifying }] = useVerifyPaymentMutation()
 
@@ -123,6 +135,7 @@ export function CorporateRequestDetailPage() {
   }
 
   const request = data?.request
+  const awaitingVendor = (data?.vendorCheckoutPending ?? 0) > 0
   const assignments = data?.assignments ?? []
   const platformFeeConfig = data?.platformFeeConfig
 
@@ -323,11 +336,16 @@ export function CorporateRequestDetailPage() {
             </div>
             <button
               onClick={handlePay}
-              disabled={isInitializingRazorpay || isInit}
-              className="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:hover:scale-100"
+              disabled={isInitializingRazorpay || isInit || awaitingVendor}
+              className={`shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:hover:scale-100 ${awaitingVendor ? 'blur-[2px] grayscale cursor-not-allowed' : ''}`}
             >
               {(isInitializingRazorpay || isInit || isVerifying) ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Make Payment'}
             </button>
+            {awaitingVendor ? (
+              <p className="text-xs font-semibold text-amber-700 sm:basis-full">
+                Waiting for the vendor to confirm check-out. Payment unlocks automatically.
+              </p>
+            ) : null}
           </div>
         </AppSurface>
       ) : (

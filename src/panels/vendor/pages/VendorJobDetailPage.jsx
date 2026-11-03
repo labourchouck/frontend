@@ -11,6 +11,13 @@ import { vendorApi } from '../../../api/vendorApi.js'
 import { SharedAttendanceDrawer } from '../../../components/shared/SharedAttendanceDrawer.jsx'
 import { useAcceptVendorJobMutation } from '../../../store/api/workforceApi.js'
 
+function formatShiftTime(t) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || ''))
+  if (!m) return t
+  const h = Number(m[1])
+  return `${((h + 11) % 12) + 1}:${m[2]} ${h >= 12 ? 'PM' : 'AM'}`
+}
+
 function formatDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -136,6 +143,15 @@ export function VendorJobDetailPage() {
               ({days} {days === 1 ? 'day' : 'days'})
             </span>
           </p>
+          {req?.shiftStart ? (
+            <p className="text-sm font-bold text-slate-800">Shift starts at {formatShiftTime(req.shiftStart)}</p>
+          ) : null}
+          {req?.notes ? (
+            <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Notes from client</p>
+              <p className="mt-1 whitespace-pre-wrap break-words">{req.notes}</p>
+            </div>
+          ) : null}
           <p className="flex items-center gap-2 text-sm font-bold text-slate-800">
             <Users className="h-4 w-4 shrink-0 text-brand" />
             {allocation.workersAssigned ?? 0} / {allocation.workersRequired} workers
