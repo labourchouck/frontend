@@ -3,6 +3,8 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Plus, Search, RefreshCw, Edit2, Trash2 } from 'lucide-react'
 import { fetchAdminMartBanners, createAdminMartBanner, deleteAdminMartBanner, patchAdminMartBanner } from '../../api/adminBuildmartApi.js'
 import { ApiError } from '../../api/http.js'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { EditMartBannerModal } from '../../components/admin/EditMartBannerModal.jsx'
@@ -10,6 +12,7 @@ import { EditMartBannerModal } from '../../components/admin/EditMartBannerModal.
 export function AdminMartBannersPage() {
   const reduce = useReducedMotion()
   const [items, setItems] = useState([])
+  const pg = usePagination(items)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   
@@ -60,7 +63,7 @@ export function AdminMartBannersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {items.map(item => {
+            {pg.pageItems.map(item => {
               const bannerId = item._id || item.id;
               return (
               <tr key={bannerId} className="hover:bg-slate-50/50">
@@ -91,6 +94,7 @@ export function AdminMartBannersPage() {
             )})}
           </tbody>
         </table>
+        <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </GlassPanel>
       
       {(editItem || isAddOpen) && (

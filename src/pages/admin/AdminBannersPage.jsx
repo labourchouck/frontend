@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { Plus, Trash2, Image as ImageIcon, Loader2, RefreshCw, Save } from 'lucide-react'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { fetchAdminBanners, createAdminBanner, updateAdminBanner, deleteAdminBanner } from '../../api/adminBannersApi.js'
@@ -171,6 +173,7 @@ function BannerCard({ banner, onChanged, onError }) {
 
 export function AdminBannersPage() {
   const [banners, setBanners] = useState([])
+  const pg = usePagination(banners, { pageSize: 6 })
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -258,8 +261,9 @@ export function AdminBannersPage() {
           <p>No banners uploaded yet</p>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {banners.map((banner) => (
+          {pg.pageItems.map((banner) => (
             <BannerCard
               key={`${banner._id}-${banner.updatedAt}`}
               banner={banner}
@@ -268,6 +272,8 @@ export function AdminBannersPage() {
             />
           ))}
         </div>
+        <AdminPagination {...pg} pageSizeOptions={[6, 12, 24]} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
+        </>
       )}
     </div>
   )

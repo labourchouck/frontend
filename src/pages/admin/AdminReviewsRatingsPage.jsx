@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { AlertCircle, FileText, Loader2, Star, User } from 'lucide-react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { reviewsApi } from '../../api/reviewsApi.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppBadge } from '../../components/app-ui/data-display/AppBadge.jsx'
@@ -10,6 +12,8 @@ export function AdminReviewsRatingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState('ALL')
+  const filteredReviews = reviews.filter((r) => filter === 'ALL' || r.reviewerId?.role === filter)
+  const pg = usePagination(filteredReviews, { resetKey: filter })
 
   useEffect(() => {
     let cancelled = false
@@ -93,12 +97,6 @@ export function AdminReviewsRatingsPage() {
         </div>
         
         {(() => {
-          const filteredReviews = reviews.filter(r => {
-            if (filter === 'ALL') return true
-            if (r.reviewerId?.role === filter) return true
-            return false
-          })
-
           return filteredReviews.length === 0 ? (
             <div className="p-12 text-center">
               <FileText className="mx-auto h-12 w-12 text-slate-300" />
@@ -107,7 +105,7 @@ export function AdminReviewsRatingsPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {filteredReviews.map((review) => (
+              {pg.pageItems.map((review) => (
                 <div key={review._id} className="p-5 transition hover:bg-slate-50/50">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1 space-y-3">
@@ -177,6 +175,7 @@ export function AdminReviewsRatingsPage() {
           </div>
           )
         })()}
+        <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </GlassPanel>
     </div>
   )

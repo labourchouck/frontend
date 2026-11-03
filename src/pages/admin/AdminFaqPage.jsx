@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Loader2, Edit2, Trash2, CheckCircle2, AlertCircle, Save, X } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
@@ -12,6 +14,7 @@ export function AdminFaqPage() {
   
   const [isEditing, setIsEditing] = useState(false)
   const [currentFaq, setCurrentFaq] = useState(null)
+  const pg = usePagination(faqs)
 
   useEffect(() => {
     fetchFaqs()
@@ -219,7 +222,7 @@ export function AdminFaqPage() {
               <p className="text-slate-500">No FAQs found. Create one to get started.</p>
             </GlassPanel>
           ) : (
-            faqs.map(faq => (
+            pg.pageItems.map(faq => (
               <GlassPanel key={faq._id} className="p-5">
                 <div className="flex gap-4 items-start justify-between">
                   <div className="space-y-2 flex-1">
@@ -245,6 +248,7 @@ export function AdminFaqPage() {
               </GlassPanel>
             ))
           )}
+          <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
         </div>
       )}
     </div>

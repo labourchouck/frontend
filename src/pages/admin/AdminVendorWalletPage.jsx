@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { Wallet, Clock, CheckCircle2, XCircle, Download, Search, Filter, Eye, X, UserCircle, Landmark, QrCode } from 'lucide-react'
 import { adminWalletsApi } from '../../api/adminWalletsApi.js'
 
@@ -84,6 +86,7 @@ export function AdminVendorWalletPage() {
   const pendingWithdrawals = useMemo(() => {
     return withdrawals.filter(w => w.status === 'PENDING').sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
   }, [withdrawals])
+  const pendingPg = usePagination(pendingWithdrawals)
 
   // Pagination Logic for History
   const totalPages = Math.ceil(historyWithdrawals.length / itemsPerPage)
@@ -171,6 +174,7 @@ export function AdminVendorWalletPage() {
                 <p className="text-xs">No pending withdrawal requests.</p>
               </div>
             ) : (
+              <>
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="border-b border-slate-100 text-xs uppercase text-slate-400">
                   <tr>
@@ -181,7 +185,7 @@ export function AdminVendorWalletPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {pendingWithdrawals.map(req => (
+                  {pendingPg.pageItems.map(req => (
                     <tr key={req._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-900">{req.vendorId?.companyName || req.vendorId?.fullName || 'N/A'}</p>
@@ -207,6 +211,8 @@ export function AdminVendorWalletPage() {
                   ))}
                 </tbody>
               </table>
+              <AdminPagination {...pendingPg} onPageChange={pendingPg.setPage} onPageSizeChange={pendingPg.setPageSize} />
+              </>
             )}
           </div>
         </div>

@@ -4,6 +4,19 @@ import { getBrowserLocation, reverseGeocode } from '../lib/locationService.js'
 import { USER_ROLES } from '../constants/userRoles.js'
 
 let isFetchingLocation = false
+
+/**
+ * Should the automatic GPS refresh replace the saved location?
+ * A location the user chose themselves (work area / address) is never replaced behind their back — that would also
+ * move a labour on the server, so broadcasts would be matched against where the device is, not where they set
+ * themselves. Only a missing or previously auto-detected location is refreshed. `force` is for explicit taps
+ * ("Turn on", "Allow", "Current location").
+ */
+export function shouldAutoRefreshLocation(stored, { force = false } = {}) {
+  if (force) return true
+  const hasLocation = Boolean(stored) && stored.lat != null && stored.lng != null
+  return !hasLocation || stored.auto === true
+}
 let lastLocationStatus = null
 
 if (typeof window !== 'undefined') {
@@ -16,8 +29,12 @@ if (typeof window !== 'undefined') {
  * Actively requests current live device coordinates and reverse-geocodes them.
  * Updates local storage, syncs with backend for labour, and notifies UI listeners.
  */
-export async function requestDeviceLocation(role) {
+export async function requestDeviceLocation(role, { force = false } = {}) {
   if (isFetchingLocation) return
+  if (!shouldAutoRefreshLocation(readAppUserLocation(), { force })) {
+    console.log('[location] keeping the location the user set manually (not replaced by GPS)')
+    return { skipped: true }
+  }
   isFetchingLocation = true
 
   window.dispatchEvent(
@@ -96,6 +113,15 @@ export function useAutoDetectLocation(user) {
       }
     }
 
+    // Broadcasts are matched on the worker's saved position, so a labour keeps it current while the app is open
+    // (not just when it was opened). A location they set themselves is still left alone.
+    const refreshId =
+      role === USER_ROLES.LABOUR
+        ? setInterval(() => {
+            if (document.visibilityState === 'visible') requestDeviceLocation(role)
+          }, 60000)
+        : null
+
     window.addEventListener('focus', handleResume)
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -121,6 +147,7 @@ export function useAutoDetectLocation(user) {
     }
 
     return () => {
+      if (refreshId) clearInterval(refreshId)
       window.removeEventListener('focus', handleResume)
       document.removeEventListener('visibilitychange', handleVisibility)
       if (permStatus) {

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { Plus, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { fetchAdminBanners, createAdminBanner, deleteAdminBanner } from '../../api/adminBannersApi.js'
@@ -6,6 +8,7 @@ import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 
 export function AdminVendorBannersPage() {
   const [banners, setBanners] = useState([])
+  const pg = usePagination(banners, { pageSize: 6 })
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -104,8 +107,9 @@ export function AdminVendorBannersPage() {
           <p>No banners uploaded yet</p>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {banners.map(banner => (
+          {pg.pageItems.map(banner => (
             <GlassPanel key={banner._id} className="group relative overflow-hidden rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
               <div className="aspect-[21/9] w-full bg-slate-100">
                 <img
@@ -126,6 +130,8 @@ export function AdminVendorBannersPage() {
             </GlassPanel>
           ))}
         </div>
+        <AdminPagination {...pg} pageSizeOptions={[6, 12, 24]} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
+        </>
       )}
     </div>
   )

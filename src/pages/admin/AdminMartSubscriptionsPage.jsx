@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { Plus, Eye, Edit, Trash2, Shield, Users } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { adminSubscriptionsApi } from '../../api/adminSubscriptionsApi.js'
@@ -29,6 +31,7 @@ export function AdminMartSubscriptionsPage() {
   const [activeTab, setActiveTab] = useState('plans') // 'plans' or 'vendors'
   const [plans, setPlans] = useState([])
   const [subscriptions, setSubscriptions] = useState([])
+  const pg = usePagination(subscriptions)
   const [loading, setLoading] = useState(true)
   
   // Modal state
@@ -267,7 +270,7 @@ export function AdminMartSubscriptionsPage() {
                     </td>
                   </tr>
                 ) : (
-                  subscriptions.map(sub => (
+                  pg.pageItems.map(sub => (
                     <tr key={sub._id} className="hover:bg-slate-50 transition">
                       <td className="px-6 py-4 font-semibold text-slate-800">
                         {sub.vendor?.fullName || 'N/A'}
@@ -300,6 +303,7 @@ export function AdminMartSubscriptionsPage() {
             </table>
           )}
         </div>
+        {activeTab === 'vendors' && <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />}
       </GlassPanel>
 
       <AdminSubscriptionPlanModal 

@@ -1,8 +1,10 @@
+import { useMartBase } from '../../hooks/useMartBase.js'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchAppMartCategories } from '../../api/buildmartApi.js'
 
 export function BuildMartCategoryGrid() {
+  const martBase = useMartBase()
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -33,7 +35,7 @@ export function BuildMartCategoryGrid() {
     <div className="mx-4 mt-3 grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
       {categories.map((category) => (
         <Link
-          to={`/app/buildmart/category/${category.id || category._id}`}
+          to={`${martBase}/category/${category.id || category._id}`}
           key={category.id || category._id}
           className="group flex flex-col items-center gap-2 outline-none"
         >

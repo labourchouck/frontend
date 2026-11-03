@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
 import {
   AlertCircle,
   CheckCircle2,
@@ -204,25 +205,34 @@ export function AdminComplaintsPage() {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [roleFilter, setRoleFilter] = useState('ALL')
   const [total, setTotal] = useState(0)
+  const [statusCounts, setStatusCounts] = useState(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
-  const load = useCallback(async (status = statusFilter, role = roleFilter) => {
+  const load = useCallback(async (status = statusFilter, role = roleFilter, pageNo = page, limit = pageSize) => {
     setLoading(true)
     setError('')
     try {
-      const res = await adminComplaintsApi.getAllComplaints({ status, role, limit: 50 })
+      const res = await adminComplaintsApi.getAllComplaints({ status, role, page: pageNo, limit })
       const data = res.data ?? {}
       setComplaints(data.complaints ?? data.items ?? [])
-      setTotal(data.total ?? (data.complaints ?? data.items ?? []).length)
+      setTotal(data.pagination?.total ?? data.total ?? (data.complaints ?? data.items ?? []).length)
+      setStatusCounts(data.statusCounts ?? null)
     } catch (e) {
       setError(e?.message || 'Failed to load complaints')
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, roleFilter, page, pageSize])
+
+  // A new filter starts again from the first page.
+  useEffect(() => {
+    setPage(1) // eslint-disable-line react-hooks/set-state-in-effect
+  }, [statusFilter, roleFilter])
 
   useEffect(() => {
-    load(statusFilter, roleFilter)
-  }, [statusFilter, roleFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+    load(statusFilter, roleFilter, page, pageSize)
+  }, [statusFilter, roleFilter, page, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const countByStatus = {
     OPEN: complaints.filter((c) => c.status === 'OPEN' || !c.status).length,
@@ -268,7 +278,7 @@ export function AdminComplaintsPage() {
                 <Icon className="h-4 w-4" aria-hidden />
               </span>
               <div>
-                <p className="text-lg font-black text-slate-900">{statusFilter === 'ALL' ? countByStatus[key] : (statusFilter === key ? complaints.length : '—')}</p>
+                <p className="text-lg font-black text-slate-900">{statusCounts ? (statusCounts[key] ?? 0) : statusFilter === 'ALL' ? countByStatus[key] : (statusFilter === key ? complaints.length : '—')}</p>
                 <p className="text-[11px] font-semibold text-slate-500">{meta.label}</p>
               </div>
             </GlassPanel>
@@ -341,8 +351,17 @@ export function AdminComplaintsPage() {
       ) : (
         <div className="space-y-3">
           {complaints.map((c) => (
-            <ComplaintCard key={c._id} complaint={c} onUpdate={() => load(statusFilter, roleFilter)} />
+            <ComplaintCard key={c._id} complaint={c} onUpdate={() => load(statusFilter, roleFilter, page, pageSize)} />
           ))}
+          <AdminPagination
+            page={page}
+            pages={Math.max(1, Math.ceil(total / pageSize))}
+            total={total}
+            pageSize={pageSize}
+            loading={loading}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => { setPageSize(n); setPage(1) }}
+          />
         </div>
       )}
     </div>

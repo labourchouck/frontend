@@ -2,6 +2,7 @@ import { Menu, ChevronDown, ClipboardList, MapPin, Mic, Search } from 'lucide-re
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { martBasePath } from '../../lib/buildmartLeadStatus.js'
 import { readAppUserLocation } from '../../lib/appUserLocationStorage.js'
 import { AppUserLocationModal } from '../app/AppUserLocationModal.jsx'
 import { useVoiceSearch } from '../app/individual/home/useVoiceSearch.js'
@@ -37,10 +38,11 @@ function RotatingHint() {
 export function BuildMartHeader({ onOpenDrawer }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const ordersPath = pathname.startsWith('/corporate') ? '/corporate/mart/orders' : '/app/buildmart/orders'
+  const martBase = martBasePath(pathname)
+  const ordersPath = `${martBase}/orders`
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [appLocation, setAppLocation] = useState(() => readAppUserLocation())
-  const voice = useVoiceSearch((text) => navigate(`/app/buildmart/category/all?q=${encodeURIComponent(text)}`))
+  const voice = useVoiceSearch((text) => navigate(`${martBase}/category/all?q=${encodeURIComponent(text)}`))
 
   useEffect(() => {
     const onLoc = () => {
@@ -114,7 +116,7 @@ export function BuildMartHeader({ onOpenDrawer }) {
         >
           <button
             type="button"
-            onClick={() => navigate('/app/buildmart/category/all?focus=1')}
+            onClick={() => navigate(`${martBase}/category/all?focus=1`)}
             className="flex h-full min-w-0 flex-1 items-center gap-2.5 pl-3.5 text-left text-slate-400 transition active:scale-[0.99]"
             aria-label="Search building materials"
           >

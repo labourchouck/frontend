@@ -1,9 +1,11 @@
+import { useMartBase } from '../../hooks/useMartBase.js'
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { fetchAppMartBanners } from '../../api/buildmartApi.js'
 
 export function BuildMartPromoBanner() {
+  const martBase = useMartBase()
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
   const [active, setActive] = useState(0)
@@ -98,7 +100,7 @@ export function BuildMartPromoBanner() {
           return banner.categoryId ? (
             <Link 
               key={banner.id || banner._id} 
-              to={`/app/buildmart/category/${banner.categoryId}`}
+              to={`${martBase}/category/${banner.categoryId}`}
               className={containerClass}
             >
               {content}

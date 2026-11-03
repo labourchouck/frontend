@@ -6,6 +6,8 @@ import { SharedAttendanceDrawer } from '../../components/shared/SharedAttendance
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
 import { PipelineTimeline } from '../../components/shared/PipelineTimeline.jsx'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import {
   useGetAdminRequestsQuery,
   usePatchRequestStatusMutation,
@@ -61,6 +63,7 @@ function CorporateRequestsTab() {
   const [patchStatus, { isLoading: patching }] = usePatchRequestStatusMutation()
   const [deleteRequest] = useDeleteAdminRequestMutation()
   const requests = data?.requests ?? []
+  const pg = usePagination(requests, { resetKey: statusFilter })
 
   const [expandedRows, setExpandedRows] = useState({})
   const [selectedLabour, setSelectedLabour] = useState(null)
@@ -144,7 +147,7 @@ function CorporateRequestsTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {requests.map((r) => {
+                {pg.pageItems.map((r) => {
                   const assignments = r.assignments || []
                   const hasAssignments = assignments.length > 0
                   const requestedCrew = r.preferredCrewIds || []
@@ -311,7 +314,7 @@ function CorporateRequestsTab() {
 
           {/* MOBILE VIEW: CARDS */}
           <ul className="lg:hidden space-y-4">
-            {requests.map((r) => {
+            {pg.pageItems.map((r) => {
               const assignments = r.assignments || []
               const hasAssignments = assignments.length > 0
               const requestedCrew = r.preferredCrewIds || []
@@ -487,6 +490,8 @@ function CorporateRequestsTab() {
               )
             })}
           </ul>
+
+          <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
         </>
       ) : null}
 
@@ -642,7 +647,9 @@ function IndividualBookingsTab() {
   )
   const [deleteAdminBooking] = useDeleteAdminBookingMutation()
 
-  const bookings = data?.bookings ?? []
+  // Failed bookings are never listed, so they are left out before counting pages.
+  const bookings = (data?.bookings ?? []).filter((b) => b.status !== 'FAILED')
+  const pg = usePagination(bookings, { resetKey: statusFilter })
 
   const confirmDelete = async () => {
     if (!deleteConfirmId) return
@@ -700,8 +707,7 @@ function IndividualBookingsTab() {
       ) : null}
 
       <ul className="space-y-4">
-        {bookings.map((b) => {
-          if (b.status === 'FAILED') return null;
+        {pg.pageItems.map((b) => {
           return (
           <li key={b._id}>
             <GlassPanel className="space-y-4 p-5">
@@ -750,6 +756,8 @@ function IndividualBookingsTab() {
           )
         })}
       </ul>
+
+      <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
 
       {selectedBooking && (
         <BookingDetailsModal 

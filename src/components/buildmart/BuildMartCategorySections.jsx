@@ -1,3 +1,4 @@
+import { useMartBase } from '../../hooks/useMartBase.js'
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
@@ -5,6 +6,7 @@ import { fetchAppMartProducts, fetchAppMartCategories } from '../../api/buildmar
 import { MartProductTile } from './MartProductTile.jsx'
 
 export function BuildMartCategorySections() {
+  const martBase = useMartBase()
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -94,7 +96,7 @@ export function BuildMartCategorySections() {
               </div>
 
               <Link
-                to={`/app/buildmart/category/${section.id}`}
+                to={`${martBase}/category/${section.id}`}
                 className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-brand"
               >
                 <span>See all</span>

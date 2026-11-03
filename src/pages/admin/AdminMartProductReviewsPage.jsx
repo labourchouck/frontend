@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, PackageSearch, CheckCircle2, AlertCircle, X, Eye, Clock, XCircle } from 'lucide-react'
 import { getAdminBuildmartProducts, reviewAdminBuildmartProduct, getAdminBuildmartProductById } from '../../api/adminBuildmartApi.js'
@@ -8,6 +9,9 @@ export function AdminMartProductReviewsPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('PENDING')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(9)
+  const [total, setTotal] = useState(0)
   const [processingId, setProcessingId] = useState(null)
   const [viewingId, setViewingId] = useState(null)
   
@@ -50,22 +54,36 @@ export function AdminMartProductReviewsPage() {
 
   const fetchProducts = () => {
     setLoading(true)
-    getAdminBuildmartProducts(filter)
-      .then(res => setProducts(res?.data?.items || res?.items || res || []))
+    getAdminBuildmartProducts(filter, { page, limit: pageSize })
+      .then(res => {
+        setProducts(res?.data?.items || res?.items || res || [])
+        setTotal(res?.data?.total ?? res?.total ?? 0)
+      })
       .catch(console.error)
       .finally(() => setLoading(false))
+  }
+
+  // Switching the filter starts again from the first page.
+  const changeFilter = (next) => {
+    setFilter(next)
+    setPage(1)
   }
 
   useEffect(() => {
     fetchProducts()
     fetchStats()
-  }, [filter])
+  }, [filter, page, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The last product of a later page was approved/rejected: step back to the previous page.
+  useEffect(() => {
+    if (!loading && products.length === 0 && page > 1) setPage((p) => p - 1) // eslint-disable-line react-hooks/set-state-in-effect
+  }, [loading, products.length, page])
 
   const handleApprove = async (id) => {
     setProcessingId(id)
     try {
       await reviewAdminBuildmartProduct(id, { status: 'APPROVED' })
-      setProducts(prev => prev.filter(p => p._id !== id && p.id !== id))
+      fetchProducts()
       fetchStats()
     } catch (err) {
       console.error(err)
@@ -85,8 +103,8 @@ export function AdminMartProductReviewsPage() {
         status: 'REJECTED', 
         rejectionReason: rejectModal.reason 
       })
-      setProducts(prev => prev.filter(p => p._id !== rejectModal.productId && p.id !== rejectModal.productId))
       setRejectModal({ open: false, productId: null, reason: '' })
+      fetchProducts()
       fetchStats()
     } catch (err) {
       console.error(err)
@@ -145,7 +163,7 @@ export function AdminMartProductReviewsPage() {
         {['PENDING', 'APPROVED', 'REJECTED'].map(status => (
           <button
             key={status}
-            onClick={() => setFilter(status)}
+            onClick={() => changeFilter(status)}
             className={`px-4 py-3 text-sm font-bold transition-colors ${
               filter === status 
                 ? 'border-b-2 border-brand text-brand' 
@@ -167,6 +185,7 @@ export function AdminMartProductReviewsPage() {
           <p className="text-sm font-bold">No {filter.toLowerCase()} products found.</p>
         </div>
       ) : (
+        <>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {products.map(product => {
             const id = product._id || product.id
@@ -256,6 +275,17 @@ export function AdminMartProductReviewsPage() {
             )
           })}
         </div>
+        <AdminPagination
+          page={page}
+          pages={Math.max(1, Math.ceil(total / pageSize))}
+          total={total}
+          pageSize={pageSize}
+          pageSizeOptions={[9, 18, 36]}
+          loading={loading}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => { setPageSize(n); setPage(1) }}
+        />
+        </>
       )}
 
       {/* Reject Modal */}

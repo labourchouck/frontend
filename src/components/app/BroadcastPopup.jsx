@@ -250,6 +250,9 @@ export function BroadcastPopup() {
                     <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />
                     <span className="text-slate-700">
                       {typeof incoming.address === 'object' ? incoming.address.locationText : incoming.address}
+                      {incoming.distanceKm != null ? (
+                        <span className="mt-0.5 block text-xs font-bold text-brand">≈ {incoming.distanceKm} km from your location</span>
+                      ) : null}
                     </span>
                   </div>
                 )}

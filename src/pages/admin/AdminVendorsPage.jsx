@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { Search, Eye, Edit2, Trash2, X, Users, Wrench, CheckCircle2 } from 'lucide-react'
 import { fetchAdminVendorsAndCrew, updateVendorCrewVerification, deleteVendorCrew, fetchAdminVendorCrewById } from '../../api/adminVendorApi.js'
 import { AppSurface } from '../../components/app-ui/cards/AppSurface.jsx'
@@ -292,6 +294,7 @@ export function AdminVendorsPage() {
     }
     return filtered
   }, [allCrewRequests, activeTab, debouncedSearchQuery])
+  const pg = usePagination(filteredCrew, { resetKey: `${activeTab}|${debouncedSearchQuery}` })
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-20">
@@ -344,6 +347,7 @@ export function AdminVendorsPage() {
           <p className="mt-1 text-sm text-slate-500">No crew requests match the current filters.</p>
         </div>
       ) : (
+        <>
         <AppSurface className="overflow-x-auto rounded-2xl shadow-sm border border-slate-200">
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
@@ -359,7 +363,7 @@ export function AdminVendorsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
-              {filteredCrew.map((crew) => (
+              {pg.pageItems.map((crew) => (
                 <tr key={crew._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <p className="font-bold text-slate-800">{crew.vendorName}</p>
@@ -477,6 +481,8 @@ export function AdminVendorsPage() {
             </tbody>
           </table>
         </AppSurface>
+        <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
+        </>
       )}
 
       <AdminVendorCrewVerificationModal 

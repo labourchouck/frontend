@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, Gift, IndianRupee, Loader2, Users, XCircle } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
@@ -82,6 +84,7 @@ export function AdminReferralsPage() {
   const [items, setItems] = useState([])
   const [summary, setSummary] = useState(null)
   const [statusFilter, setStatusFilter] = useState('')
+  const pg = usePagination(items, { resetKey: statusFilter })
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type })
@@ -321,7 +324,7 @@ export function AdminReferralsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.length ? (
-                items.map((row) => (
+                pg.pageItems.map((row) => (
                   <tr key={row._id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3">
                       <p className="font-semibold text-slate-900">
@@ -376,6 +379,7 @@ export function AdminReferralsPage() {
             </tbody>
           </table>
         </div>
+        <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </GlassPanel>
     </div>
   )

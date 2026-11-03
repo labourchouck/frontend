@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { Plus, Eye, Edit, Trash2, Shield, Users } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { adminSubscriptionsApi } from '../../api/adminSubscriptionsApi.js'
@@ -30,6 +32,7 @@ export function AdminCorporateSubscriptionsPage() {
   const [activeTab, setActiveTab] = useState('users') // 'users' or 'plans'
   const [plans, setPlans] = useState([])
   const [subscriptions, setSubscriptions] = useState([])
+  const pg = usePagination(subscriptions)
   const [loading, setLoading] = useState(true)
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(false)
   
@@ -301,7 +304,7 @@ export function AdminCorporateSubscriptionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {subscriptions.map((sub) => (
+                {pg.pageItems.map((sub) => (
                   <tr key={sub._id} className="transition hover:bg-slate-50">
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-900">{sub.user?.fullName || 'Unknown'}</div>
@@ -338,6 +341,7 @@ export function AdminCorporateSubscriptionsPage() {
               </tbody>
             </table>
           </div>
+          <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
         </GlassPanel>
       )}
 

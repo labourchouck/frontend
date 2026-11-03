@@ -33,7 +33,7 @@ export function LocationPermissionBanner({ className = '' }) {
   useEffect(() => {
     if (!gpsOff || dismissed) return undefined
     const id = setInterval(() => {
-      if (document.visibilityState === 'visible') requestDeviceLocation(user?.role)
+      if (document.visibilityState === 'visible') requestDeviceLocation(user?.role, { force: true })
     }, 5000)
     return () => clearInterval(id)
   }, [gpsOff, dismissed, user?.role])
@@ -71,7 +71,7 @@ export function LocationPermissionBanner({ className = '' }) {
   const handleAction = async () => {
     setBusy(true)
     try {
-      await requestDeviceLocation(user?.role)
+      await requestDeviceLocation(user?.role, { force: true })
     } finally {
       setBusy(false)
     }

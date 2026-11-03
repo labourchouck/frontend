@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { Clock, Loader2, CheckCircle, Search, Filter, AlertCircle, Calendar } from 'lucide-react'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { AppPrimaryButton } from '../../components/app/AppPrimaryButton.jsx'
@@ -48,6 +50,8 @@ export function AdminAttendancePage() {
   useEffect(() => {
     loadAttendance()
   }, [loadAttendance])
+
+  const pg = usePagination(records, { resetKey: `${filterDate}|${filterStatus}` })
 
   const handleVerify = async (id, status = 'present') => {
     setVerifyingId(id)
@@ -128,8 +132,9 @@ export function AdminAttendancePage() {
           <p className="text-xs mt-1">Try changing the date or status filter.</p>
         </GlassPanel>
       ) : (
+        <>
         <ul className="space-y-3">
-          {records.map((r) => (
+          {pg.pageItems.map((r) => (
             <li key={r._id}>
               <GlassPanel className="flex flex-wrap items-center justify-between gap-4 p-5 hover:border-brand/30 transition-colors">
                 <div className="flex items-start gap-4">
@@ -203,6 +208,8 @@ export function AdminAttendancePage() {
             </li>
           ))}
         </ul>
+        <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
+        </>
       )}
     </div>
   )

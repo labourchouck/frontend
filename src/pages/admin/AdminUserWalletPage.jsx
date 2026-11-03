@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { AdminPagination } from '../../components/admin/AdminPagination.jsx'
+import { usePagination } from '../../hooks/usePagination.js'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Banknote,
@@ -71,6 +73,7 @@ export function AdminUserWalletPage() {
   const [requests, setRequests] = useState([])
   const [summary, setSummary] = useState(null)
   const [statusFilter, setStatusFilter] = useState('')
+  const pg = usePagination(requests, { resetKey: statusFilter })
   const [busyId, setBusyId] = useState('')
   const [rejectingId, setRejectingId] = useState('')
   const [rejectReason, setRejectReason] = useState('')
@@ -186,7 +189,7 @@ export function AdminUserWalletPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {requests.length ? (
-                requests.map((r) => (
+                pg.pageItems.map((r) => (
                   <tr key={r._id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3">
                       <p className="font-semibold text-slate-900">
@@ -290,6 +293,7 @@ export function AdminUserWalletPage() {
             </tbody>
           </table>
         </div>
+        <AdminPagination {...pg} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </GlassPanel>
     </div>
   )

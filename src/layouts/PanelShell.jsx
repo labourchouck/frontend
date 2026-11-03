@@ -35,6 +35,7 @@ export function PanelShell({
   const reduce = useReducedMotion()
 
   const title = getTitle(pathname)
+  const isMartPage = pathname.startsWith('/corporate/mart') && !pathname.endsWith('/mart/orders')
   const drawerInitials = adminInitials(user)
 
   const hideShellHeader =
@@ -47,7 +48,7 @@ export function PanelShell({
     /\/crew\/[^/]+$/.test(pathname) ||
     pathname.includes('/invoice') ||
     pathname.includes('/subscription') ||
-    pathname.endsWith('/mart/orders')
+    pathname.startsWith('/corporate/mart')
 
   useEffect(() => {
     queueMicrotask(() => setDrawerOpen(false))
@@ -190,7 +191,8 @@ export function PanelShell({
 
         <main
           className={`relative z-10 flex-1 px-4 pb-24 print:p-0 ${
-            hideShellHeader ? 'pt-0 print:pt-0' : 'pt-4'
+            // Mart pages bring their own header and pull themselves up by the 1rem top padding (-mt-4); the orders page does not.
+            hideShellHeader && !isMartPage ? 'pt-0 print:pt-0' : 'pt-4'
           }`}
         >
           <AppPageTransition />

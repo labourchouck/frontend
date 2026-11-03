@@ -390,22 +390,13 @@ export function AppKycPage() {
         </GlassPanel>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2">
-        <Link
-          to="/app/work-categories"
-          className="flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:border-brand/30"
-        >
-          <Wrench className="h-5 w-5 text-brand" aria-hidden />
-          <span className="text-xs font-bold text-slate-900">Update skills</span>
-        </Link>
-        <Link
-          to="/app/profile"
-          className="flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:border-brand/30"
-        >
-          <ArrowRight className="h-5 w-5 text-slate-400" aria-hidden />
-          <span className="text-xs font-bold text-slate-900">Profile</span>
-        </Link>
-      </div>
+      <Link
+        to="/app/work-categories"
+        className="flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm ring-1 ring-slate-100 transition hover:border-brand/30"
+      >
+        <Wrench className="h-5 w-5 text-brand" aria-hidden />
+        <span className="text-xs font-bold text-slate-900">Update skills</span>
+      </Link>
     </div>
   )
 }

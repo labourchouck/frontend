@@ -125,8 +125,12 @@ export async function fetchAppMartBanners() {
   return data;
 }
 
-export async function getAdminBuildmartProducts(status = 'PENDING') {
-  const query = status ? `?status=${status}` : '';
+export async function getAdminBuildmartProducts(status = 'PENDING', { page, limit } = {}) {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (page) params.set('page', page)
+  if (limit) params.set('limit', limit)
+  const query = params.toString() ? `?${params}` : '';
   const data = await apiRequest(`/buildmart/admin/products${query}`);
   return data;
 }

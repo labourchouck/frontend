@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Map, AlertTriangle, CheckCircle2, Loader2, Target } from 'lucide-react'
+import { Map, AlertTriangle, CheckCircle2, Loader2, Target, Radio } from 'lucide-react'
 import { adminZonesApi } from '../../api/adminZonesApi.js'
 import { ApiError } from '../../api/http.js'
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
@@ -58,6 +58,7 @@ export function AdminZonesPage() {
 
   const [bookingBroadcastRadius, setBookingBroadcastRadius] = useState('')
   const [b2bBroadcastRadius, setB2bBroadcastRadius] = useState('')
+  const [recent, setRecent] = useState([])
 
   const showToast = useCallback((message, variant = 'success') => {
     setToast({ message, variant })
@@ -68,10 +69,12 @@ export function AdminZonesPage() {
     let cancelled = false
     
     Promise.all([
-      adminZonesApi.getZoneSettings()
+      adminZonesApi.getZoneSettings(),
+      adminZonesApi.getZoneStatistics().catch(() => null),
     ])
-    .then(([settingsRes]) => {
+    .then(([settingsRes, statsRes]) => {
       if (cancelled) return
+      setRecent(statsRes?.data?.recentBroadcasts ?? [])
       
       if (settingsRes.data?.bookingBroadcastRadius != null) {
         setBookingBroadcastRadius(String(settingsRes.data.bookingBroadcastRadius))
@@ -199,6 +202,56 @@ export function AdminZonesPage() {
           </AppPrimaryButton>
         </div>
       </div>
+
+      <SettingsSection
+        icon={Radio}
+        title="Recent broadcasts"
+        description="Who was offered each job, and why everyone else was not — so you can see the radius at work"
+        accent="indigo-600"
+      >
+        {recent.length === 0 ? (
+          <p className="text-sm text-slate-500">No broadcasts yet. New bookings will appear here.</p>
+        ) : (
+          <div className="space-y-3" data-testid="recent-broadcasts">
+            {recent.map((b) => {
+              const r = b.report || {}
+              const skipped = Object.entries(r.skipped || {})
+              return (
+                <details key={b._id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                  <summary className="cursor-pointer select-none">
+                    <span className="text-sm font-extrabold text-slate-900">
+                      Offered to {r.offered ?? b.offered} of {r.totalWorkers ?? '?'} labour
+                    </span>
+                    <span className="ml-2 text-xs font-semibold text-slate-500">
+                      {b.type === 'SCHEDULED' ? 'Scheduled' : 'Instant'} · radius {r.radiusKm ?? b.radiusKm} km · {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} · {b.status}
+                    </span>
+                    {skipped.length ? (
+                      <span className="mt-1.5 flex flex-wrap gap-1.5">
+                        {skipped.map(([key, n]) => (
+                          <span key={key} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">
+                            {(r.workers || []).find((w) => w.key === key)?.reason || key}: {n}
+                          </span>
+                        ))}
+                      </span>
+                    ) : null}
+                  </summary>
+                  <ul className="mt-3 divide-y divide-slate-100 text-xs">
+                    {(r.workers || []).map((w, i) => (
+                      <li key={i} className="flex items-center justify-between gap-3 py-1.5">
+                        <span className="font-bold text-slate-800">{w.name}</span>
+                        <span className={w.key === 'offered' ? 'font-bold text-emerald-700' : 'text-slate-500'}>
+                          {w.reason}
+                          {w.distanceKm != null ? ` · ${w.distanceKm} km` : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )
+            })}
+          </div>
+        )}
+      </SettingsSection>
     </div>
   )
 }

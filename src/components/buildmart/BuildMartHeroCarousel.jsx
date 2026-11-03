@@ -1,3 +1,4 @@
+import { useMartBase } from '../../hooks/useMartBase.js'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -5,6 +6,7 @@ import { ChevronRight } from 'lucide-react'
 import { fetchAppMartBanners } from '../../api/buildmartApi.js'
 
 export function BuildMartHeroCarousel() {
+  const martBase = useMartBase()
   const navigate = useNavigate()
   const reduce = useReducedMotion()
   const [index, setIndex] = useState(0)
@@ -89,7 +91,7 @@ export function BuildMartHeroCarousel() {
               <button
                 type="button"
                 onClick={() =>
-                  navigate(`/app/buildmart?category=${encodeURIComponent(banner.categoryId || '')}`)
+                  navigate(`${martBase}?category=${encodeURIComponent(banner.categoryId || '')}`)
                 }
                 className="mt-4 inline-flex w-fit items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-extrabold text-orange-700 shadow-lg transition hover:brightness-105 active:scale-[0.99]"
               >
