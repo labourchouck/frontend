@@ -19,11 +19,14 @@ import { AppSectionHeader } from '../../components/app-ui/layout/AppSectionHeade
 import { GlassPanel } from '../../components/ui/GlassPanel.jsx'
 import { VendorPageLayout } from '../../components/vendor/VendorPageLayout.jsx'
 import { isVendorPanelUnlocked } from '../../lib/vendorDemo.js'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { vendorApi } from '../../api/vendorApi.js'
 import { useSocket } from '../../context/SocketContext.jsx'
 import { filterVendorJobs } from '../../lib/vendorDummyData.js'
 import { formatVendorInr, openVendorDrawer, vendorInitials, vendorTimeGreeting } from '../../lib/vendorUiHelpers.js'
+import { AppUserLocationModal } from '../../components/app/AppUserLocationModal.jsx'
+import { readAppUserLocation, formatAppUserLocationLabel } from '../../lib/appUserLocationStorage.js'
+import { requestDeviceLocation } from '../../hooks/useAutoDetectLocation.js'
 
 const QUICK_ACTIONS = [
   { to: '/vendor/jobs', label: 'Supply jobs', icon: ClipboardList, bg: 'from-sky-500/15 to-sky-50', tone: 'text-sky-700' },
@@ -47,6 +50,9 @@ export function VendorHomeScreen({ user }) {
   const [banners, setBanners] = useState([])
   const [bannerIdx, setBannerIdx] = useState(0)
   const socket = useSocket()
+  const [locModalOpen, setLocModalOpen] = useState(false)
+  const [locationLabel, setLocationLabel] = useState('')
+  const [isLocFetching, setIsLocFetching] = useState(false)
 
   useEffect(() => {
     if (reduce || banners.length === 0) return undefined
@@ -55,6 +61,34 @@ export function VendorHomeScreen({ user }) {
     }, 5000)
     return () => window.clearInterval(id)
   }, [reduce, banners])
+
+  // Automatically listen to and refresh current auto-detected location
+  useEffect(() => {
+    const refreshLoc = () => {
+      const loc = readAppUserLocation()
+      const formatted = formatAppUserLocationLabel(loc)
+      if (formatted) {
+        setLocationLabel(formatted)
+        setIsLocFetching(false)
+      }
+    }
+    refreshLoc()
+    window.addEventListener('lc-app-user-location-changed', refreshLoc)
+
+    // If location is not yet in storage, trigger device location auto-detect
+    const stored = readAppUserLocation()
+    if (!stored?.address && !stored?.lat) {
+      setIsLocFetching(true)
+      requestDeviceLocation(user?.role).finally(() => {
+        setIsLocFetching(false)
+        refreshLoc()
+      })
+    }
+
+    return () => {
+      window.removeEventListener('lc-app-user-location-changed', refreshLoc)
+    }
+  }, [user?.role])
 
   useEffect(() => {
     if (!verified || !unlocked) return undefined
@@ -205,12 +239,12 @@ export function VendorHomeScreen({ user }) {
 
           <button
             type="button"
-            onClick={() => navigate('/vendor/jobs')}
-            className="mt-4 flex w-full items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-left text-sm backdrop-blur-sm hover:bg-white/15"
+            onClick={() => setLocModalOpen(true)}
+            className="mt-4 flex w-full items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-left text-sm backdrop-blur-sm hover:bg-white/15 transition-colors cursor-pointer group"
           >
-            <MapPin className="h-4 w-4 shrink-0 text-brand-bright" aria-hidden />
+            <MapPin className={`h-4 w-4 shrink-0 text-brand-bright ${isLocFetching ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} aria-hidden />
             <span className="min-w-0 flex-1 truncate font-medium text-white/90">
-              {stats.sitesActive ?? 0} active site deployments · tap to manage
+              {locationLabel || (isLocFetching ? 'Fetching your location…' : 'Tap to set location')}
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-white/50" aria-hidden />
           </button>
@@ -367,6 +401,11 @@ export function VendorHomeScreen({ user }) {
           </GlassPanel>
         </section>
       </VendorPageLayout>
+
+      <AppUserLocationModal
+        open={locModalOpen}
+        onClose={() => setLocModalOpen(false)}
+      />
     </motion.div>
   )
 }

@@ -213,6 +213,37 @@ export const workforceApi = baseApi.injectEndpoints({
     toggleVendorAttendance: build.mutation({
       query: (body) => ({ url: '/vendor/attendance/toggle', method: 'POST', body }),
       transformResponse: unwrap,
+      // Tick the box immediately; the server response / refetch then confirms it (rolled back if the call fails).
+      async onQueryStarted({ recordId, action }, { dispatch, getState, queryFulfilled }) {
+        const now = new Date().toISOString()
+        const patches = workforceApi.util
+          .selectInvalidatedBy(getState(), ['VendorAttendance'])
+          .filter((q) => q.endpointName === 'getVendorAttendance')
+          .map((q) =>
+            dispatch(
+              workforceApi.util.updateQueryData('getVendorAttendance', q.originalArgs, (draft) => {
+                for (const job of draft?.jobs ?? []) {
+                  const rec = job.attendanceRecords?.find((r) => r._id === recordId)
+                  if (!rec) continue
+                  if (action === 'vendorCheckIn') {
+                    rec.vendorCheckIn = true
+                    rec.vendorCheckInAt = rec.vendorCheckInAt || now
+                    rec.status = 'dispatched'
+                  } else if (action === 'vendorCheckOut') {
+                    rec.vendorCheckOut = true
+                    rec.vendorCheckOutAt = rec.vendorCheckOutAt || now
+                    rec.status = 'completed'
+                  }
+                }
+              }),
+            ),
+          )
+        try {
+          await queryFulfilled
+        } catch {
+          patches.forEach((patch) => patch.undo())
+        }
+      },
       invalidatesTags: ['VendorAttendance', 'Attendance', 'VendorJobs', 'VendorDashboard'],
     }),
     acceptVendorJob: build.mutation({

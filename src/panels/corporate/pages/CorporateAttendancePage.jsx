@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSocket } from '../../../context/SocketContext.jsx'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -64,6 +65,15 @@ export function CorporateAttendancePage() {
     date: selectedDate,
   })
   const [toggleAttendance, { isLoading: isToggling }] = useToggleCorporateAttendanceMutation()
+  const socket = useSocket()
+
+  // The other party's check-in / check-out arrives as ATTENDANCE_UPDATED — refresh so this screen updates without a reload.
+  useEffect(() => {
+    if (!socket) return undefined
+    const onUpdate = () => refetch()
+    socket.on('ATTENDANCE_UPDATED', onUpdate)
+    return () => socket.off('ATTENDANCE_UPDATED', onUpdate)
+  }, [socket, refetch])
 
   const [togglingRecordId, setTogglingRecordId] = useState(null)
   const [feedbackMsg, setFeedbackMsg] = useState(null)
