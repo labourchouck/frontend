@@ -136,6 +136,12 @@ export function CorporateRequestDetailPage() {
 
   const request = data?.request
   const awaitingVendor = (data?.vendorCheckoutPending ?? 0) > 0
+  const progress = data?.attendanceProgress
+  const multiDay = (progress?.totalDays ?? 1) > 1
+  const paymentReady = progress ? progress.paymentReady : true
+  const showProgressCard =
+    multiDay && !paymentReady && request.paymentStatus !== 'PAID' &&
+    ((data?.assignments?.length ?? 0) > 0 || progress.daysClosed > 0)
   const assignments = data?.assignments ?? []
   const platformFeeConfig = data?.platformFeeConfig
 
@@ -320,7 +326,34 @@ export function CorporateRequestDetailPage() {
         </div>
       </AppSurface>
 
-      {((['completed', 'billing'].includes(request.status) || forcePayment) && request.paymentStatus !== 'PAID') ? (
+      {showProgressCard ? (
+        <AppSurface className="border-sky-200 bg-gradient-to-br from-sky-50 to-white">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-base font-black text-slate-900">Multi-day booking progress</h3>
+            <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-bold text-sky-700">
+              {progress.daysClosed} of {progress.totalDays} days done
+            </span>
+          </div>
+          <div className="mt-3 flex gap-1" aria-hidden>
+            {Array.from({ length: progress.totalDays }).map((_, i) => (
+              <span key={i} className={`h-1.5 flex-1 rounded-full ${i < progress.daysClosed ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+            ))}
+          </div>
+          <ul className="mt-3 space-y-1.5 text-xs font-medium leading-relaxed text-slate-600">
+            <li>• Every day, confirm each worker's <b>Check In</b> and <b>Check Out</b> in Attendance. The vendor then closes that day's shift.</li>
+            <li>• Check attendance again the next day. The cycle repeats until the last day.</li>
+            <li>• <b>Payment is made once, on the last day,</b> after the vendor closes the final shift. The vendor receives their payment after that.</li>
+          </ul>
+          <Link
+            to="/corporate/attendance"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white"
+          >
+            <Clock className="h-3.5 w-3.5" /> Open attendance
+          </Link>
+        </AppSurface>
+      ) : null}
+
+      {((['completed', 'billing'].includes(request.status) || forcePayment) && request.paymentStatus !== 'PAID' && (!multiDay || paymentReady)) ? (
         <AppSurface className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div>

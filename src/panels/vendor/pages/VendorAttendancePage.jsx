@@ -258,7 +258,7 @@ export function VendorAttendancePage() {
 
   return (
     <VendorPageLayout hero={hero}>
-      <div className="space-y-5 max-w-4xl mx-auto">
+      <div className="mx-auto w-full min-w-0 max-w-4xl space-y-5">
         {/* Date Selector */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -392,6 +392,18 @@ export function VendorAttendancePage() {
                           {job.locationText}
                         </p>
                       )}
+                      {job.totalDays > 1 && (() => {
+                        const dayNo = (job.bookedDates || []).indexOf(selectedDate) + 1
+                        const lastDay = job.bookedDates?.[job.bookedDates.length - 1] === selectedDate
+                        return (
+                          <p className="mt-2 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[11px] font-semibold leading-snug text-sky-800">
+                            {dayNo > 0 ? `Day ${dayNo} of ${job.totalDays}. ` : ''}
+                            {lastDay
+                              ? 'Last day: once you close the final shift, the client pays and your payment for this booking is settled.'
+                              : 'Dispatch and close the shift every day. The client pays once, on the last day, and you receive your payment after that.'}
+                          </p>
+                        )
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-2 self-start sm:self-auto">

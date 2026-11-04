@@ -91,7 +91,8 @@ export function CorporateRequestCheckout({
 
   const perDayCost = breakdown.reduce((sum, item) => sum + item.adminPriceTotal, 0)
   const basePriceTotal = perDayCost * totalDays
-  const totalTaxAmount = totalGstPerDay * totalDays
+  // GST is a flat amount (on one day's price) and is not multiplied by the number of days
+  const totalTaxAmount = totalGstPerDay
 
 
   let platformFee = 0

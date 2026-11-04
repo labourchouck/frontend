@@ -203,7 +203,7 @@ export function CorporateAttendancePage() {
   }, [jobs, attendanceFilter])
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto pb-12">
+    <div className="mx-auto w-full min-w-0 max-w-4xl space-y-5 pb-12">
       {/* Header Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-brand/90 p-5 text-white shadow-xl">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -376,11 +376,23 @@ export function CorporateAttendancePage() {
                         {job.locationText}
                       </p>
                     )}
+                    {job.totalDays > 1 && (() => {
+                      const dayNo = (job.bookedDates || []).indexOf(selectedDate) + 1
+                      const lastDay = job.bookedDates?.[job.bookedDates.length - 1] === selectedDate
+                      return (
+                        <p className="mt-2 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[11px] font-semibold leading-snug text-sky-800">
+                          {dayNo > 0 ? `Day ${dayNo} of ${job.totalDays}. ` : ''}
+                          {lastDay
+                            ? 'Last day: once the vendor closes the final shift, Make Payment appears here.'
+                            : 'Check attendance again each day. Payment is made once, on the last day, and the vendor is paid after that.'}
+                        </p>
+                      )
+                    })()}
                   </div>
 
                   {/* Actions & Summary */}
                   <div className="flex items-center gap-2">
-                    {job.attendanceRecords?.length > 0 && job.attendanceRecords.every(r => r.vendorCheckOut) && (
+                    {job.attendanceRecords?.length > 0 && job.attendanceRecords.every(r => r.vendorCheckOut) && (job.totalDays <= 1 || job.bookedDates?.[job.bookedDates.length - 1] === selectedDate) && (
                       <Link 
                         to={`/corporate/requests/${job.requestId}?payment=true`}
                         className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 text-white px-3 py-1.5 text-xs font-bold shadow-sm hover:bg-emerald-700 transition-colors"

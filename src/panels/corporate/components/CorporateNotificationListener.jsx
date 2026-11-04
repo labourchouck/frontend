@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BellRing, CheckCircle2, ChevronRight, Sparkles, UserCheck, X, AlertCircle } from 'lucide-react'
+import { useDispatch } from 'react-redux'
 import { useSocket } from '../../../context/SocketContext.jsx'
+import { workforceApi } from '../../../store/api/workforceApi.js'
 
 export function CorporateNotificationListener() {
   const socket = useSocket()
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [toasts, setToasts] = useState([])
 
   useEffect(() => {
@@ -49,6 +52,9 @@ export function CorporateNotificationListener() {
     }
 
     const handleAttendanceUpdate = (data) => {
+      // Refresh every mounted request / attendance / dashboard view — e.g. the request card shows "Make Payment" the
+      // moment the vendor closes the last shift, without a reload.
+      dispatch(workforceApi.util.invalidateTags(['Requests', 'Attendance', 'CorporateDashboard']))
       console.log('[Corporate Notification] Attendance Updated:', data)
       let actionLabel = 'updated attendance'
       if (data.action === 'vendorCheckIn') actionLabel = 'dispatched / checked in by vendor'
@@ -79,7 +85,29 @@ export function CorporateNotificationListener() {
       socket.off('B2B_REQUEST_REJECTED', handleJobRejected)
       socket.off('ATTENDANCE_UPDATED', handleAttendanceUpdate)
     }
-  }, [socket])
+  }, [socket, dispatch])
+
+  // Every toast dismisses itself after a few seconds (the close button still works immediately).
+  const timers = useRef(new Map())
+  useEffect(() => {
+    toasts.forEach((t) => {
+      if (timers.current.has(t.id)) return
+      timers.current.set(
+        t.id,
+        window.setTimeout(() => {
+          timers.current.delete(t.id)
+          setToasts((prev) => prev.filter((x) => x.id !== t.id))
+        }, 6000),
+      )
+    })
+  }, [toasts])
+  useEffect(() => {
+    const pending = timers.current
+    return () => {
+      pending.forEach((timer) => window.clearTimeout(timer))
+      pending.clear()
+    }
+  }, [])
 
   const removeToast = (id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))

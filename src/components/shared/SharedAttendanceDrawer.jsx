@@ -10,13 +10,32 @@ export function SharedAttendanceDrawer({ requestId, onClose }) {
 
   const attendanceRecords = data?.records || []
 
-  // Group attendance by date
+  // Group by booked day (records carry shiftDateStr / shiftDate — there is no `date` field), oldest day first
   const groupedByDate = attendanceRecords.reduce((acc, record) => {
-    const date = new Date(record.date).toLocaleDateString()
-    if (!acc[date]) acc[date] = []
-    acc[date].push(record)
+    const key = record.shiftDateStr || (record.shiftDate ? new Date(record.shiftDate).toISOString().slice(0, 10) : 'unknown')
+    if (!acc[key]) acc[key] = []
+    acc[key].push(record)
     return acc
   }, {})
+  const dayKeys = Object.keys(groupedByDate).sort()
+  const todayKey = new Date().toLocaleDateString('en-CA')
+  const dayLabel = (key) => {
+    const d = new Date(`${key}T00:00:00`)
+    return Number.isNaN(d.getTime())
+      ? key
+      : d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  const STATUS_LABELS = {
+    scheduled: ['Scheduled', 'text-slate-500'],
+    dispatched: ['Dispatched', 'text-amber-600'],
+    present: ['Present on site', 'text-emerald-600'],
+    work_completed: ['Work completed', 'text-indigo-600'],
+    completed: ['Shift closed', 'text-emerald-700'],
+    absent: ['Absent', 'text-rose-600'],
+    half_day: ['Half day', 'text-amber-600'],
+    late: ['Late', 'text-amber-600'],
+  }
+  const time = (v) => (v ? new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--')
 
   return (
     <>
@@ -54,59 +73,56 @@ export function SharedAttendanceDrawer({ requestId, onClose }) {
                 <p className="text-xs text-slate-500 mt-1">Workers have not checked in for this request yet.</p>
               </div>
             ) : (
-              Object.entries(groupedByDate).map(([date, records]) => (
-                <div key={date} className="mb-6">
+              dayKeys.map((key, idx) => (
+                <div key={key} className="mb-6">
                   <div className="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
                     <Clock className="w-4 h-4 text-brand" />
-                    <h3 className="text-sm font-bold text-slate-800">{date}</h3>
+                    <h3 className="text-sm font-bold text-slate-800">
+                      {dayKeys.length > 1 ? `Day ${idx + 1} · ` : ''}{dayLabel(key)}
+                    </h3>
+                    {key === todayKey ? (
+                      <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold text-brand">Today</span>
+                    ) : null}
                   </div>
                   <div className="space-y-3">
-                    {records.map(record => (
-                      <div key={record._id} className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3 shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-slate-100 p-2 rounded-full">
-                            <User className="w-4 h-4 text-slate-500" />
+                    {groupedByDate[key].map((record) => {
+                      const [statusText, statusTone] = STATUS_LABELS[record.status] || [String(record.status || '').replace(/_/g, ' '), 'text-slate-500']
+                      return (
+                        <div key={record._id} className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-3 shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-slate-100 p-2 rounded-full">
+                              <User className="w-4 h-4 text-slate-500" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-bold text-slate-900">{record.labourName || record.labourId?.fullName || 'Worker'}</p>
+                              <p className={`mt-0.5 flex items-center gap-1 text-[11px] font-bold uppercase ${statusTone}`}>
+                                {record.status === 'present' || record.status === 'completed' ? <CheckCircle2 className="w-3 h-3" /> : null}
+                                {statusText}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-900">{record.labourId?.fullName || 'Worker'}</p>
-                            <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                              {record.status === 'present' ? (
-                                <><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Present</>
-                              ) : (
-                                <span className="text-rose-500 uppercase font-bold text-[10px]">{record.status}</span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-y-3 gap-x-2 border-t border-slate-50 pt-3">
-                          <div className="flex flex-col">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Vendor Dispatch</span>
-                            <span className="text-xs font-semibold text-slate-700 mt-0.5">
-                              {record.vendorCheckInAt ? new Date(record.vendorCheckInAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col text-right">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Client Check-In</span>
-                            <span className="text-xs font-semibold text-brand mt-0.5">
-                              {record.clientCheckInAt ? new Date(record.clientCheckInAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Client Check-Out</span>
-                            <span className="text-xs font-semibold text-brand mt-0.5">
-                              {record.clientCheckOutAt ? new Date(record.clientCheckOutAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col text-right">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Vendor Check-Out</span>
-                            <span className="text-xs font-semibold text-slate-700 mt-0.5">
-                              {record.vendorCheckOutAt ? new Date(record.vendorCheckOutAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
-                            </span>
+
+                          <div className="grid grid-cols-2 gap-y-3 gap-x-2 border-t border-slate-50 pt-3">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Vendor Dispatch</span>
+                              <span className="text-xs font-semibold text-slate-700 mt-0.5">{time(record.vendorCheckInAt)}</span>
+                            </div>
+                            <div className="flex flex-col text-right">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Client Check-In</span>
+                              <span className="text-xs font-semibold text-brand mt-0.5">{time(record.clientCheckInAt)}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Client Check-Out</span>
+                              <span className="text-xs font-semibold text-brand mt-0.5">{time(record.clientCheckOutAt)}</span>
+                            </div>
+                            <div className="flex flex-col text-right">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Vendor Check-Out</span>
+                              <span className="text-xs font-semibold text-slate-700 mt-0.5">{time(record.vendorCheckOutAt)}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               ))
