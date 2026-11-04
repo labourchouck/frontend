@@ -1,5 +1,39 @@
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
+
+const DEFAULT_BOTTOM_PADDING = 'max(0.125rem, calc(env(safe-area-inset-bottom, 0px) * 0.4))'
+
+/**
+ * Android with the classic 3-button navigation reports a large bottom inset (the height of the system button bar,
+ * ~48dp) even though that bar already sits below the app, which left an empty strip under the tab bar. Gesture
+ * navigation / iOS report a small inset (home indicator) that still needs a little room. Measure the real inset and
+ * drop the padding when it is the 3-button size on Android.
+ */
+function useBottomNavPadding() {
+  const [padding, setPadding] = useState(DEFAULT_BOTTOM_PADDING)
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || !/android/i.test(navigator.userAgent || '')) return undefined
+    const probe = document.createElement('div')
+    probe.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px)'
+    document.body.appendChild(probe)
+    const measure = () => {
+      const inset = parseFloat(getComputedStyle(probe).paddingBottom) || 0
+      setPadding(inset >= 32 ? '0.125rem' : DEFAULT_BOTTOM_PADDING)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    window.addEventListener('orientationchange', measure)
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('orientationchange', measure)
+      probe.remove()
+    }
+  }, [])
+
+  return padding
+}
 
 /**
  * Bottom tab bar — solid surface, brand active states (no glass).
@@ -7,11 +41,12 @@ import { motion, useReducedMotion } from 'framer-motion'
  */
 export function AppBottomNav({ items }) {
   const reduce = useReducedMotion()
+  const bottomPadding = useBottomNavPadding()
 
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-30 bg-white shadow-[0_-12px_32px_-16px_rgba(15,23,42,0.16)] print:hidden"
-      style={{ paddingBottom: 'max(0.125rem, calc(env(safe-area-inset-bottom, 0px) * 0.4))' }}
+      style={{ paddingBottom: bottomPadding }}
       aria-label="Bottom navigation"
     >
       <div className="mx-auto flex w-full max-w-lg items-stretch justify-around px-1 pt-1">
