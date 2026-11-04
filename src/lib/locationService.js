@@ -18,7 +18,12 @@ export function loadGoogleMapsSDK() {
   if (googleMapsPromise) return googleMapsPromise
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-  if (!apiKey) return Promise.resolve(null)
+  if (!apiKey) {
+    console.warn('[location] VITE_GOOGLE_MAPS_API_KEY is missing in this build — using OpenStreetMap for addresses (less precise)')
+    return Promise.resolve(null)
+  }
+  // Google calls this global when the key is rejected for this domain (referrer restriction / API not enabled)
+  window.gm_authFailure = () => console.warn('[location] Google Maps key rejected for this domain — add it under the key\'s allowed referrers')
 
   googleMapsPromise = new Promise((resolve) => {
     const existing = document.querySelector('#google-maps-script')
@@ -237,6 +242,7 @@ export async function reverseGeocode(lat, lng) {
 
             resolve(detailed.formatted_address)
           } else {
+            console.warn('[location] Google geocoder returned', status, '— falling back to OpenStreetMap (check the API key / allowed domains)')
             resolve(null)
           }
         })
