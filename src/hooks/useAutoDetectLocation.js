@@ -4,6 +4,8 @@ import { getBrowserLocation, reverseGeocode } from '../lib/locationService.js'
 import { USER_ROLES } from '../constants/userRoles.js'
 
 let isFetchingLocation = false
+// The account the app was last "opened" for in this page load; opening the app (or logging in) always re-detects.
+let launchedForUser = null
 
 /**
  * Should the automatic GPS refresh replace the saved location?
@@ -95,11 +97,16 @@ export function useAutoDetectLocation(user) {
   useEffect(() => {
     if (!role) return
 
-    // Auto-fetch current location on opening the app
+    // Auto-fetch current location on opening the app. Opening the app always uses the live GPS position — a
+    // previously saved address (e.g. a booking address or an old manual choice) must not stay stuck as "current
+    // location". Later refreshes in the same session still respect a location the user picks themselves.
     const now = Date.now()
-    if (now - lastFetchRef.current > 8000) {
+    const userKey = user?._id || user?.id || role
+    const isLaunch = launchedForUser !== userKey
+    if (isLaunch || now - lastFetchRef.current > 8000) {
+      launchedForUser = userKey
       lastFetchRef.current = now
-      requestDeviceLocation(role)
+      requestDeviceLocation(role, { force: isLaunch })
     }
 
     // When the user turns on GPS in phone quick settings and returns to the app
@@ -154,5 +161,5 @@ export function useAutoDetectLocation(user) {
         permStatus.onchange = null
       }
     }
-  }, [role])
+  }, [role, user?._id, user?.id])
 }
